@@ -1,0 +1,11 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_project_checklist_emp,project.checklist,model_project_checklist,base.group_user,1,1,1,0
+access_availability_request_emp,availability.request,model_availability_request,base.group_user,1,1,1,0
+access_vendor_request_emp,vendor.request,model_vendor_request,base.group_user,1,1,1,0
+access_expense_report_emp,expense.report,model_expense_report,base.group_user,1,1,1,0 
+access_expense_report_line_emp,expense.report.line,model_expense_report_line,base.group_user,1,1,1,0 
+access_parking_list_emp,parking.list,model_parking_list,base.group_user,1,1,1,0 
+access_parking_list_line_emp,parking.list.line,model_parking_list_line,base.group_user,1,1,1,0 
+access_payment_request_emp,payment.request,model_payment_request,base.group_user,1,1,1,0 
+access_purchase_request_line_emp,purchase.request.line,model_purchase_request_line,base.group_user,1,1,1,0
+access_availability_request_line_emp,availability.request.line,model_availability_request_line,base.group_user,1,1,1,0
