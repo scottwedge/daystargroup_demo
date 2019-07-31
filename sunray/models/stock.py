@@ -7,6 +7,16 @@ from ast import literal_eval
 from odoo.exceptions import UserError, ValidationError
 from odoo import api, fields, models, _
 
+class ResCompany(models.Model):
+    _inherit = "res.company"
+    
+    company_lead_approval = fields.Boolean(string='Lead Approval', company_dependent=True)
+    
+class ResConfigSettings(models.TransientModel):
+    _inherit = 'res.config.settings'
+    
+    lead_approval = fields.Boolean(string='Lead Approval', company_dependent=False, readonly=False, related='company_id.company_lead_approval')
+    
 class Partner(models.Model):
     _name = 'res.partner'
     _inherit = 'res.partner'
@@ -333,8 +343,14 @@ class Project(models.Model):
     
     crm_lead_id = fields.Many2one(comodel_name='crm.lead', string='Lead')
     
+    parent_project_id = fields.Many2one(comodel_name='project.project', string='Parent Project')
+    
     account_analytic_id = fields.Many2one('account.analytic.account', string='Analytic Account', required=True, default=_default_analytic, track_visibility="always")
     account_id = fields.Many2one('account.account', string='Account',  domain = [('user_type_id', 'in', [5,8,17,16])])
+    
+    monthly_maintenance_schedule = fields.Date(string="Monthly Maintenance Schedule", track_visibility="onchange")
+    client_site_visit = fields.Date(string="Client Site Visit", track_visibility="onchange")
+    internal_external_monthly = fields.Date(string="Internal External Monthly", track_visibility="onchange")
     
     @api.multi
     def _checklist_count(self):
@@ -357,6 +373,134 @@ class Project(models.Model):
         action['domain'].append(('partner_id', 'child_of', self.partner_id.id))
         return action
     
+    @api.multi
+    def send_monthly_maintenance_schedule_mail(self):
+        employees = self.env['project.project'].search([])
+        current_dates = False
+        for self in employees:
+            if self.monthly_maintenance_schedule:
+                
+                current_dates = datetime.datetime.strptime(self.monthly_maintenance_schedule, "%Y-%m-%d")
+                current_datesz = current_dates - relativedelta(days=5)
+                
+                date_start_day = current_datesz.day
+                date_start_month = current_datesz.month
+                date_start_year = current_datesz.year
+                
+                today = datetime.datetime.now().strftime("%Y-%m-%d")
+                
+                test_today = datetime.datetime.today().strptime(today, "%Y-%m-%d")
+                date_start_day_today = test_today.day
+                date_start_month_today = test_today.month
+                date_start_year_today = test_today.year
+                
+                if date_start_month == date_start_month_today:
+                    if date_start_day == date_start_day_today:
+                        if date_start_year == date_start_year_today:
+                            config = self.env['mail.template'].sudo().search([('name','=','Monthly Maintenance Schedule')], limit=1)
+                            mail_obj = self.env['mail.mail']
+                            if config:
+                                values = config.generate_email(self.id)
+                                mail = mail_obj.create(values)
+                                if mail:
+                                    mail.send()
+    
+    @api.multi
+    def send_client_site_visit_mail(self):
+        employees = self.env['project.project'].search([])
+        current_dates = False
+        for self in employees:
+            if self.client_site_visit:
+                
+                current_dates = datetime.datetime.strptime(self.client_site_visit, "%Y-%m-%d")
+                current_datesz = current_dates - relativedelta(days=5)
+                
+                date_start_day = current_datesz.day
+                date_start_month = current_datesz.month
+                date_start_year = current_datesz.year
+                
+                today = datetime.datetime.now().strftime("%Y-%m-%d")
+                
+                test_today = datetime.datetime.today().strptime(today, "%Y-%m-%d")
+                date_start_day_today = test_today.day
+                date_start_month_today = test_today.month
+                date_start_year_today = test_today.year
+                
+                if date_start_month == date_start_month_today:
+                    if date_start_day == date_start_day_today:
+                        if date_start_year == date_start_year_today:
+                            config = self.env['mail.template'].sudo().search([('name','=','Client Site Visit')], limit=1)
+                            mail_obj = self.env['mail.mail']
+                            if config:
+                                values = config.generate_email(self.id)
+                                mail = mail_obj.create(values)
+                                if mail:
+                                    mail.send()
+                                    
+    @api.multi
+    def send_client_site_visit_customer_mail(self):
+        employees = self.env['project.project'].search([])
+        current_dates = False
+        for self in employees:
+            if self.client_site_visit:
+                
+                current_dates = datetime.datetime.strptime(self.client_site_visit, "%Y-%m-%d")
+                current_datesz = current_dates - relativedelta(days=5)
+                
+                date_start_day = current_datesz.day
+                date_start_month = current_datesz.month
+                date_start_year = current_datesz.year
+                
+                today = datetime.datetime.now().strftime("%Y-%m-%d")
+                
+                test_today = datetime.datetime.today().strptime(today, "%Y-%m-%d")
+                date_start_day_today = test_today.day
+                date_start_month_today = test_today.month
+                date_start_year_today = test_today.year
+                
+                if date_start_month == date_start_month_today:
+                    if date_start_day == date_start_day_today:
+                        if date_start_year == date_start_year_today:
+                            config = self.env['mail.template'].sudo().search([('name','=','Client Site Visit customer')], limit=1)
+                            mail_obj = self.env['mail.mail']
+                            if config:
+                                values = config.generate_email(self.id)
+                                mail = mail_obj.create(values)
+                                if mail:
+                                    mail.send()
+                    
+    @api.multi
+    def send_internal_external_monthly_mail(self):
+        employees = self.env['project.project'].search([])
+        current_dates = False
+        for self in employees:
+            if self.internal_external_monthly:
+                
+                current_dates = datetime.datetime.strptime(self.internal_external_monthly, "%Y-%m-%d")
+                current_datesz = current_dates - relativedelta(days=5)
+                
+                date_start_day = current_datesz.day
+                date_start_month = current_datesz.month
+                date_start_year = current_datesz.year
+                
+                today = datetime.datetime.now().strftime("%Y-%m-%d")
+                
+                test_today = datetime.datetime.today().strptime(today, "%Y-%m-%d")
+                date_start_day_today = test_today.day
+                date_start_month_today = test_today.month
+                date_start_year_today = test_today.year
+                
+                if date_start_month == date_start_month_today:
+                    if date_start_day == date_start_day_today:
+                        if date_start_year == date_start_year_today:
+                            config = self.env['mail.template'].sudo().search([('name','=','Internal External Monthly')], limit=1)
+                            mail_obj = self.env['mail.mail']
+                            if config:
+                                values = config.generate_email(self.id)
+                                mail = mail_obj.create(values)
+                                if mail:
+                                    mail.send()
+    
 class ProjectChecklist(models.Model):
     _name = "project.checklist"
     _inherit = ['mail.thread', 'mail.activity.mixin', 'portal.mixin']
@@ -369,10 +513,6 @@ class ProjectChecklist(models.Model):
             result.append((ticket.id, "%s (#%d)" % (ticket.ticket_id.name, ticket.id)))
         return result
     '''
-    
-    @api.model
-    def _default_tax_group(self):
-        return self.env['helpdesk.ticket'].search([], limit=1)
     
     @api.model
     def _get_default_project(self):

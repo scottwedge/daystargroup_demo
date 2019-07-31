@@ -12,7 +12,85 @@ class Lead(models.Model):
     type_of_offer = fields.Selection([('saas', 'SaaS'), ('pass', 'PaaS '), ('sale', 'Sale ')], string='Type of Offer', required=False,default='saas')
     size = fields.Char(string='Size (kWp)')
     
+    state = fields.Selection([
+        ('draft', 'Draft'),
+        ('submit', 'Submitted'),
+        ('approve', 'Approved'),
+        ('reject', 'Rejected'),
+        ], string='Status', readonly=True, index=True, copy=False, default='draft', track_visibility='onchange')
+
+    @api.multi
+    def button_reset(self):
+        self.write({'state': 'draft'})
+        return {}
     
+    @api.multi
+    def button_submit(self):
+        self.write({'state': 'submit'})
+        group_id = self.env['ir.model.data'].xmlid_to_object('sunray.group_hr_line_manager')
+        user_ids = []
+        partner_ids = []
+        for user in group_id.users:
+            user_ids.append(user.id)
+            partner_ids.append(user.partner_id.id)
+        self.message_subscribe(partner_ids=partner_ids)
+        subject = "Created Lead {} is ready for Approval".format(self.name)
+        self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
+        return False
+        return {}
+    
+    @api.multi
+    def button_approve(self):
+        self.write({'state': 'approve'})
+        self.active = True
+        subject = "Created Lead {} has been approved".format(self.name)
+        partner_ids = []
+        for partner in self.sheet_id.message_partner_ids:
+            partner_ids.append(partner.id)
+        self.sheet_id.message_post(subject=subject,body=subject,partner_ids=partner_ids)
+        return {}
+    
+    @api.multi
+    def button_reject(self):
+        self.write({'state': 'reject'})
+        return {}
+    
+    @api.model
+    def create(self, vals):
+        result = super(Lead, self).create(vals)
+        result.check_lead_approval()
+        return result
+    
+    @api.multi
+    def check_lead_approval(self):
+        if self.company_id.company_lead_approval == True:
+            self.active = False
+        else:
+            self.active = True
+    
+    @api.multi
+    def create_project(self):
+        """
+        Method to open create project form
+        """
+
+        partner_id = self.partner_id
+             
+        view_ref = self.env['ir.model.data'].get_object_reference('project', 'edit_project')
+        view_id = view_ref[1] if view_ref else False
+         
+        res = {
+            'type': 'ir.actions.act_window',
+            'name': ('Project'),
+            'res_model': 'project.project',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'view_id': view_id,
+            'target': 'current',
+            'context': {'default_partner_id': partner_id.id, 'default_name': self.name, 'default_crm_lead_id': self.id}
+        }
+        
+        return res
     
 class HelpdeskTicket(models.Model):
     _inherit = "helpdesk.ticket"
@@ -85,7 +163,7 @@ class VendorRequest(models.Model):
             'email' : self.email,
             'customer': self.customer,
             'supplier' : self.supplier,
-            'supplier' : self.company_id.id
+            'company' : self.company_id.id
         }
         self.env['res.partner'].create(vals)
         return {}
@@ -156,7 +234,7 @@ class Holidays(models.Model):
     
     @api.multi
     def send_hr_notification(self):
-        group_id = self.env['ir.model.data'].xmlid_to_object('netcom.group_hr_leave_manager')
+        group_id = self.env['ir.model.data'].xmlid_to_object('sunray.group_hr_leave_manager')
         user_ids = []
         partner_ids = []
         for user in group_id.users:
