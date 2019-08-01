@@ -51,8 +51,8 @@
         <field name="model">purchase.order</field>
         <field name="inherit_id" ref="purchase.purchase_order_form"/>
         <field name="arch" type="xml">
-        	<button name="print_quotation" position="attributes"> <attribute name="groups">purchase.group_purchase_user</attribute></button>
-        	<button name="action_rfq_send" position="attributes"> <attribute name="groups">purchase.group_purchase_user</attribute></button>
+        	<button name="print_quotation" position="attributes"> <!-- <attribute name="groups">purchase.group_purchase_user</attribute> --></button>
+        	<button name="action_rfq_send" position="attributes"> <!-- <attribute name="groups">purchase.group_purchase_user</attribute>  --></button>
         	<field name="name" position="before">
             	<field name= "need_override" invisible = "1"/>
             	<h3 attrs="{'invisible': [('need_override', '=', False)]}"><b>Needs Budget Override, The Budget Dept. has been notified </b></h3>
