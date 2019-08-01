@@ -16,7 +16,7 @@
     # Check https://github.com/odoo/odoo/blob/master/odoo/addons/base/module/module_data.xml
     # for the full list
     'category': 'Sunray',
-    'version': '0.8',
+    'version': '0.9',
 
 
     # any module necessary for this one to work correctly
@@ -26,7 +26,7 @@
     'data': [
         'security/sunray_security.xml',
         'security/ir.model.access.csv',
-        #'data/data.xml',
+        'data/data.xml',
         'views/views.xml',
         'views/stock_views.xml',
         #'views/templates.xml',
