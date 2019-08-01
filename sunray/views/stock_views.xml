@@ -51,8 +51,8 @@
         <field name="model">purchase.order</field>
         <field name="inherit_id" ref="purchase.purchase_order_form"/>
         <field name="arch" type="xml">
-        	<button name="print_quotation" position="attributes"> <!-- <attribute name="groups">purchase.group_purchase_user</attribute> --></button>
-        	<button name="action_rfq_send" position="attributes"> <!-- <attribute name="groups">purchase.group_purchase_user</attribute>  --></button>
+        	<button name="print_quotation" position="attributes"> <attribute name="groups">purchase.group_purchase_user</attribute> </button>
+        	<button name="action_rfq_send" position="attributes"> <attribute name="groups">purchase.group_purchase_user</attribute> </button>
         	<field name="name" position="before">
             	<field name= "need_override" invisible = "1"/>
             	<h3 attrs="{'invisible': [('need_override', '=', False)]}"><b>Needs Budget Override, The Budget Dept. has been notified </b></h3>
@@ -112,7 +112,7 @@
             	<field name="account_analytic_id" invisible = "1"/>
             </xpath>
             <xpath expr="//field[@name='order_line']/tree/field[@name='analytic_tag_ids']" position="replace">
-            	<field name="analytic_tag_ids" groups="purchase.group_analytic_accounting" invisible = "1" widget="many2many_tags" options="{'color_field': 'color'}"/>
+            	<field name="analytic_tag_ids" invisible = "1" widget="many2many_tags" options="{'color_field': 'color'}"/>
             </xpath>
             <field name="partner_id" position="after">
             	<field name="project_id"/>
@@ -429,7 +429,7 @@
                                     <field name="product_id" required="1" attrs="{'readonly': ['|', ('state', '=', 'done'), ('move_id', '!=', False)]}"/>
                                     <field name="move_id" invisible="1"/>
                                     <field name="picking_type_entire_packs" invisible="1"/>
-                                    <field name="product_uom_id" force_save="1" attrs="{'readonly': [('state', '!=', 'draft')]}" groups="product.group_uom"/>
+                                    <field name="product_uom_id" force_save="1" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
                                     <field name="package_id" attrs="{'readonly': [('picking_type_entire_packs', '=', True)]}" groups="stock.group_tracking_lot" domain="[('location_id', '=', location_id)]"/>
                                     <field name="location_id" attrs="{'readonly': [('picking_type_entire_packs', '=', True)]}" groups="stock.group_stock_multi_locations,stock.group_tracking_lot" domain="[('id', 'child_of', parent.location_id)]"/>
                                     <field name="location_dest_id" attrs="{'readonly': [('picking_type_entire_packs', '=', True)]}" groups="stock.group_stock_multi_locations,stock.group_tracking_lot" domain="[('id', 'child_of', parent.location_dest_id)]"/>
@@ -474,7 +474,7 @@
                                     <field name="product_uom_qty" string="Initial Demand" attrs="{'readonly': [('is_initial_demand_editable', '=', False)]}"/>
                                     <field name="reserved_availability" string="Reserved" attrs="{'column_invisible': ['|', ('parent.state','=', 'done'), ('parent.picking_type_code', '=', 'incoming')]}"/>
                                     <field name="quantity_done" string="Done" attrs="{'readonly': [('is_quantity_done_editable', '=', False)]}"/>
-                                    <field name="product_uom" attrs="{'readonly': [('state', '!=', 'draft'), ('additional', '=', False)]}" options="{'no_open': True, 'no_create': True}" string="Unit of Measure" groups="product.group_uom"/>
+                                    <field name="product_uom" attrs="{'readonly': [('state', '!=', 'draft'), ('additional', '=', False)]}" options="{'no_open': True, 'no_create': True}" string="Unit of Measure"/>
                                     <field name="price_cost" string="Cost Price"/>
                                     <field name="price_subtotal" string="Price Subtotal"/>
                                     <button name="action_show_details" string="Register lots, packs, location" type="object" icon="fa-list" attrs="{'invisible': [('show_details_visible', '=', False)]}" options='{"warn": true}'/>
