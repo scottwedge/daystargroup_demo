@@ -36,21 +36,19 @@
         	<field name="company_id" eval="False"/>
         </record>
         
-       <!-- <record model="mail.channel" id="channel_all_bom">
-            <field name="name">BOM Creation for Engineers</field>
-            <field name="public">private</field>
-            <field name="group_ids" eval="[(4, ref('base.group_user'))]"/>
-            <field name="description">BOM Creation Group for Engineers.</field>
-        </record>
-        
-        
-        
         <record id="seq_customer_code" model="ir.sequence">
         	<field name="name">Customer Code</field>
         	<field name="code">res.partner</field>
         	<field name="prefix">MA</field>
         	<field name="padding">4</field>
         	<field name="company_id" eval="False"/>
+        </record>
+        
+       <!-- <record model="mail.channel" id="channel_all_bom">
+            <field name="name">BOM Creation for Engineers</field>
+            <field name="public">private</field>
+            <field name="group_ids" eval="[(4, ref('base.group_user'))]"/>
+            <field name="description">BOM Creation Group for Engineers.</field>
         </record>
         
         <record id="seq_item_code" model="ir.sequence">

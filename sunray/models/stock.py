@@ -28,6 +28,25 @@ class Partner(models.Model):
     
     overall_vendor_rating = fields.Selection([('0', '0'),('1', '1'), ('2', '2'), ('3', '3'), ('4', '4'), ('5', '5')], string='Overall Vendor Rating', required=False)
     
+    parent_account_number = fields.Char('Parent Account Number', required=False, index=True, copy=False)
+    
+    @api.model
+    def create(self, vals):
+        if 'customer' in vals and vals['customer'] == True:
+            vals['parent_account_number'] = self.env['ir.sequence'].next_by_code('res.partner') or '/'
+        return super(Partner, self).create(vals)
+    
+    @api.multi
+    def name_get(self):
+        res = []
+ 
+        for partner in self:
+            result = partner.name
+            if partner.parent_account_number:
+                result = str(partner.name) + " " + str(partner.parent_account_number)
+            res.append((partner.id, result))
+        return res
+    
 class HrExpenseSheet(models.Model):
     _name = "hr.expense.sheet"
     _inherit = 'hr.expense.sheet'
@@ -327,6 +346,13 @@ class ProductTemplate(models.Model):
                                     mail.send()
                                 return True
         return
+
+class SaleOrderLine(models.Model):
+    _name = 'sale.order.line'
+    _description = 'Sales Order Line'
+    _inherit = ['sale.order.line']
+    
+    type = fields.Selection([('sale', 'Sale'), ('lease', 'Lease')], string='Type', required=True, default='sale')
     
 class Project(models.Model):
     _name = "project.project"
@@ -673,7 +699,7 @@ class Picking(models.Model):
     
     @api.multi
     def send_store_request_mail(self):
-        if self.picking_type_id.id == 70 and self.state in ['draft','waiting','confirmed']:
+        if self.picking_type_id.name == "Staff Store Requests" and self.state in ['draft','waiting','confirmed']:
             group_id = self.env['ir.model.data'].xmlid_to_object('stock.group_stock_manager')
             user_ids = []
             partner_ids = []

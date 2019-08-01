@@ -9,3 +9,4 @@ access_parking_list_line_emp,parking.list.line,model_parking_list_line,base.grou
 access_payment_request_emp,payment.request,model_payment_request,base.group_user,1,1,1,0 
 access_purchase_request_line_emp,purchase.request.line,model_purchase_request_line,base.group_user,1,1,1,0
 access_availability_request_line_emp,availability.request.line,model_availability_request_line,base.group_user,1,1,1,0
+access_sub_account,sub.account,model_sub_account,base.group_user,1,1,1,0 

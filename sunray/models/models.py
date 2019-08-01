@@ -3,6 +3,7 @@
 import datetime
 
 from datetime import date, timedelta
+from odoo.exceptions import UserError, AccessError, ValidationError
 from odoo import api, fields, models, _
 
 class Lead(models.Model):
@@ -43,6 +44,7 @@ class Lead(models.Model):
     def button_approve(self):
         self.write({'state': 'approve'})
         self.active = True
+        self.send_introductory_mail()
         subject = "Created Lead {} has been approved".format(self.name)
         partner_ids = []
         for partner in self.sheet_id.message_partner_ids:
@@ -66,7 +68,38 @@ class Lead(models.Model):
         if self.company_id.company_lead_approval == True:
             self.active = False
         else:
-            self.active = True
+            self.send_introductory_mail()
+    
+    @api.multi
+    def send_introductory_mail(self):
+        config = self.env['mail.template'].sudo().search([('name','=','Introductory Email Template')], limit=1)
+        mail_obj = self.env['mail.mail']
+        if config:
+            values = config.generate_email(self.id)
+            mail = mail_obj.create(values)
+            if mail:
+                mail.send()
+                subject = "Introductory message for {} has been sent to client".format(self.name)
+                partner_ids = []
+                for partner in self.sheet_id.message_partner_ids:
+                    partner_ids.append(partner.id)
+                self.sheet_id.message_post(subject=subject,body=subject,partner_ids=partner_ids)
+                
+    
+    @api.multi
+    def send_site_audit_request_mail(self):
+        config = self.env['mail.template'].sudo().search([('name','=','Site Audit Request Template')], limit=1)
+        mail_obj = self.env['mail.mail']
+        if config:
+            values = config.generate_email(self.id)
+            mail = mail_obj.create(values)
+            if mail:
+                mail.send()
+                subject = "Site audit request request {} has been sent to client".format(self.name)
+                partner_ids = []
+                for partner in self.sheet_id.message_partner_ids:
+                    partner_ids.append(partner.id)
+                self.sheet_id.message_post(subject=subject,body=subject,partner_ids=partner_ids)
     
     @api.multi
     def create_project(self):
@@ -91,7 +124,168 @@ class Lead(models.Model):
         }
         
         return res
+
+class SubAccount(models.Model):
+        
+    _name = "sub.account"
+    _description = "sub account form"
+    _order = "parent_id"
+    _inherit = ['mail.thread', 'mail.activity.mixin', 'portal.mixin']
     
+    @api.multi
+    def name_get(self):
+        res = []
+        for partner in self:
+            result = partner.name
+            if partner.child_account:
+                result = str(partner.name) + " " + str(partner.child_account)
+            res.append((partner.id, result))
+        return res
+    
+    def _default_category(self):
+        return self.env['res.partner.category'].browse(self._context.get('category_id'))
+
+    def _default_company(self):
+        return self.env['res.company']._company_default_get('res.partner')
+            
+    def _compute_company_type(self):
+        for partner in self:
+            partner.company_type = 'company' if partner.is_company else 'person'
+            
+#     def _createSub(self):
+#         partner_ids = self.search([('parent_id','=',self.parent_id.id)])
+#         number = len(partner_ids) + 1
+#         number = "SA00" + str(number)
+#         return number
+
+    name = fields.Char(index=True, track_visibility='onchange')
+    
+    parent_id = fields.Many2one('res.partner', string='Customer', domain="[('customer','=',True)]", index=True, ondelete='cascade', track_visibility='onchange')
+        
+    function = fields.Char(string='Description')
+    
+    comment = fields.Text(string='Desription')
+    
+    addinfo = fields.Text(string='Additional Information')
+    
+    child_account = fields.Char(string='Child Account Number', index=True, copy=False, default='/', track_visibility='onchange')
+    
+    website = fields.Char(help="Website of Partner or Company")
+    
+    employee = fields.Boolean(help="Check this box if this contact is an Employee.")
+    
+    fax = fields.Char(help="fax")
+    
+    create_date = fields.Date(string='Create Date', readonly=True, track_visibility='onchange')
+    
+    activation_date = fields.Date(string='Activation Date', readonly=False, track_visibility='onchange')
+    
+    term_date = fields.Date(string='Termination Date', track_visibility='onchange')
+    
+    perm_up_date = fields.Date(string='Permanent Activation Date', readonly=False, track_visibility='onchange')
+    
+    price_review_date = fields.Date(string='Price Review Date', readonly=False, track_visibility='onchange')
+    
+    contact_person = fields.Many2one('res.partner.title')
+    
+    company_name = fields.Many2many('Company Name')
+    
+    employee = fields.Boolean(help="Check this box if this contact is an Employee.")
+      
+    type = fields.Selection(
+        [('contact', 'Contact'),
+         ('invoice', 'Invoice address'),
+         ('delivery', 'Shipping address'),
+         ('other', 'Other address')], string='Address Type',
+        default='invoice',
+        help="Used to select automatically the right address according to the context in sales and purchases documents.")
+    street = fields.Char()
+    street2 = fields.Char()
+    zip = fields.Char(change_default=True)
+    city = fields.Char()
+    state_id = fields.Many2one("res.country.state", string='State', ondelete='restrict')
+    country_id = fields.Many2one('res.country', string='Country', ondelete='restrict')
+    email = fields.Char()
+    
+    phone = fields.Char()
+    mobile = fields.Char()
+    
+    company_type = fields.Selection(string='Company Type',
+        selection=[('person', 'Individual'), ('company', 'Company')],
+        compute='_compute_company_type', inverse='_write_company_type')
+    company_id = fields.Many2one('res.company', 'Company', index=True, default=_default_company)
+    
+    contact_address = fields.Char(compute='_compute_contact_address', string='Complete Address')
+    company_name = fields.Char('Company Name') 
+    
+    state = fields.Selection([
+        ('new', 'Waiting Approval'),
+        ('approve', 'Approved'),
+        ('activate', 'Activated'),
+        ('suspend', 'Suspended'),
+        ('terminate', 'Terminated'),
+        ('cancel', 'Canceled'),
+        ('reject', 'Rejected'),
+        ], string='Status', index=True, copy=False, default='new', track_visibility='onchange')
+
+    @api.model
+    def create(self, vals):
+        partner_ids = self.search([('parent_id','=',vals['parent_id'])],order="child_account desc")
+        for p in  partner_ids:
+            print(p.child_account)
+        if not partner_ids:
+            vals['child_account'] = "SA001"
+        else:
+            number = partner_ids[0].child_account.split("A",2)
+            number = int(number[1]) + 1
+            vals['child_account'] = "SA" + str(number).zfill(3)
+        return super(SubAccount, self).create(vals)
+    
+    
+    #partners = self.search([len('child_account')])
+     #       print(partners)
+      #      partners = partners + 1
+       #     label = "SA"
+        #    partners = str(label) + str(partners.child_account)
+        
+    
+    @api.multi
+    def button_new(self):
+        self.write({'state': 'new'})
+        return {}
+    
+    @api.multi
+    def button_activate(self):
+        self.write({'state': 'activate'})
+#        self.activation_date = date.today()
+        return {}
+    
+    @api.multi
+    def button_suspend(self):
+        self.write({'state': 'suspend'})
+        return {}
+    
+    @api.multi
+    def button_terminate(self):
+        self.write({'state': 'terminate'})
+        self.term_date = date.today()
+        return {}
+    
+    @api.multi
+    def button_cancel(self):
+        self.write({'state': 'cancel'})
+        return {}
+    
+    @api.multi
+    def button_approve(self):
+        self.write({'state': 'approve'})
+        return {}
+    
+    @api.multi
+    def button_reject(self):
+        self.write({'state': 'reject'})
+        return {}
+
 class HelpdeskTicket(models.Model):
     _inherit = "helpdesk.ticket"
     _description = 'Ticket'
@@ -173,6 +367,146 @@ class VendorRequest(models.Model):
         self.write({'state': 'reject'})
         return {}
 
+class HolidaysRequest(models.Model):
+    _name = "hr.leave"
+    _inherit = "hr.leave"
+    
+    @api.model
+    def create(self, vals):
+        result = super(HolidaysRequest, self).create(vals)
+        result.send_mail()
+        return result
+    
+    @api.multi
+    def send_mail(self):
+        incomplete_propation_period = self.env['hr.contract'].search([('employee_id', '=', self.employee_id.id), ('state','=','open'), ('trial_date_end','>',date.today())], limit=1)
+        print(incomplete_propation_period)
+        if incomplete_propation_period:
+            raise UserError(_("You currently can't apply for leave as your probation period isn't over"))
+        else:
+            if self.state in ['confirm']:
+                config = self.env['mail.template'].sudo().search([('name','=','Leave Approval Request Template')], limit=1)
+                mail_obj = self.env['mail.mail']
+                if config:
+                    values = config.generate_email(self.id)
+                    mail = mail_obj.create(values)
+                    if mail:
+                        mail.send()
+                        
+    @api.multi
+    def send_manager_approved_mail(self):
+        config = self.env['mail.template'].sudo().search([('name','=','Leave Manager Approval')], limit=1)
+        mail_obj = self.env['mail.mail']
+        if config:
+            values = config.generate_email(self.id)
+            mail = mail_obj.create(values)
+            if mail:
+                mail.send()
+                
+    @api.multi
+    def action_approve(self):
+        # if validation_type == 'both': this method is the first approval approval
+        # if validation_type != 'both': this method calls action_validate() below
+        if any(holiday.state != 'confirm' for holiday in self):
+            raise UserError(_('Leave request must be confirmed ("To Approve") in order to approve it.'))
+
+        current_employee = self.env['hr.employee'].search([('user_id', '=', self.env.uid)], limit=1)
+        self.filtered(lambda hol: hol.validation_type == 'both').write({'state': 'validate1', 'first_approver_id': current_employee.id}).send_manager_approved_mail()
+        self.filtered(lambda hol: not hol.validation_type == 'both').action_validate()
+        if not self.env.context.get('leave_fast_create'):
+            self.activity_update()
+        return True
+    
+    @api.multi
+    def send_hr_approved_mail(self):
+        config = self.env['mail.template'].sudo().search([('name','=','Leave HR Approval')], limit=1)
+        mail_obj = self.env['mail.mail']
+        if config:
+            values = config.generate_email(self.id)
+            mail = mail_obj.create(values)
+            if mail:
+                mail.send()
+    
+    
+    @api.multi
+    def action_validate(self):
+        current_employee = self.env['hr.employee'].search([('user_id', '=', self.env.uid)], limit=1)
+        if any(holiday.state not in ['confirm', 'validate1'] for holiday in self):
+            raise UserError(_('Leave request must be confirmed in order to approve it.'))
+
+        self.write({'state': 'validate'})
+        self.send_hr_approved_mail()
+        self.filtered(lambda holiday: holiday.validation_type == 'both').write({'second_approver_id': current_employee.id})
+        self.filtered(lambda holiday: holiday.validation_type != 'both').write({'first_approver_id': current_employee.id})
+
+        for holiday in self.filtered(lambda holiday: holiday.holiday_type != 'employee'):
+            if holiday.holiday_type == 'category':
+                employees = holiday.category_id.employee_ids
+            elif holiday.holiday_type == 'company':
+                employees = self.env['hr.employee'].search([('company_id', '=', holiday.mode_company_id.id)])
+            else:
+                employees = holiday.department_id.member_ids
+
+            if self.env['hr.leave'].search_count([('date_from', '<=', holiday.date_to), ('date_to', '>', holiday.date_from),
+                               ('state', 'not in', ['cancel', 'refuse']), ('holiday_type', '=', 'employee'),
+                               ('employee_id', 'in', employees.ids)]):
+                raise ValidationError(_('You can not have 2 leaves that overlaps on the same day.'))
+
+            values = [holiday._prepare_holiday_values(employee) for employee in employees]
+            leaves = self.env['hr.leave'].with_context(
+                tracking_disable=True,
+                mail_activity_automation_skip=True,
+                leave_fast_create=True,
+            ).create(values)
+            leaves.action_approve()
+            # FIXME RLi: This does not make sense, only the parent should be in validation_type both
+            if leaves and leaves[0].validation_type == 'both':
+                leaves.action_validate()
+
+        employee_requests = self.filtered(lambda hol: hol.holiday_type == 'employee')
+        employee_requests._validate_leave_request()
+        if not self.env.context.get('leave_fast_create'):
+            employee_requests.activity_update()
+        return True
+    
+    @api.multi
+    def send_leave_notification_mail(self):
+
+        employees = self.env['hr.leave'].search([])
+        
+        current_dates = False
+        
+        for self in employees:
+            if self.date_from:
+                
+                current_dates = datetime.datetime.strptime(self.date_from, "%Y-%m-%d")
+                current_datesz = current_dates - relativedelta(days=3)
+                
+                date_start_day = current_datesz.day
+                date_start_month = current_datesz.month
+                date_start_year = current_datesz.year
+                
+                today = datetime.datetime.now().strftime("%Y-%m-%d")
+                
+                test_today = datetime.datetime.today().strptime(today, "%Y-%m-%d")
+                date_start_day_today = test_today.day
+                date_start_month_today = test_today.month
+                date_start_year_today = test_today.year
+                
+                
+                if date_start_month == date_start_month_today:
+                    if date_start_day == date_start_day_today:
+                        if date_start_year == date_start_year_today:
+                            config = self.env['mail.template'].sudo().search([('name','=','Leave Reminder')], limit=1)
+                            mail_obj = self.env['mail.mail']
+                            if config:
+                                values = config.generate_email(self.id)
+                                mail = mail_obj.create(values)
+                                if mail:
+                                    mail.send()
+                                return True
+        return
+'''
 class Holidays(models.Model):
     _name = "hr.leave"
     _inherit = "hr.leave"
@@ -212,6 +546,13 @@ class Holidays(models.Model):
                 if mail:
                     mail.send()
                     
+    #add followers for odoo 12          
+    @api.multi
+    def add_follower(self, employee_id):
+        employee = self.env['hr.employee'].browse(employee_id)
+        if employee.user_id:
+            self.message_subscribe(partner_ids=employee.user_id.partner_id.ids)          
+          
     @api.multi
     def send_manager_approved_mail(self):
         config = self.env['mail.template'].sudo().search([('name','=','Leave Manager Approval')], limit=1)
@@ -345,23 +686,37 @@ class Holidays(models.Model):
                                 return True
         return
 
-
+'''
 class EmployeeContract(models.Model):
     _name = 'hr.contract'
     _inherit = 'hr.contract'
     
+    trial_date_end_bool = fields.Boolean(string="Update Probation", store=True)
+    
     @api.onchange('trial_date_end')
-    def send_hr_notification(self):
-        group_id = self.env['ir.model.data'].xmlid_to_object('sunray.group_hr_leave_manager')
-        user_ids = []
-        partner_ids = []
-        for user in group_id.users:
-            user_ids.append(user.id)
-            partner_ids.append(user.partner_id.id)
-        self.message_subscribe_users(user_ids=user_ids)
-        subject = "Probation period for {} contract had been updated and is Hence {}".format(self.name, self.trial_date_end)
-        self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
-        return False
+    def send_notification(self):
+        self.trial_date_end_bool = True
+    
+    @api.multi
+    def write(self, vals):
+        result = super(EmployeeContract, self).write(vals)
+        self.send_notification_message()
+        return result
+    
+    @api.depends('trial_date_end_bool')
+    def send_notification_message(self):
+        if self.trial_date_end_bool == True:
+            group_id = self.env['ir.model.data'].xmlid_to_object('sunray.group_hr_line_manager')
+            user_ids = []
+            partner_ids = []
+            for user in group_id.users:
+                user_ids.append(user.id)
+                partner_ids.append(user.partner_id.id)
+            self.message_subscribe(partner_ids=partner_ids)
+            subject = "Probation period for {}'s contract had been updated and is Hence {}".format(self.name, self.trial_date_end)
+            self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
+            self.trial_date_end_bool = False
+            return False
     
 class AvailabilityRequest(models.Model):
     _name = "availability.request"
