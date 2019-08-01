@@ -277,6 +277,9 @@
 				  	<field name="crm_lead_id"/>
 				</field>
 				<field name="user_id" position="after">
+					<field name="lead_technician_id"/>
+				  	<field name="quality_assurance_id"/>
+				  	<field name="project_engineers_id" widget="many2many_tags"/>
 				  	<field name="account_id"/>
 				  	<field name="account_analytic_id"/>
 				</field>

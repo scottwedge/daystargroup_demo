@@ -21,6 +21,16 @@ class Partner(models.Model):
     _name = 'res.partner'
     _inherit = 'res.partner'
     
+    type = fields.Selection(
+        [('contact', 'Contact'),
+         ('invoice', 'Invoice address'),
+         ('delivery', 'Shipping address'),
+         ('other', 'Other address'),
+         ("private", "Sub Account"),
+        ], string='Address Type',
+        default='contact',
+        help="Used by Sales and Purchase Apps to select the relevant address depending on the context.")
+    
     tax_compliance = fields.Selection([('1', '1'), ('2', '2'), ('3', '3'), ('4', '4'), ('5', '5')], string='Tax compliance', required=False)
     due_diligence_form = fields.Selection([('1', '1'), ('2', '2'), ('3', '3'), ('4', '4'), ('5', '5')], string='Due Diligence Form', required=False)
     cac = fields.Selection([('1', '1'), ('2', '2'), ('3', '3'), ('4', '4'), ('5', '5')], string='CAC', required=False)
@@ -28,7 +38,7 @@ class Partner(models.Model):
     
     overall_vendor_rating = fields.Selection([('0', '0'),('1', '1'), ('2', '2'), ('3', '3'), ('4', '4'), ('5', '5')], string='Overall Vendor Rating', required=False)
     
-    parent_account_number = fields.Char('Parent Account Number', required=False, index=True, copy=False)
+    parent_account_number = fields.Char(string='Parent Account Number', required=False, index=True, copy=False, store=True)
     
     @api.model
     def create(self, vals):
@@ -377,6 +387,11 @@ class Project(models.Model):
     monthly_maintenance_schedule = fields.Date(string="Monthly Maintenance Schedule", track_visibility="onchange")
     client_site_visit = fields.Date(string="Client Site Visit", track_visibility="onchange")
     internal_external_monthly = fields.Date(string="Internal External Monthly", track_visibility="onchange")
+    
+    lead_technician_id = fields.Many2one(comodel_name='res.users', string='Lead Tecnician')
+    quality_assurance_id = fields.Many2one(comodel_name='res.users', string='Quality Assurance Engineer')
+    
+    project_engineers_id = fields.Many2many(comodel_name='res.users', string='Project Engineers', help="list of engineeers for this project")
     
     @api.multi
     def _checklist_count(self):
