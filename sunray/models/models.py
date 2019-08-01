@@ -345,7 +345,12 @@ class Holidays(models.Model):
                                 return True
         return
 
-
+class MrpProduction(models.Model):
+    _name = 'mrp.production'
+    inherit = 'mrp.production'
+    
+    
+    
 class EmployeeContract(models.Model):
     _name = 'hr.contract'
     _inherit = 'hr.contract'
@@ -525,6 +530,8 @@ class AvailabilityRequestLine(models.Model):
     product_id = fields.Many2one('product.product', 'Product')
     product_oum_qty = fields.Float(string="Quantity")
     price_cost  = fields.Float(string="Cost", related="product_id.standard_price")
+    
+    
     
 class Expreliminary(models.Model):
     _name = 'expense.report'
