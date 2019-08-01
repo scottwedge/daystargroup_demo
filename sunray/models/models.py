@@ -874,6 +874,7 @@ class AvailabilityRequest(models.Model):
 
 class AvailabilityRequestLine(models.Model):
     _name = "availability.request.line"
+    _description = 'Availability Request Line'
     
     availability_id = fields.Many2one('availability.request', 'Availability Demand Form')
     
@@ -883,13 +884,14 @@ class AvailabilityRequestLine(models.Model):
     
 class Expreliminary(models.Model):
     _name = 'expense.report'
+    _description = 'Expense Report'
    
     def _default_employee(self): # this method is to search the hr.employee and return the user id of the person clicking the form atm
         self.env['hr.employee'].search([('user_id','=',self.env.uid)])
         return self.env['hr.employee'].search([('user_id','=',self.env.uid)])
     
     employee_id = fields.Many2one(comodel_name='hr.employee', string='Employee', default=_default_employee) #used as a signature to pull the currently employee    
-    employee_sign_date = fields.Date(string='Date', default=date.today())# used as a signature date. 
+    employee_sign_date = fields.Date(string='Employee Sign Date', default=date.today())# used as a signature date. 
        
 
     name = fields.Char(string='Name')
@@ -915,8 +917,9 @@ class Expreliminary(models.Model):
 
 class businessexpensereport(models.Model):
     _name = 'expense.report.line'
+    _description = 'Expense Report Line'
 
-    expense_id = fields.Many2one(comodel_name='expense.report')
+    expense_id = fields.Many2one(comodel_name='expense.report', string="Expense id")
 
     date = fields.Date(string='Date')
 
@@ -941,6 +944,7 @@ class businessexpensereport(models.Model):
     
 class parkpreliminary(models.Model):
     _name = 'parking.list'
+    _description = 'Parking List'
    
     def _default_employee(self): # this method is to search the hr.employee and return the user id of the person clicking the form atm
         self.env['hr.employee'].search([('user_id','=',self.env.uid)])
@@ -952,20 +956,21 @@ class parkpreliminary(models.Model):
     requester = fields.Char(string='Requester')
 
     reciever_id = fields.Many2one(comodel_name='hr.employee', string='Received By', default=_default_employee)
-    receiver_sign_date = fields.Date(string='Date', default=date.today())
+    receiver_sign_date = fields.Date(string='Receivers Date', default=date.today())
 
     line_ids = fields.One2many(comodel_name='parking.list.line',inverse_name='parking_id', string='Parking ID')
 
-    employee_id = fields.Many2one(comodel_name='hr.employee', string='Name', default=_default_employee) #used as a signature to pull the currently employee    
-    employee_sign_date = fields.Date(string='Date', default=date.today())# used as a signature date. 
+    employee_id = fields.Many2one(comodel_name='hr.employee', string='Employee Name', default=_default_employee) #used as a signature to pull the currently employee    
+    employee_sign_date = fields.Date(string='Employees Date', default=date.today())# used as a signature date. 
 
-    security_id = fields.Many2one(comodel_name='hr.employee', string='Name', default=_default_employee) #used as a signature to pull the currently employee    
-    security_sign_date = fields.Date(string='Date', default=date.today())# used as a signature date. 
+    security_id = fields.Many2one(comodel_name='hr.employee', string='Security Name', default=_default_employee) #used as a signature to pull the currently employee    
+    security_sign_date = fields.Date(string='Securitys Date', default=date.today())# used as a signature date. 
 
 
 
 class parkinglistreport(models.Model):
     _name = 'parking.list.line'
+    _description = 'Parking List Line'
 
     parking_id = fields.Many2one(comodel_name='hr.employee')
 
@@ -978,7 +983,8 @@ class parkinglistreport(models.Model):
     
 class paypreliminary(models.Model):
     _name = 'payment.request'
-
+    _description = 'Payment Request'
+    
     pr_no = fields.Char(string='PR_ No.')
     issue_date = fields.Date(string='Date of Issue')
     request_company = fields.Char(string='Requesting Company')
@@ -1005,6 +1011,7 @@ class paypreliminary(models.Model):
 
 class purchaserequesttable(models.Model):
     _name = 'purchase.request.line'
+    _description = 'Purchase Request Line'
 
     purchase_id = fields.Many2one(comodel_name='payment.request')
 
