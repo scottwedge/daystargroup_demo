@@ -381,7 +381,7 @@ class Project(models.Model):
     
     parent_project_id = fields.Many2one(comodel_name='project.project', string='Parent Project')
     
-    account_analytic_id = fields.Many2one('account.analytic.account', string='Analytic Account', required=False, default=_default_analytic, track_visibility="always")
+    account_analytic_id = fields.Many2one('account.analytic.account', string='Analytic Acount', required=False, default=_default_analytic, track_visibility="always")
     account_id = fields.Many2one('account.account', string='Account',  domain = [('user_type_id', 'in', [5,8,17,16])])
     
     monthly_maintenance_schedule = fields.Date(string="Monthly Maintenance Schedule", track_visibility="onchange")
