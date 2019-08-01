@@ -16,7 +16,7 @@
     # Check https://github.com/odoo/odoo/blob/master/odoo/addons/base/module/module_data.xml
     # for the full list
     'category': 'Sunray',
-    'version': '0.10',
+    'version': '0.11',
 
 
     # any module necessary for this one to work correctly
