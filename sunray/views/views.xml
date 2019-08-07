@@ -217,12 +217,12 @@
                         </notebook>
 
                        
-                        <group string ='Ware House Sign out' class="oe_left" col='2' colspan="2">
-                            <field name="employee_id"/>
+                        <group string ='Ware House Sign out' class="oe_left" col='2' colspan="4">
+                            <field name="employee_id" />
                             <field name="employee_sign_date"/>
                         </group> 
 
-                        <group string ='Security Check' class="oe_right" col='2' colspan="2">
+                        <group string ='Security Check' class="oe_right" col='2' colspan="4">
                             <field name="security_id"/>
                             <field name="security_sign_date"/>
                         </group> 
@@ -282,10 +282,11 @@
 	        <form string="Partners">
 	   	<header>
 			<button name="button_submit" states="draft" string="Submit" type="object" />
-			<button name="button_approve" states="submit" string="Approve" type="object" groups="account.group_account_invoice"/>
-			<button name="button_reject" states="submit" string="Reject" type="object" groups="account.group_account_invoice"/>
+			<button name="button_validate" states="submit" string="Approve" type="object" groups="sunray.group_one_vendor_approval"/>
+			<button name="button_approve" states="validate" string="Confirm" type="object" groups="sunray.group_two_vendor_approval"/>
+			<button name="button_reject" states="submit,validate" string="Reject" type="object" groups="sunray.group_one_vendor_approval,sunray.group_one_vendor_approval"/>
 			<button name="button_reset" states="reject" string="Set to Draft" type="object" />
-			<field name="state" widget="statusbar" statusbar_visible="draft,submit,approve" readonly="1"/>
+			<field name="state" widget="statusbar" statusbar_visible="draft,submit,validate,approve" readonly="1"/>
 	    </header>
 	        <sheet>
 	            <field name="image" widget='image' class="oe_avatar" options='{"preview_image": "image_medium", "size": [90, 90]}'/>
@@ -338,6 +339,8 @@
 	                    <field name="mobile" widget="phone"/>
 	                    <field name="email" widget="email" context="{'gravatar_image': True}"/>
 	                    <field name="company_id" groups="base.group_system"/>
+	                    <field name="employee_id" groups="base.group_system"/>
+	                    <field name="vendor_registration" groups="base.group_system"/>
 	                    <field name="customer" invisible="1"/>
 	                    <field name="supplier" invisible="1"/>
 	                </group>

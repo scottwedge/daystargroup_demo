@@ -125,6 +125,13 @@ class Lead(models.Model):
         
         return res
 
+class Stage(models.Model):
+    _name = "crm.stage"
+    _inherit = "crm.stage"
+    
+    company_id = fields.Many2one('res.company', string='Company', store=True, readonly=True,
+        default=lambda self: self.env.user.company_id, track_visibility='onchange')
+    
 class SubAccount(models.Model):
         
     _name = "sub.account"
@@ -314,13 +321,28 @@ class VendorRequest(models.Model):
     _order = "name"
     _inherit = ['res.partner']
     
+    def _default_employee(self): # this method is to search the hr.employee and return the user id of the person clicking the form atm
+        self.env['hr.employee'].search([('user_id','=',self.env.uid)])
+        return self.env['hr.employee'].search([('user_id','=',self.env.uid)])
+    
+    @api.multi
+    def _check_line_manager(self):
+        current_employee = self.env['hr.employee'].search([('user_id', '=', self.env.uid)], limit=1)
+        if current_employee == self.employee_id:
+            raise UserError(_('You are not allowed to approve your own request.'))
+    
     state = fields.Selection([
         ('draft', 'Draft'),
         ('submit', 'Submitted'),
+        ('validate', 'Second Approval'),
         ('approve', 'Approved'),
         ('reject', 'Rejected'),
         ], string='Status', readonly=True, index=True, copy=False, default='draft', track_visibility='onchange')
-
+    
+    employee_id = fields.Many2one(comodel_name='hr.employee', string='Requesting Employee', default=_default_employee)
+    
+    vendor_registration = fields.Boolean ('Vendor fully Registered', track_visibility="onchange", readonly=True)
+    
     @api.depends('is_company', 'parent_id.commercial_partner_id')
     def _compute_commercial_partner(self):
         return {}
@@ -334,11 +356,36 @@ class VendorRequest(models.Model):
     @api.multi
     def button_submit(self):
         self.write({'state': 'submit'})
+        group_id = self.env['ir.model.data'].xmlid_to_object('sunray.group_one_vendor_approval')
+        user_ids = []
+        partner_ids = []
+        for user in group_id.users:
+            user_ids.append(user.id)
+            partner_ids.append(user.partner_id.id)
+        self.message_subscribe(partner_ids=partner_ids)
+        subject = "This Vendor {} needs first approval".format(self.name)
+        self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
+        return {}
+    
+    @api.multi
+    def button_validate(self):
+        self._check_line_manager()
+        self.write({'state': 'validate'})
+        group_id = self.env['ir.model.data'].xmlid_to_object('sunray.group_two_vendor_approval')
+        user_ids = []
+        partner_ids = []
+        for user in group_id.users:
+            user_ids.append(user.id)
+            partner_ids.append(user.partner_id.id)
+        self.message_subscribe(partner_ids=partner_ids)
+        subject = "This Vendor {} needs second approval".format(self.name)
+        self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
         return {}
     
     @api.multi
     def button_approve(self):
         self.write({'state': 'approve'})
+        self.vendor_registration = True
         vals = {
             'name' : self.name,
             'company_type' : self.company_type,
@@ -357,7 +404,8 @@ class VendorRequest(models.Model):
             'email' : self.email,
             'customer': self.customer,
             'supplier' : self.supplier,
-            'company' : self.company_id.id
+            'company' : self.company_id.id,
+            'vendor_registration' : self.vendor_registration
         }
         self.env['res.partner'].create(vals)
         return {}
@@ -376,6 +424,12 @@ class HolidaysRequest(models.Model):
         result = super(HolidaysRequest, self).create(vals)
         result.send_mail()
         return result
+    
+    @api.multi
+    def _check_line_manager(self):
+        current_employee = self.env['hr.employee'].search([('user_id', '=', self.env.uid)], limit=1)
+        if current_employee == self.employee_id:
+            raise UserError(_('Only your line manager can approve your leave request.'))
     
     @api.multi
     def send_mail(self):
@@ -409,7 +463,9 @@ class HolidaysRequest(models.Model):
         # if validation_type != 'both': this method calls action_validate() below
         if any(holiday.state != 'confirm' for holiday in self):
             raise UserError(_('Leave request must be confirmed ("To Approve") in order to approve it.'))
-
+        
+        self._check_line_manager()
+        
         current_employee = self.env['hr.employee'].search([('user_id', '=', self.env.uid)], limit=1)
         self.filtered(lambda hol: hol.validation_type == 'both').write({'state': 'validate1', 'first_approver_id': current_employee.id}).send_manager_approved_mail()
         self.filtered(lambda hol: not hol.validation_type == 'both').action_validate()

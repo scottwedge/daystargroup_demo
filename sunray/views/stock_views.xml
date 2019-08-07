@@ -117,12 +117,14 @@
             <field name="partner_id" position="after">
             	<field name="project_id"/>
             	<field name="employee_id" groups="sunray.group_hr_line_manager"/>
-            	<field name="approval_date"/>
+            	<field name="department_name" invisible="0"/>
+            	<field name="request_date"/>
+            	
             	<field name="manager_approval"/>
+            	<field name="approval_date"/>
             </field>
             <field name="company_id" position="after">
             	<field name="client_id" domain="[('customer','=',True)]" required="0"/>
-            	<field name="department_name" invisible="1"/>
             </field>
             <field name="incoterm_id" position="after">
             	<field name="stock_source"/>
@@ -236,6 +238,7 @@
 	        <field name="inherit_id" ref="base.view_partner_form" />
 	        <field name="arch" type="xml">
 	           	<field name="vat" position="after">
+	           		<field name="vendor_registration" attrs="{'invisible': [('supplier', '!=', True)]}" />
 					<field name="tax_compliance" attrs="{'invisible': [('supplier', '!=', True)]}" />
 				  	<field name="due_diligence_form" attrs="{'invisible': [('supplier', '!=', True)]}" />
 				  	<field name="cac" attrs="{'invisible': [('supplier', '!=', True)]}" />

@@ -2,6 +2,7 @@
 import datetime
 
 from datetime import date, timedelta
+from dateutil.relativedelta import relativedelta
 from odoo.tools import email_split, float_is_zero
 from ast import literal_eval
 from odoo.exceptions import UserError, ValidationError
@@ -39,6 +40,8 @@ class Partner(models.Model):
     overall_vendor_rating = fields.Selection([('0', '0'),('1', '1'), ('2', '2'), ('3', '3'), ('4', '4'), ('5', '5')], string='Overall Vendor Rating', required=False)
     
     parent_account_number = fields.Char(string='Parent Account Number', required=False, index=True, copy=False, store=True)
+    
+    vendor_registration = fields.Boolean ('Vendor fully Registered', track_visibility="onchange", readonly=True)
     
     @api.model
     def create(self, vals):
@@ -97,7 +100,122 @@ class HrExpenseSheet(models.Model):
             self.write({'state': 'done'})
         self.activity_update()
         return res
+
+class BudgetDept(models.Model):
+    _name = 'account.budget.post'
+    _inherit = 'account.budget.post'
     
+    department_id = fields.Many2one(
+        comodel_name="hr.department",
+        string='Department')
+
+class CrossoveredBudgetLines(models.Model):
+    _name = "crossovered.budget.lines"
+    _inherit = ['crossovered.budget.lines']
+    _order = "general_budget_id"
+    
+    allowed_amount = fields.Float(compute='_compute_allowed_amount', string='Allowed Amount', digits=0, store=False)
+    commitments = fields.Float(compute='_compute_commitments', string='Commitments', digits=0, store=False)
+    dept_id = fields.Many2one('hr.department', 'Department',related='general_budget_id.department_id', store=True, readonly=False, copy=False)
+    
+    practical_amount = fields.Float(compute='_compute_practical_amount', string='Practical Amount', digits=0, store=False)
+    theoritical_amount = fields.Float(compute='_compute_theoritical_amount', string='Theoretical Amount', digits=0, store=False)
+    percentage = fields.Float(compute='_compute_percentage', string='Achievement', store=False)
+    '''
+    dept_id = fields.Many2one(
+        comodel_name='account.budget.post')
+    department = fields.Many2one(
+        comodel_name='hr.department',
+        related = 'dept_id.department_id',
+        string='Department')
+    '''
+    @api.multi
+    def _compute_theoritical_amount(self):
+        today = fields.Datetime.now()
+        for line in self:
+            # Used for the report
+
+            if self.env.context.get('wizard_date_from') and self.env.context.get('wizard_date_to'):
+                date_from = fields.Datetime.from_string(self.env.context.get('wizard_date_from'))
+                date_to = fields.Datetime.from_string(self.env.context.get('wizard_date_to'))
+                if date_from < fields.Datetime.from_string(line.date_from):
+                    date_from = fields.Datetime.from_string(line.date_from)
+                elif date_from > fields.Datetime.from_string(line.date_to):
+                    date_from = False
+
+                if date_to > fields.Datetime.from_string(line.date_to):
+                    date_to = fields.Datetime.from_string(line.date_to)
+                elif date_to < fields.Datetime.from_string(line.date_from):
+                    date_to = False
+
+                theo_amt = 0.00
+                if date_from and date_to:
+                    line_timedelta = fields.Datetime.from_string(line.date_to) - fields.Datetime.from_string(line.date_from)
+                    elapsed_timedelta = date_to - date_from
+                    if elapsed_timedelta.days > 0:
+                        theo_amt = (elapsed_timedelta.total_seconds() / line_timedelta.total_seconds()) * line.planned_amount
+            else:
+                if line.paid_date:
+                    if fields.Datetime.from_string(line.date_to) <= fields.Datetime.from_string(line.paid_date):
+                        theo_amt = 0.00
+                    else:
+                        theo_amt = line.planned_amount
+                else:
+                    line_timedelta = fields.Datetime.from_string(line.date_to) - fields.Datetime.from_string(line.date_from)
+                    elapsed_timedelta = fields.Datetime.from_string(today) - (fields.Datetime.from_string(line.date_from))
+
+                    if elapsed_timedelta.days < 0:
+                        # If the budget line has not started yet, theoretical amount should be zero
+                        theo_amt = 0.00
+                    
+                    elif line_timedelta.days > 0 and fields.Datetime.from_string(today) < fields.Datetime.from_string(line.date_to):
+                        month_dif =int(str(fields.Datetime.from_string(today))[5:7]) - int(str(line.date_from)[5:7]) + 1
+#                         interval = int(str(line.date_to)[5:7]) - int(str(line.date_from)[5:7]) + 1
+                        interval = 12
+                        theo_amt =  (line.planned_amount/interval) * month_dif
+                    else:
+                        theo_amt = line.planned_amount
+
+            line.theoritical_amount = theo_amt
+    
+    @api.multi
+    def _compute_allowed_amount(self):
+        for line in self:
+            line.allowed_amount = line.theoritical_amount + float((line.practical_amount or 0.0)) + float((line.commitments or 0.0))
+    
+    
+    @api.multi
+    def _compute_commitments(self):
+        for line in self:
+            result = 0.0
+            acc_ids = line.general_budget_id.account_ids.ids
+            date_to = self.env.context.get('wizard_date_to') or line.date_to
+            date_from = self.env.context.get('wizard_date_from') or line.date_from
+            if line.analytic_account_id.id:
+                self.env.cr.execute("""
+                    SELECT sum(price_total) 
+                    from purchase_order_line 
+                    WHERE account_analytic_id=%s
+                    AND account_id=ANY(%s)
+                    AND order_id in (SELECT id FROM purchase_order WHERE state in ('done','purchase') 
+                    and invoice_status != 'invoiced'
+                    and date_order between to_date(%s,'yyyy-mm-dd') AND to_date(%s,'yyyy-mm-dd'))""",
+                        (line.analytic_account_id.id, acc_ids, date_from, date_to,))
+                result = self.env.cr.fetchone()[0] or 0.0
+                
+                self.env.cr.execute("""
+                    SELECT sum(total_amount) 
+                    from hr_expense 
+                    WHERE analytic_account_id=%s
+                    AND account_id=ANY(%s)
+                    AND sheet_id in (SELECT id FROM hr_expense_sheet WHERE state = 'approve') 
+                    and date between to_date(%s,'yyyy-mm-dd') AND to_date(%s,'yyyy-mm-dd')""",
+                        (line.analytic_account_id.id, acc_ids, date_from, date_to,))
+                result2 = self.env.cr.fetchone()[0] or 0.0
+                
+            line.commitments = -(result+result2)
+
+
 class PurchaseOrder(models.Model):
     _name = "purchase.order"
     _inherit = ['purchase.order']
@@ -106,6 +224,17 @@ class PurchaseOrder(models.Model):
     #def _onchange_partner_id(self):
     #    self.partner_id = self.project_id.partner_id
     #    return {}
+    
+    @api.multi
+    def _check_line_manager(self):
+        current_employee = self.env['hr.employee'].search([('user_id', '=', self.env.uid)], limit=1)
+        if current_employee == self.employee_id:
+            raise UserError(_('You are not allowed to approve your own request.'))
+        
+    @api.multi
+    def _check_vendor_registration(self):
+        if self.partner_id.vendor_registration == False:
+            raise UserError(_('Cant Confirm purchase order for an Unknown Vendor -- Request Vendor Registration.'))
     
     def _default_employee(self):
         self.env['hr.employee'].search([('user_id','=',self.env.uid)])
@@ -120,11 +249,21 @@ class PurchaseOrder(models.Model):
                 else:
                     self.need_override = False
     
-    need_override = fields.Boolean ('Need Budget Override', compute= "_check_override", track_visibility="onchange")
+    need_override = fields.Boolean ('Need Budget Override', compute= "_check_override", track_visibility="onchange", copy=False)
+    
     employee_id = fields.Many2one('hr.employee', 'Employee',
         states={'done': [('readonly', True)], 'cancel': [('readonly', True)]}, default=_default_employee)
+    request_date = fields.Date(string='Request Date', readonly=True, track_visibility='onchange')
+    department_name = fields.Char(string="Employee Department", related="employee_id.department_id.name", readonly=True)    
+    
     approval_date = fields.Date(string='Manager Approval Date', readonly=True, track_visibility='onchange')
     manager_approval = fields.Many2one('res.users','Manager Approval Name', readonly=True, track_visibility='onchange')
+    manager_position = fields.Char('Manager Position', readonly=True, track_visibility='onchange')
+    
+    po_approval_date = fields.Date(string='Confirmation Date', readonly=True, track_visibility='onchange')
+    po_manager_approval = fields.Many2one('res.users','Manager Confirmation Name', readonly=True, track_visibility='onchange')
+    po_manager_position = fields.Char('Manager Confirmation Position', readonly=True, track_visibility='onchange')
+    
     client_id = fields.Many2one('res.partner','Client', track_visibility='onchange')
     
     project_id = fields.Many2one(comodel_name='project.project', string='Project')
@@ -139,7 +278,6 @@ class PurchaseOrder(models.Model):
         ('cancel', 'Cancelled')
         ], string='Status', readonly=True, index=True, copy=False, default='draft', track_visibility='onchange')
     
-    department_name = fields.Char(string="Department", related="employee_id.department_id.name", readonly=True)    
     stock_source = fields.Char(string='Source document')
     store_request_id = fields.Many2one('stock.picking','Store Request', readonly=True, track_visibility='onchange')
     
@@ -163,6 +301,7 @@ class PurchaseOrder(models.Model):
     @api.multi
     def button_submit(self):
         self.write({'state': 'submit'})
+        self.request_date = date.today()
         return {}
 
     @api.multi
@@ -203,6 +342,7 @@ class PurchaseOrder(models.Model):
         for order in self:
             if order.state not in ['draft','submit', 'sent']:
                 continue
+            self._check_line_manager()
             if self._check_budget() == False and self.need_override:
                 return {}
             self.approval_date = date.today()
@@ -217,6 +357,12 @@ class PurchaseOrder(models.Model):
             else:
                 order.write({'state': 'to approve'})
         return True
+    
+    @api.multi
+    def button_approve(self):
+        res = super(PurchaseOrder, self).button_approve()
+        self._check_vendor_registration()
+        return res
     
     #NOT TO BE USED YET AND DO NOT DELETE THIS 
     """@api.multi
@@ -233,7 +379,8 @@ class PurchaseOrder(models.Model):
         self.mapped('order_line')
         self.write({'state': 'draft'})
         return {}
-
+    
+    '''
     @api.multi
     def copy(self, default=None):
         new_po = super(PurchaseOrder, self).copy(default=default)
@@ -245,7 +392,7 @@ class PurchaseOrder(models.Model):
             line.write({'need_override': False})
             line.write({'override_budget': False})
         return new_po
-    
+    '''
     
 class PurchaseOrderLine(models.Model):
     _name = "purchase.order.line"
@@ -264,8 +411,8 @@ class PurchaseOrderLine(models.Model):
     
     account_analytic_id = fields.Many2one('account.analytic.account', string='Analytic Account', required=False, default=_default_analytic, track_visibility="always")
     account_id = fields.Many2one('account.account', string='Account',  domain = [('user_type_id', 'in', [5,8,17,16])])
-    need_override = fields.Boolean ('Need Budget Override', track_visibility="onchange")
-    override_budget = fields.Boolean ('Override Budget', track_visibility="onchange")
+    need_override = fields.Boolean ('Need Budget Override', track_visibility="onchange", copy=False)
+    override_budget = fields.Boolean ('Override Budget', track_visibility="onchange", copy=False)
     
     @api.multi
     def action_override_budget(self):
