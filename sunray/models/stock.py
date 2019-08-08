@@ -1231,6 +1231,9 @@ class StockMove(models.Model):
     def _default_cost(self):
         return self.product_id.standard_price
     
+    def _default_analytic(self):
+        return self.env['account.analytic.account'].search([('name','=','Sunray')])
+    
     @api.multi
     @api.onchange('product_id')
     def product_change(self):
@@ -1285,6 +1288,7 @@ class StockMove(models.Model):
 #         return acc_dest
         
     
+    account_analytic_id = fields.Many2one('account.analytic.account', string='Analytic Acount', required=False, default=_default_analytic, track_visibility="always")
     account_id = fields.Many2one('account.account', string='Account', index=True, ondelete='cascade')
     
     price_cost = fields.Float(string="Cost", default=lambda self: self.product_id.standard_price)

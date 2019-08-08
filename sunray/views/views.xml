@@ -11,6 +11,7 @@
             </xpath>
             <xpath expr="//button[@name='action_set_won_rainbowman']" position="after">
                 <button name="send_site_audit_request_mail" string="Send Site Audit Request" type="object" class="btn-primary"/>
+                <button name="create_manufacturing_order" string="Create System Design" type="object" class="btn-primary"/>
             </xpath>
 			<field name="tag_ids" position="after">
 				<field name="size"/>

@@ -124,6 +124,47 @@ class Lead(models.Model):
         }
         
         return res
+    
+    @api.multi
+    def create_manufacturing_order(self):
+        """
+        Method to open create purchase agreement form
+        """
+
+        partner_id = self.partner_id
+        #client_id = self.client_id
+        #store_request_id = self.id
+        #sub_account_id = self.sub_account_id
+        #product_id = self.move_lines.product_id
+             
+        view_ref = self.env['ir.model.data'].get_object_reference('mrp', 'mrp_production_form_view')
+        view_id = view_ref[1] if view_ref else False
+        
+        #purchase_line_obj = self.env['purchase.order.line']
+        '''for subscription in self:
+            order_lines = []
+            for line in subscription.move_lines:
+                order_lines.append((0, 0, {
+                    'product_uom_id': line.product_id.uom_id.id,
+                    'product_id': line.product_id.id,
+                    'account_analytic_id': 1,
+                    'product_qty': line.product_uom_qty,
+                    'schedule_date': date.today(),
+                    'price_unit': line.product_id.standard_price,
+                }))
+        ''' 
+        res = {
+            'type': 'ir.actions.act_window',
+            'name': ('Manufacturing Order'),
+            'res_model': 'mrp.production',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'view_id': view_id,
+            'target': 'current',
+            'context': {'default_origin': self.name}
+        }
+        
+        return res
 
 class Stage(models.Model):
     _name = "crm.stage"

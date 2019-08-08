@@ -409,6 +409,10 @@
             	<field name="price_cost"/>
             	<field name="price_subtotal"/>
             </xpath>
+            <xpath expr="//field[@name='move_raw_ids']/tree/field[@name='product_uom_qty']" position="before">
+            	<field name="account_id"/>
+            	<field name="account_analytic_id"/>
+            </xpath>
             <xpath expr="//notebook" position="before">
                 <group class="oe_subtotal oe_left">
 	                  <field name="project_budget" widget="monetary" options="{'currency_field': 'currency_id'}"/>
@@ -451,7 +455,7 @@
 	        	<xpath expr="//header" position="inside">
 	        		<button name="create_purchase_agreement" class="btn-primary" string="Create Purchase Agreement" type="object"/>
 	        		<button name="create_manufacturing_order" class="btn-primary" string="Create Manufacturing Order" type="object"/>
-	            	<field name="state" widget="statusbar" statusbar_visible="kick_off,project_plan,supply_chain_project_execution,qc_sign_off,customer_sign_off,close_out" readonly="0"/>
+	            	<field name="state" widget="statusbar" statusbar_visible="kick_off,project_plan,supply_chain_project_execution,qc_sign_off,customer_sign_off,close_out"/>
 	            </xpath>
 	        	<xpath expr="//button[@name='toggle_active']" position="before">
 		        	<button class="oe_stat_button" type="object" name="open_project_checklist" icon="fa-list">
