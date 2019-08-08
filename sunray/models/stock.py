@@ -22,6 +22,14 @@ class Partner(models.Model):
     _name = 'res.partner'
     _inherit = 'res.partner'
     
+    state = fields.Selection([
+        ('draft', 'Draft'),
+        ('submit', 'Submitted'),
+        ('validate', 'Second Approval'),
+        ('approve', 'Approved'),
+        ('reject', 'Rejected'),
+        ], string='Status', readonly=True, index=True, copy=False, default='draft', track_visibility='onchange')
+    
     type = fields.Selection(
         [('contact', 'Contact'),
          ('invoice', 'Invoice address'),
@@ -59,6 +67,51 @@ class Partner(models.Model):
                 result = str(partner.name) + " " + str(partner.parent_account_number)
             res.append((partner.id, result))
         return res
+    
+    @api.multi
+    def button_reset(self):
+        self.write({'state': 'draft'})
+        return {}
+    
+    @api.multi
+    def button_submit(self):
+        self.write({'state': 'submit'})
+        group_id = self.env['ir.model.data'].xmlid_to_object('sunray.group_one_vendor_approval')
+        user_ids = []
+        partner_ids = []
+        for user in group_id.users:
+            user_ids.append(user.id)
+            partner_ids.append(user.partner_id.id)
+        self.message_subscribe(partner_ids=partner_ids)
+        subject = "This Vendor {} needs first approval".format(self.name)
+        self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
+        return {}
+    
+    @api.multi
+    def button_validate(self):
+        self._check_line_manager()
+        self.write({'state': 'validate'})
+        group_id = self.env['ir.model.data'].xmlid_to_object('sunray.group_two_vendor_approval')
+        user_ids = []
+        partner_ids = []
+        for user in group_id.users:
+            user_ids.append(user.id)
+            partner_ids.append(user.partner_id.id)
+        self.message_subscribe(partner_ids=partner_ids)
+        subject = "This Vendor {} needs second approval".format(self.name)
+        self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
+        return {}
+    
+    @api.multi
+    def button_approve(self):
+        self.write({'state': 'approve'})
+        self.vendor_registration = True
+        return {}
+    
+    @api.multi
+    def button_reject(self):
+        self.write({'state': 'reject'})
+        return {}
     
 class HrExpenseSheet(models.Model):
     _name = "hr.expense.sheet"
@@ -513,7 +566,7 @@ class SaleOrderLine(models.Model):
     
 class Project(models.Model):
     _name = "project.project"
-    _inherit = "project.project"
+    _inherit = ['project.project', 'mail.activity.mixin', 'rating.mixin']
     _description = "Project"
     
     def _default_analytic(self):
@@ -522,7 +575,22 @@ class Project(models.Model):
     #def _default_account(self):
     #    return self.product_id.property_account_expense_id
     
+    state = fields.Selection([
+        ('kick_off', 'Kick off'),
+        ('project_plan', 'Project plan'),
+        ('supply_chain_project_execution', 'Supply Chain Project Execution'),
+        ('qc_sign_off', 'Qc sign off'),
+        ('customer_sign_off', 'Customer Sign off'),
+        ('close_out', ' Close out'),
+        ], string='Stage', readonly=False, index=True, copy=False, default='kick_off', track_visibility='onchange')
+    
     checklist_count = fields.Integer(compute="_checklist_count",string="Checklist", store=False)
+    
+    action_count = fields.Integer(compute="_action_count",string="Action", store=False)
+    
+    issues_count = fields.Integer(compute="_issues_count",string="Issues", store=False)
+    
+    mo_count = fields.Integer(compute="_mo_count",string="Manufacturing Orders", store=False)
     
     crm_lead_id = fields.Many2one(comodel_name='crm.lead', string='Lead')
     
@@ -535,10 +603,29 @@ class Project(models.Model):
     client_site_visit = fields.Date(string="Client Site Visit", track_visibility="onchange")
     internal_external_monthly = fields.Date(string="Internal External Monthly", track_visibility="onchange")
     
-    lead_technician_id = fields.Many2one(comodel_name='res.users', string='Lead Tecnician')
+    lead_technician_id = fields.Many2one(comodel_name='res.users', string='Lead Technician')
     quality_assurance_id = fields.Many2one(comodel_name='res.users', string='Quality Assurance Engineer')
     
     project_engineers_id = fields.Many2many(comodel_name='res.users', string='Project Engineers', help="list of engineeers for this project")
+    
+    project_plan_file = fields.Binary(string='Project Plan', track_visibility="onchange", store=True)
+    project_budget = fields.Float(string='Project Budget', track_visibility="onchange", store=True)
+    
+    @api.model
+    def create(self, vals):
+        result = super(Project, self).create(vals)
+        result.send_project_commencement_mail()
+        return result
+    
+    @api.multi
+    def send_project_commencement_mail(self):
+        config = self.env['mail.template'].sudo().search([('name','=','Project Commencement Email')], limit=1)
+        mail_obj = self.env['mail.mail']
+        if config:
+            values = config.generate_email(self.id)
+            mail = mail_obj.create(values)
+            if mail:
+                mail.send()
     
     @api.multi
     def _checklist_count(self):
@@ -554,9 +641,72 @@ class Project(models.Model):
         return True
     
     @api.multi
+    def _action_count(self):
+        oe_checklist = self.env['project.action']
+        for pa in self:
+            domain = [('project_id', '=', pa.id)]
+            pres_ids = oe_checklist.search(domain)
+            pres = oe_checklist.browse(pres_ids)
+            action_count = 0
+            for pr in pres:
+                action_count+=1
+            pa.action_count = action_count
+        return True
+    
+    @api.multi
+    def _mo_count(self):
+        oe_checklist = self.env['mrp.production']
+        for pa in self:
+            domain = [('project_id', '=', pa.id)]
+            pres_ids = oe_checklist.search(domain)
+            pres = oe_checklist.browse(pres_ids)
+            action_count = 0
+            for pr in pres:
+                action_count+=1
+            pa.action_count = action_count
+        return True
+    
+    @api.multi
+    def _issues_count(self):
+        oe_checklist = self.env['project.issues']
+        for pa in self:
+            domain = [('project_id', '=', pa.id)]
+            pres_ids = oe_checklist.search(domain)
+            pres = oe_checklist.browse(pres_ids)
+            issues_count = 0
+            for pr in pres:
+                issues_count+=1
+            pa.issues_count = issues_count
+        return True
+    
+    @api.multi
     def open_project_checklist(self):
         self.ensure_one()
         action = self.env.ref('sunray.sunray_project_checklist_action').read()[0]
+        action['domain'] = literal_eval(action['domain'])
+        action['domain'].append(('partner_id', 'child_of', self.partner_id.id))
+        return action
+    
+    @api.multi
+    def open_project_action(self):
+        self.ensure_one()
+        action = self.env.ref('sunray.sunray_project_actionform_action').read()[0]
+        action['domain'] = literal_eval(action['domain'])
+        action['domain'].append(('partner_id', 'child_of', self.partner_id.id))
+        return action
+    
+    @api.multi
+    def open_project_issues(self):
+        self.ensure_one()
+        action = self.env.ref('sunray.sunray_project_issuesform_action').read()[0]
+        action['domain'] = literal_eval(action['domain'])
+        action['domain'].append(('partner_id', 'child_of', self.partner_id.id))
+        return action
+    
+    @api.multi
+    def open_manfacturing_order(self):
+        self.ensure_one()
+        action = self.env.ref('sunray.sunray_mrp_production_action').read()[0]
         action['domain'] = literal_eval(action['domain'])
         action['domain'].append(('partner_id', 'child_of', self.partner_id.id))
         return action
@@ -688,6 +838,89 @@ class Project(models.Model):
                                 mail = mail_obj.create(values)
                                 if mail:
                                     mail.send()
+    
+    @api.multi
+    def create_purchase_agreement(self):
+        """
+        Method to open create purchase agreement form
+        """
+
+        partner_id = self.partner_id
+        #client_id = self.client_id
+        #store_request_id = self.id
+        #sub_account_id = self.sub_account_id
+        #product_id = self.move_lines.product_id
+             
+        view_ref = self.env['ir.model.data'].get_object_reference('purchase_requisition', 'view_purchase_requisition_form')
+        view_id = view_ref[1] if view_ref else False
+        
+        #purchase_line_obj = self.env['purchase.order.line']
+        '''for subscription in self:
+            order_lines = []
+            for line in subscription.move_lines:
+                order_lines.append((0, 0, {
+                    'product_uom_id': line.product_id.uom_id.id,
+                    'product_id': line.product_id.id,
+                    'account_analytic_id': 1,
+                    'product_qty': line.product_uom_qty,
+                    'schedule_date': date.today(),
+                    'price_unit': line.product_id.standard_price,
+                }))
+        ''' 
+        res = {
+            'type': 'ir.actions.act_window',
+            'name': ('Purchase Agreement'),
+            'res_model': 'purchase.requisition',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'view_id': view_id,
+            'target': 'current',
+            'context': {'default_type_id': 2, 'default_origin': self.name}
+        }
+        
+        return res
+    
+    @api.multi
+    def create_manufacturing_order(self):
+        """
+        Method to open create purchase agreement form
+        """
+
+        partner_id = self.partner_id
+        #client_id = self.client_id
+        #store_request_id = self.id
+        #sub_account_id = self.sub_account_id
+        #product_id = self.move_lines.product_id
+             
+        view_ref = self.env['ir.model.data'].get_object_reference('mrp', 'mrp_production_form_view')
+        view_id = view_ref[1] if view_ref else False
+        
+        #purchase_line_obj = self.env['purchase.order.line']
+        '''for subscription in self:
+            order_lines = []
+            for line in subscription.move_lines:
+                order_lines.append((0, 0, {
+                    'product_uom_id': line.product_id.uom_id.id,
+                    'product_id': line.product_id.id,
+                    'account_analytic_id': 1,
+                    'product_qty': line.product_uom_qty,
+                    'schedule_date': date.today(),
+                    'price_unit': line.product_id.standard_price,
+                }))
+        ''' 
+        res = {
+            'type': 'ir.actions.act_window',
+            'name': ('Manufacturing Order'),
+            'res_model': 'mrp.production',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'view_id': view_id,
+            'target': 'current',
+            'context': {'default_origin': self.name}
+        }
+        
+        return res
+    
     
 class ProjectChecklist(models.Model):
     _name = "project.checklist"
@@ -1054,13 +1287,75 @@ class StockMove(models.Model):
     
     account_id = fields.Many2one('account.account', string='Account', index=True, ondelete='cascade')
     
-    price_cost = fields.Float(string="Cost", default=_default_cost)
+    price_cost = fields.Float(string="Cost", default=lambda self: self.product_id.standard_price)
     price_subtotal = fields.Float(string="Price Subtotal", compute="_compute_subtotal", readonly=True)
     
     
+class MrpProduction(models.Model):
+    _inherit = "mrp.production"    
+    
+    def _default_partner(self):
+        return self.project_id.partner_id.id
+    
+    project_id = fields.Many2one(comodel_name='project.project', string='Project')
+    
+    partner_id = fields.Many2one(comodel_name='res.partner', string='Customer', readonly=False, default=_default_partner)
+    
+    total_cost = fields.Float(string='Total Cost', compute='_total_cost', track_visibility='onchange', readonly=True)
+    
+    project_budget = fields.Float(string='Project Budget', related='project_id.project_budget', track_visibility='onchange', readonly=True)
+    
+    @api.multi
+    @api.depends('move_raw_ids.product_uom_qty')
+    def _total_cost(self):
+        for a in self:
+            for line in a.move_raw_ids:
+                a.total_cost += line.price_cost * line.product_uom_qty
+                
+    
+    @api.multi
+    def create_store_request(self):
+        """
+        Method to open create purchase order form
+        """
+
+        #partner_id = self.request_client_id
+        #client_id = self.request_client_id
+        #sub_account_id = self.sub_account_id
+        #product_id = self.move_lines.product_id
+             
+        view_ref = self.env['ir.model.data'].get_object_reference('sunray', 'sunray_stock_form_view')
+        view_id = view_ref[1] if view_ref else False
+        
+        #purchase_line_obj = self.env['purchase.order.line']
+        for subscription in self:
+            order_lines = []
+            for line in subscription.move_raw_ids:
+                order_lines.append((0, 0, {
+                    'name': line.product_id.name,
+                    'product_uom': line.product_id.uom_id.id,
+                    'product_id': line.product_id.id,
+                    'reserved_availability': line.reserved_availability,
+                    'product_uom_qty': line.product_uom_qty,
+                    'additional': True,
+                    'date_expected': date.today(),
+                    'price_cost': line.product_id.standard_price,
+                }))
+         
+        res = {
+            'type': 'ir.actions.act_window',
+            'name': ('Store Request'),
+            'res_model': 'stock.picking',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'view_id': view_id,
+            'target': 'current',
+            'context': {'default_origin': self.name, "default_is_locked":False, "default_picking_type_id":self.env.ref("sunray.stock_picking_type_emp").id, 'default_move_lines': order_lines}
+        }
+        
+        return res
     
     
     
-    
-    
+             
     

@@ -16,10 +16,10 @@
     # Check https://github.com/odoo/odoo/blob/master/odoo/addons/base/module/module_data.xml
     # for the full list
     'category': 'Sunray',
-    'version': '0.18',
+    'version': '0.19',
 
     # any module necessary for this one to work correctly
-    'depends': ['base','hr','hr_expense','project','purchase','helpdesk','stock','product','account_budget','purchase_requisition'],
+    'depends': ['base','hr','hr_expense','project','purchase','helpdesk','stock','product','account_budget','purchase_requisition','mrp'],
 
     # always loaded
     'data': [

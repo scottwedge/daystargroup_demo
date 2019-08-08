@@ -16,3 +16,6 @@ access_parking_list,parking.list,model_parking_list,base.group_user,1,1,1,0
 access_parking_list_line,parking.list.line,model_parking_list_line,base.group_user,1,1,1,0 
 access_payment_request,payment.request,model_payment_request,base.group_user,1,1,1,0 
 access_purchase_request_line,purchase.request.line,model_purchase_request_line,base.group_user,1,1,1,0
+access_project_action_emp,project.action,model_project_action,base.group_user,1,1,1,0
+access_project_action_line_emp,project.action.line,model_project_action_line,base.group_user,1,1,1,0
+access_project_issues,project.issues,model_project_issues,base.group_user,1,1,1,0

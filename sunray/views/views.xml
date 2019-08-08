@@ -72,6 +72,31 @@
 	    </field>
 	</record>
 	
+	<record id="sunray_helpdesk_view_project" model="ir.ui.view">
+            <field name="name">project.project.tree</field>
+            <field name="model">project.project</field>
+            <field name="arch" type="xml">
+                <tree string="Projects">
+                    <field name="name" string="Project Name"/>
+                    <field name="user_id" string="Project Manager"/>
+                    <field name="lead_technician_id" string="Lead Technician"/>
+                    <field name="partner_id" string="Customer"/>
+                    <field name="monthly_maintenance_schedule"/>
+                    <field name="client_site_visit"/>
+                    <field name="internal_external_monthly"/>
+                </tree>
+            </field>
+        </record>
+	
+	<record model="ir.actions.act_window" id="sunray_helpdesk_view_project_action_window">
+      <field name="name">Projects</field>
+      <field name="res_model">project.project</field>
+      <field name="context">{}</field>
+      <field name="domain">[('state', '=', 'close_out')]</field>
+      <field name="view_mode">tree</field>
+      <field name="view_id" ref="sunray_helpdesk_view_project"/>
+    </record>
+	
 	<record model="ir.actions.act_window" id="VendorRequest_action_window">
       <field name="name">Vendor Request</field>
       <field name="res_model">vendor.request</field>
@@ -505,6 +530,9 @@
               action="payment_request_action"/>
     <menuitem name="Availability Demand Form" id="availability_demand_menu" parent="stock.menu_stock_root"
               action="availability_demand_action_window"/>
+              
+    <menuitem id="sunray_helpdesk_project_menu_main" action="sunray_helpdesk_view_project_action_window"
+        sequence="15" parent="helpdesk.menu_helpdesk_root"/>
 	
   </data>
 </odoo>
