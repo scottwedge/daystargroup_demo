@@ -95,11 +95,11 @@ class Lead(models.Model):
             mail = mail_obj.create(values)
             if mail:
                 mail.send()
-                subject = "Site audit request request {} has been sent to client".format(self.name)
+                subject = "Site audit request {} has been sent to client".format(self.name)
                 partner_ids = []
-                for partner in self.sheet_id.message_partner_ids:
+                for partner in self.message_partner_ids:
                     partner_ids.append(partner.id)
-                self.sheet_id.message_post(subject=subject,body=subject,partner_ids=partner_ids)
+                self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
     
     @api.multi
     def create_project(self):
