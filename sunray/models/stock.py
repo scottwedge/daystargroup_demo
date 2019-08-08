@@ -1297,7 +1297,7 @@ class MrpProduction(models.Model):
     def _default_partner(self):
         return self.project_id.partner_id.id
     
-    project_id = fields.Many2one(comodel_name='project.project', string='Project')
+    project_id = fields.Many2one(comodel_name='project.project', string='Projects')
     
     partner_id = fields.Many2one(comodel_name='res.partner', string='Customer', readonly=False, default=_default_partner)
     

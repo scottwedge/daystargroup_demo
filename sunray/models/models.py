@@ -1081,6 +1081,7 @@ class purchaserequesttable(models.Model):
     
 class ProjectAction(models.Model):
     _name = "project.action"
+    _description = 'Project Action'
     _inherit = ['mail.thread', 'mail.activity.mixin']
     
     def _default_employee(self): # this method is to search the hr.employee and return the user id of the person clicking the form atm
@@ -1114,6 +1115,7 @@ class ProjectAction(models.Model):
     
 class ProjectActionLine(models.Model):
     _name = "project.action.line"
+    _description = 'Project Action Line'
     _inherit = ['mail.thread', 'mail.activity.mixin']
     
     project_action_id = fields.Many2one('project.action', 'Project Action')
@@ -1129,6 +1131,7 @@ class ProjectActionLine(models.Model):
         
 class ProjectIssue(models.Model):
     _name = "project.issues"
+    _description = 'Project Issues'
     _inherit = ['mail.thread', 'mail.activity.mixin']
     
     def _default_employee(self): # this method is to search the hr.employee and return the user id of the person clicking the form atm
