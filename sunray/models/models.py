@@ -1203,7 +1203,7 @@ class ProjectIssue(models.Model):
         ('open', 'Open'),
         ], string='Status', readonly=False, index=True, copy=False, default='draft', track_visibility='onchange')
     
-    project_issue_severity = fields.Selection([('0', '0'),('1', 'Low'), ('2', 'Medium'), ('3', 'High'), ('4', 'Urgent')], string='Severity', required=False)
+    project_issue_severity = fields.Selection([('1', 'Low'), ('2', 'Medium'), ('3', 'High'), ('4', 'Urgent')], string='Severity', required=False)
     project_action_priority = fields.Selection([('0', '0'),('1', 'Low'), ('2', 'Medium'), ('3', 'High'), ('4', 'Urgent')], string='Priority', required=False)
     date = fields.Date(string='Reported On', default=date.today())
     comments = fields.Char(string='Comments')

@@ -161,7 +161,7 @@
     <field name="arch" type="xml">
         <form string="Action">
         	<header>
-        		<field name="state" widget="statusbar" statusbar_visible="draft,wip,closed,on_hold,open" readonly="0"/>
+        		<field name="state" widget="statusbar" statusbar_visible="draft,wip,closed,on_hold,open" readonly="0" clickable="1"/>
         	</header>
 			 <sheet>
 			 	<h1>
@@ -217,7 +217,7 @@
     <field name="arch" type="xml">
         <form string="Action">
         	<header>
-        		<field name="state" widget="statusbar" statusbar_visible="draft,wip,closed,on_hold,open" readonly="0"/>
+        		<field name="state" widget="statusbar" statusbar_visible="draft,wip,closed,on_hold,open" readonly="0" clickable="1"/>
         	</header>
 			 <sheet>
 		 		<group colspan="2">
@@ -455,7 +455,7 @@
 	        	<xpath expr="//header" position="inside">
 	        		<button name="create_purchase_agreement" class="btn-primary" string="Create Purchase Agreement" type="object"/>
 	        		<button name="create_manufacturing_order" class="btn-primary" string="Create Manufacturing Order" type="object"/>
-	            	<field name="state" widget="statusbar" statusbar_visible="kick_off,project_plan,supply_chain_project_execution,qc_sign_off,customer_sign_off,close_out"/>
+	            	<field name="state" widget="statusbar" statusbar_visible="kick_off,project_plan,supply_chain_project_execution,qc_sign_off,customer_sign_off,close_out" clickable="1"/>
 	            </xpath>
 	        	<xpath expr="//button[@name='toggle_active']" position="before">
 		        	<button class="oe_stat_button" type="object" name="open_project_checklist" icon="fa-list">
