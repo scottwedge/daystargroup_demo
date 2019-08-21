@@ -453,7 +453,8 @@
 	        <field name="inherit_id" ref="project.edit_project" />
 	        <field name="arch" type="xml">
 	        	<xpath expr="//header" position="inside">
-	        		<button name="create_purchase_agreement" class="btn-primary" string="Create Purchase Agreement" type="object"/>
+	        		<!-- <button name="create_purchase_agreement" class="btn-primary" string="Create Purchase Agreement" type="object"/>-->
+	        		<button name="create_store_request" class="btn-primary" string="Create Store Request" type="object"/>
 	        		<button name="create_manufacturing_order" class="btn-primary" string="Create Manufacturing Order" type="object"/>
 	            	<field name="state" widget="statusbar" statusbar_visible="kick_off,project_plan,supply_chain_project_execution,qc_sign_off,customer_sign_off,close_out" clickable="1"/>
 	            </xpath>
@@ -587,10 +588,12 @@
                     <field name="id" invisible="1"/>
                     
                     <field name="show_mark_as_todo" invisible="1"/>
+                    <field name="man_confirm" invisible="1"/>
                     <field name="show_check_availability" invisible="1"/>
                     <field name="show_validate" invisible="1"/>
                     <field name="show_lots_text" invisible="1"/>
-                    <button name="action_confirm" attrs="{'invisible': [('show_mark_as_todo', '=', False)]}" string="Mark as Todo" type="object" class="oe_highlight" groups="base.group_user"/>
+                    <button name="button_submit" attrs="{'invisible': [('state', '!=', 'draft')]}" string="Submit To Manager" type="object" class="oe_highlight" groups="base.group_user"/>
+                    <button name="action_confirm" attrs="{'invisible': [('state', '!=', 'submit')]}" string="Approve &amp; Mark To Do" type="object" class="oe_highlight" groups="sunray.group_hr_line_manager"/>
                     <button name="action_assign" attrs="{'invisible': [('show_check_availability', '=', False)]}" string="Check Availability" type="object" class="oe_highlight" groups="base.group_user"/>
                     <button name="button_validate" attrs="{'invisible': ['|',('show_validate', '=', False), ('need_approval', '=', True)]}" string="Validate" groups="stock.group_stock_user" type="object" class="oe_highlight"/>
                     <button name="button_approve_srt" attrs="{'invisible': [('need_approval', '=', False)]}" string="Approve" groups="stock.group_stock_user" type="object" class="oe_highlight"/>
@@ -605,8 +608,8 @@
                     <field name="has_packages" invisible="1"/>
                     <!-- <button name="manager_confirm" groups="sunray.group_hr_line_manager" class="btn-primary" string="Manager Confirmation" type="object"  attrs="{'invisible': ['|',('man_confirm','=',True),('state', 'not in', ['confirmed'])]}"/> -->
                     
-                    <button name="create_purchase_order" class="btn-primary" string="Create Quotation" type="object" groups="stock.group_stock_manager"/>
-                    <button name="create_purchase_agreement" class="btn-primary" string="Create Purchase Agreement" type="object" groups="stock.group_stock_manager"/>
+                    <button name="create_purchase_order" states="assigned,done" class="btn-primary" string="Create Quotation" type="object" groups="stock.group_stock_manager"/>
+                    <button name="create_purchase_agreement" states="assigned,done" class="btn-primary" string="Create Purchase Agreement" type="object" groups="stock.group_stock_manager"/>
                     
                     <button name="button_reset" attrs="{'invisible': ['|', ('state', 'in', ('draft','cancel')), ('is_locked', '=', False)]}" string="reset" groups="stock.group_stock_manager" type="object"/>
                     <button name="button_scrap" type="object" string="Scrap" attrs="{'invisible': ['|', '|', '&amp;', ('picking_type_code', '!=', 'incoming'), ('state', 'in', ('draft', 'cancel', 'waiting')), '&amp;', ('picking_type_code', '=', 'incoming'), ('state', '!=', 'done'), ('is_locked', '=', False)]}"/>
@@ -726,6 +729,7 @@
                                     <field name="picking_type_code" invisible="1"/>
                                     <field name="move_type" attrs="{'invisible': [('picking_type_code', '=', 'incoming')]}"/>
                                     <field name="picking_type_id" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                                    <field name="project_id" readonly="1"/>
                                 </group>
                                 <group>
                                     <field name="company_id" groups="base.group_multi_company" options="{'no_create': True}"/>

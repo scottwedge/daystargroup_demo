@@ -326,6 +326,8 @@ class PurchaseOrder(models.Model):
         ('sent', 'RFQ Sent'),
         ('to approve', 'To Approve'),
         ('submit', 'Manager Approval'),
+        ('legal', 'Awaiting Legal Review'),
+        ('legal_reviewed', 'Reviewed'),
         ('purchase', 'Purchase Order'),
         ('done', 'Locked'),
         ('cancel', 'Cancelled')
@@ -599,9 +601,9 @@ class Project(models.Model):
     account_analytic_id = fields.Many2one('account.analytic.account', string='Analytic Acount', required=False, default=_default_analytic, track_visibility="always")
     account_id = fields.Many2one('account.account', string='Account',  domain = [('user_type_id', 'in', [5,8,17,16])])
     
-    monthly_maintenance_schedule = fields.Date(string="Monthly Maintenance Schedule", track_visibility="onchange")
-    client_site_visit = fields.Date(string="Client Site Visit", track_visibility="onchange")
-    internal_external_monthly = fields.Date(string="Internal External Monthly", track_visibility="onchange")
+    monthly_maintenance_schedule = fields.Datetime(string="Monthly Maintenance Schedule", track_visibility="onchange")
+    client_site_visit = fields.Datetime(string="Client Site Visit", track_visibility="onchange")
+    internal_external_monthly = fields.Datetime(string="Internal External Monthly", track_visibility="onchange")
     
     lead_technician_id = fields.Many2one(comodel_name='res.users', string='Lead Technician')
     quality_assurance_id = fields.Many2one(comodel_name='res.users', string='Quality Assurance Engineer')
@@ -609,7 +611,7 @@ class Project(models.Model):
     project_engineers_id = fields.Many2many(comodel_name='res.users', string='Project Engineers', help="list of engineeers for this project")
     
     project_plan_file = fields.Binary(string='Project Plan', track_visibility="onchange", store=True)
-    project_budget = fields.Float(string='Project Budget', track_visibility="onchange", store=True)
+    project_budget = fields.Float(string='Project Budget', track_visibility="onchange", store=True, related='crm_lead_id.budget')
     
     @api.model
     def create(self, vals):
@@ -922,6 +924,48 @@ class Project(models.Model):
         return res
     
     
+    @api.multi
+    def create_store_request(self):
+        """
+        Method to open create purchase order form
+        """
+
+        #partner_id = self.request_client_id
+        client_id = self.partner_id
+        #sub_account_id = self.sub_account_id
+        #product_id = self.move_lines.product_id
+             
+        view_ref = self.env['ir.model.data'].get_object_reference('sunray', 'sunray_stock_form_view')
+        view_id = view_ref[1] if view_ref else False
+        
+        #purchase_line_obj = self.env['purchase.order.line']
+        #for subscription in self:
+        #    order_lines = []
+        #    for line in subscription.move_raw_ids:
+        #        order_lines.append((0, 0, {
+        #            'name': line.product_id.name,
+        #            'product_uom': line.product_id.uom_id.id,
+        #            'product_id': line.product_id.id,
+        #            'reserved_availability': line.reserved_availability,
+        #            'product_uom_qty': line.product_uom_qty,
+        #            'additional': True,
+        #            'date_expected': date.today(),
+        #            'price_cost': line.product_id.standard_price,
+        #       }))
+         
+        res = {
+            'type': 'ir.actions.act_window',
+            'name': ('Store Request'),
+            'res_model': 'stock.picking',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'view_id': view_id,
+            'target': 'current',
+            'context': {'default_origin': self.name, 'default_client_id': client_id.id, "default_is_locked":False, "default_picking_type_id":self.env.ref("sunray.stock_picking_type_emp").id, 'default_partner_id': self.partner_id.id, 'default_project_id': self.id}
+        }
+        
+        return res
+    
 class ProjectChecklist(models.Model):
     _name = "project.checklist"
     _inherit = ['mail.thread', 'mail.activity.mixin', 'portal.mixin']
@@ -1027,6 +1071,54 @@ class Picking(models.Model):
     _name = "stock.picking"
     _inherit = 'stock.picking'
     
+    state = fields.Selection([
+        ('draft', 'Draft'),
+        ('submit', 'Submitted'),
+        ('waiting', 'Waiting Another Operation'),
+        ('confirmed', 'Waiting'),
+        ('assigned', 'Ready'),
+        ('done', 'Done'),
+        ('cancel', 'Cancelled'),
+    ], string='Status', compute='_compute_state',
+        copy=False, index=True, readonly=True, store=True, track_visibility='onchange',
+        help=" * Draft: not confirmed yet and will not be scheduled until confirmed.\n"
+             " * Waiting Another Operation: waiting for another move to proceed before it becomes automatically available (e.g. in Make-To-Order flows).\n"
+             " * Waiting: if it is not ready to be sent because the required products could not be reserved.\n"
+             " * Ready: products are reserved and ready to be sent. If the shipping policy is 'As soon as possible' this happens as soon as anything is reserved.\n"
+             " * Done: has been processed, can't be modified or cancelled anymore.\n"
+             " * Cancelled: has been cancelled, can't be confirmed anymore.")
+    
+    @api.multi
+    def button_submit(self):
+        self.write({'state': 'submit'})
+        group_id = self.env['ir.model.data'].xmlid_to_object('sunray.group_hr_line_manager')
+        user_ids = []
+        partner_ids = []
+        for user in group_id.users:
+            user_ids.append(user.id)
+            partner_ids.append(user.partner_id.id)
+        self.message_subscribe(partner_ids=partner_ids)
+        subject = "Store request {} needs approval".format(self.name)
+        self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
+        return False
+        return {}
+    
+    @api.multi
+    def action_confirm(self):
+        res = super(Picking, self).action_confirm()
+        self.manager_confirm()
+        group_id = self.env['ir.model.data'].xmlid_to_object('stock.group_stock_manager')
+        user_ids = []
+        partner_ids = []
+        for user in group_id.users:
+            user_ids.append(user.id)
+            partner_ids.append(user.partner_id.id)
+        self.message_subscribe(partner_ids=partner_ids)
+        subject = "Store request {} has been approved by line manager".format(self.name)
+        self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
+        return False
+        return res
+    
     @api.multi
     def manager_confirm(self):
         for order in self:
@@ -1054,6 +1146,8 @@ class Picking(models.Model):
     client_id = fields.Many2one('res.partner', string='Client', index=True, ondelete='cascade', required=False)
     need_approval = fields.Boolean ('Need Approval', compute= "check_approval", track_visibility="onchange")
     #rejection_reason = fields.Many2one('stock.rejection.reason', string='Rejection Reason', index=True, track_visibility='onchange')
+    
+    project_id = fields.Many2one('project.project', string='Project', index=True, ondelete='cascade', required=False)
     
     total_price = fields.Float(string='Total', compute='_total_price', readonly=True, store=True)
     

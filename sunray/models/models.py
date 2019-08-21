@@ -3,6 +3,7 @@
 import datetime
 
 from datetime import date, timedelta
+from dateutil.relativedelta import relativedelta
 from odoo.exceptions import UserError, AccessError, ValidationError
 from odoo import api, fields, models, _
 
@@ -19,7 +20,9 @@ class Lead(models.Model):
         ('approve', 'Approved'),
         ('reject', 'Rejected'),
         ], string='Status', readonly=True, index=True, copy=False, default='draft', track_visibility='onchange')
-
+    
+    budget = fields.Float(string='Budget')
+    
     @api.multi
     def button_reset(self):
         self.write({'state': 'draft'})
@@ -475,9 +478,21 @@ class HolidaysRequest(models.Model):
     @api.multi
     def send_mail(self):
         incomplete_propation_period = self.env['hr.contract'].search([('employee_id', '=', self.employee_id.id), ('state','=','open'), ('trial_date_end','>',date.today())], limit=1)
-        print(incomplete_propation_period)
+        
+        unset_propation_period_contract = self.env['hr.contract'].search([('employee_id', '=', self.employee_id.id), ('state','=','open')], limit=1)
+        
+        today = datetime.datetime.now().strftime("%Y-%m-%d")
+        current_dates = datetime.datetime.strptime(today, "%Y-%m-%d")
+        
+        contract_start_date = unset_propation_period_contract.date_start
+        
+        between_contracts = relativedelta(current_dates, contract_start_date)
+        months_between_contracts = between_contracts.months
+        
         if incomplete_propation_period:
             raise UserError(_("You currently can't apply for leave as your probation period isn't over"))
+        elif months_between_contracts < 5:
+            raise UserError(_("You currently can't apply for leave as your contract hasn't exhausted 5 months"))
         else:
             if self.state in ['confirm']:
                 config = self.env['mail.template'].sudo().search([('name','=','Leave Approval Request Template')], limit=1)
@@ -1165,10 +1180,12 @@ class ProjectActionLine(models.Model):
     action_items = fields.Char(string='Action Item')
     comments = fields.Char(string='Comments')
     
-    @api.multi
+    @api.depends('s_n')
     def _total_cost(self):
+        s_n = 1
         for a in self:
-            self.s_n+=1
+            s_n +=1
+            a.s_n = s_n
         
 class ProjectIssue(models.Model):
     _name = "project.issues"

@@ -16,6 +16,7 @@
 			<field name="tag_ids" position="after">
 				<field name="size"/>
 	    		<field name="type_of_offer"/>
+	    		<field name="budget"/>
 			</field>
 	    </field>
 	</record>
