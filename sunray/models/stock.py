@@ -358,7 +358,30 @@ class PurchaseOrder(models.Model):
         self.write({'state': 'submit'})
         self.request_date = date.today()
         return {}
-
+    
+    @api.multi
+    def button_submit_legal(self):
+        self.write({'state': 'legal'})
+        group_id = self.env['ir.model.data'].xmlid_to_object('sunray.group_legal_team')
+        user_ids = []
+        partner_ids = []
+        for user in group_id.users:
+            user_ids.append(user.id)
+            partner_ids.append(user.partner_id.id)
+        self.message_subscribe_users(user_ids=user_ids)
+        subject = "Purchase Order {} needs a review from legal team".format(self.name)
+        self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
+        return False
+    
+    @api.multi
+    def button_legal_reviewd(self):
+        self.write({'state': 'legal_reviewed'})
+        subject = "Legal team review has been Done, Purchase Order {} can be approved now".format(self.name)
+        partner_ids = []
+        for partner in self.message_partner_ids:
+            partner_ids.append(partner.id)
+        self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
+    
     @api.multi
     def _check_budget(self):
         override = False
@@ -380,7 +403,7 @@ class PurchaseOrder(models.Model):
                     override = True
                     line.write({'need_override': True})
         if override:
-            group_id = self.env['ir.model.data'].xmlid_to_object('netcom.group_sale_account_budget')
+            group_id = self.env['ir.model.data'].xmlid_to_object('sunray.group_hr_line_manager')
             user_ids = []
             partner_ids = []
             for user in group_id.users:
@@ -398,8 +421,9 @@ class PurchaseOrder(models.Model):
             if order.state not in ['draft','submit', 'sent']:
                 continue
             self._check_line_manager()
-            if self._check_budget() == False and self.need_override:
-                return {}
+            self._check_line_manager()
+            #if self._check_budget() == False and self.need_override:
+             #   return {}
             self.approval_date = date.today()
             self.manager_approval = self._uid
             order._add_supplier_to_product()
@@ -417,6 +441,7 @@ class PurchaseOrder(models.Model):
     def button_approve(self):
         res = super(PurchaseOrder, self).button_approve()
         self._check_vendor_registration()
+        self.button_submit_legal()
         return res
     
     #NOT TO BE USED YET AND DO NOT DELETE THIS 
@@ -592,6 +617,14 @@ class Project(models.Model):
     
     issues_count = fields.Integer(compute="_issues_count",string="Issues", store=False)
     
+    risk_count = fields.Integer(compute="_risk_count",string="Risks", store=False)
+
+    ehs_count = fields.Integer(compute="_ehs_count",string="EHS", store=False)
+
+    change_request_count = fields.Integer(compute="_change_request_count",string="Change Request", store=False)
+
+    decision_count = fields.Integer(compute="_decision_count",string="Decision", store=False)
+    
     mo_count = fields.Integer(compute="_mo_count",string="Manufacturing Orders", store=False)
     
     crm_lead_id = fields.Many2one(comodel_name='crm.lead', string='Lead')
@@ -682,6 +715,60 @@ class Project(models.Model):
         return True
     
     @api.multi
+    def _risk_count(self):
+        oe_checklist = self.env['project.risk']
+        for pa in self:
+                domain = [('project_id', '=', pa.id)]
+                pres_ids = oe_checklist.search(domain)
+                pres = oe_checklist.browse(pres_ids)
+                risk_count = 0
+                for pr in pres:
+                    risk_count+=1
+                pa.risk_count = risk_count
+        return True
+
+
+
+    @api.multi
+    def _change_request_count(self):
+        oe_checklist = self.env['project.change_request']
+        for pa in self:
+                domain = [('project_id', '=', pa.id)]
+                pres_ids = oe_checklist.search(domain)
+                pres = oe_checklist.browse(pres_ids)
+                change_request_count = 0
+                for pr in pres:
+                    change_request_count+=1
+                pa.change_request_count = change_request_count
+        return True
+
+    @api.multi
+    def _ehs_count(self):
+        oe_checklist = self.env['project.ehs']
+        for pa in self:
+                domain = [('project_id', '=', pa.id)]
+                pres_ids = oe_checklist.search(domain)
+                pres = oe_checklist.browse(pres_ids)
+                ehs_count = 0
+                for pr in pres:
+                    ehs_count+=1
+                pa.ehs_count = ehs_count
+        return True
+
+    @api.multi
+    def _decision_count(self):
+        oe_checklist = self.env['project.decision']
+        for pa in self:
+                domain = [('project_id', '=', pa.id)]
+                pres_ids = oe_checklist.search(domain)
+                pres = oe_checklist.browse(pres_ids)
+                decision_count = 0
+                for pr in pres:
+                    decision_count+=1
+                pa.decision_count = decision_count
+        return True
+    
+    @api.multi
     def open_project_checklist(self):
         self.ensure_one()
         action = self.env.ref('sunray.sunray_project_checklist_action').read()[0]
@@ -709,6 +796,38 @@ class Project(models.Model):
     def open_manfacturing_order(self):
         self.ensure_one()
         action = self.env.ref('sunray.sunray_mrp_production_action').read()[0]
+        action['domain'] = literal_eval(action['domain'])
+        action['domain'].append(('partner_id', 'child_of', self.partner_id.id))
+        return action
+    
+    @api.multi
+    def open_project_change_request(self):
+        self.ensure_one()
+        action = self.env.ref('sunray.sunray_project_change_request_form_action').read()[0]
+        action['domain'] = literal_eval(action['domain'])
+        action['domain'].append(('partner_id', 'child_of', self.partner_id.id))
+        return action
+    
+    @api.multi
+    def open_project_risk(self):
+        self.ensure_one()
+        action = self.env.ref('sunray.sunray_project_riskform_action').read()[0]
+        action['domain'] = literal_eval(action['domain'])
+        action['domain'].append(('partner_id', 'child_of', self.partner_id.id))
+        return action
+
+    @api.multi
+    def open_project_decision(self):
+        self.ensure_one()
+        action = self.env.ref('sunray.sunray_project_decisionform_action').read()[0]
+        action['domain'] = literal_eval(action['domain'])
+        action['domain'].append(('partner_id', 'child_of', self.partner_id.id))
+        return action    
+
+    @api.multi
+    def open_project_ehs(self):
+        self.ensure_one()
+        action = self.env.ref('sunray.sunray_project_ehsform_action').read()[0]
         action['domain'] = literal_eval(action['domain'])
         action['domain'].append(('partner_id', 'child_of', self.partner_id.id))
         return action
