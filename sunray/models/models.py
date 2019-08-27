@@ -1180,7 +1180,7 @@ class ProjectActionLine(models.Model):
     action_items = fields.Char(string='Action Item')
     comments = fields.Char(string='Comments')
     
-    @api.depends('s_n')
+    #@api.depends('s_n')
     def _total_cost(self):
         s_n = 1
         for a in self:
