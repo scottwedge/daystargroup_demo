@@ -342,7 +342,40 @@ class HelpdeskTicket(models.Model):
     _description = 'Ticket'
     
     project_id = fields.Many2one(comodel_name='project.project', string='Project')
-
+    
+class Employee(models.Model):
+    _name = "hr.employee"
+    _description = "Employee"
+    _inherit = "hr.employee"
+    
+    @api.multi
+    def reminder_deactivate_employee_contract(self):
+        group_id = self.env['ir.model.data'].xmlid_to_object('hr.group_hr_manager')
+        user_ids = []
+        partner_ids = []
+        for user in group_id.users:
+            user_ids.append(user.id)
+            partner_ids.append(user.partner_id.id)
+        self.message_subscribe(partner_ids=partner_ids)
+        subject = "This is a reminder to deactivate any running contract for this employee".format(self.name)
+        self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
+        return False
+        return {}
+    
+    @api.multi
+    def button_deactivate_employee(self):
+        self.ensure_one()
+        if self.active == True:
+            config = self.env['mail.template'].sudo().search([('name','=','Employee Departure')], limit=1)
+            mail_obj = self.env['mail.mail']
+            if config:
+                values = config.generate_email(self.id)
+                mail = mail_obj.create(values)
+                if mail:
+                    mail.send()
+            self.active = False
+            self.reminder_deactivate_employee_contract()
+    
 class Job(models.Model):
 
     _name = "hr.job"

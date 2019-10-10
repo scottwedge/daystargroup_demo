@@ -10,7 +10,7 @@
                 <button name="create_project" string="Create Project" type="object" class="btn-primary"/>
             </xpath>
             <xpath expr="//button[@name='action_set_won_rainbowman']" position="after">
-                <button name="send_site_audit_request_mail" string="Send Site Audit Request" type="object" class="btn-primary"/>
+                <button name="send_site_audit_request_mail" string="Send Site Audit Request" type="object" class="btn-primary" confirm="You are about to send site audit request"/>
                 <button name="create_manufacturing_order" string="Create System Design" type="object" class="btn-primary"/>
             </xpath>
 			<field name="tag_ids" position="after">
@@ -31,6 +31,20 @@
 			</field>
 	    </field>
 	</record>
+	
+	<record id="sunray_hr_form_view" model="ir.ui.view">
+        <field name="name">sunray.hr.form</field>
+        <field name="model">hr.employee</field>
+        <field name="priority" eval="7" />
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="before">
+            	<header>
+	    			<button name="button_deactivate_employee" string="Deactivate Employee" type="object" class="oe_highlight" groups="hr.group_hr_manager" confirm="Confirm Deactivation of Employee"/>
+            	</header>
+            </xpath>
+        </field>
+    </record>
 	
 	<record id="sunray_crm_case_form_view_leads" model="ir.ui.view">
 	    <field name="name">sunray.crm.lead.form.leadform</field>
