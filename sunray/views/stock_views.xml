@@ -1,0 +1,1026 @@
+<odoo>
+  <data>
+  	
+  	<record id="sunray_res_config_settings_view_form" model="ir.ui.view">
+            <field name="name">sunray.res.config.settings.view.form.inherit.crm</field>
+            <field name="model">res.config.settings</field>
+            <field name="priority" eval="40"/>
+            <field name="inherit_id" ref="crm.res_config_settings_view_form"/>
+            <field name="arch" type="xml">
+	            <xpath expr="//div[@id='crm_lead']" position="after">
+                     <div class="col-12 col-lg-6 o_setting_box" id="crm_lead"
+                            title="Use the option to set the lead approval for leads within company">
+                            <div class="o_setting_left_pane">
+                                <field name="lead_approval"/>
+                            </div>
+                            <div class="o_setting_right_pane">
+                                <label for="lead_approval"/>
+                                <div class="text-muted">
+                                    Lead Approval to be used for set company
+                                </div>
+                            </div>
+                        </div>
+	            </xpath>	         
+           </field>
+   	</record>
+  	
+  	<record id="purchase_rfq" model="ir.actions.act_window">
+        <field name="name">Requests for Quotation</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">purchase.order</field>
+        <field name="context">{'search_default_todo':1, 'show_purchase': False}</field>
+        <field name="domain">[('state','in',('draft','sent','bid','cancel', 'submit','confirmed'))]</field>
+        <field name="view_mode">tree,kanban,form,pivot,graph,calendar</field>
+        <field name="search_view_id" ref="purchase.view_purchase_order_filter"/>
+        <field name="help" type="html">
+          <p class="oe_view_nocontent_create">
+            Click to create a request for quotation.
+          </p><p>
+            The quotation contains the history of the discussion/negotiation
+            you had with your vendor. Once confirmed, a request for
+            quotation is converted into a purchase order.
+          </p><p>
+            Most propositions of purchase orders are created automatically
+            by Odoo based on inventory needs.
+          </p>
+        </field>
+    </record>
+    
+    <record id="sunray_purchase_form_view" model="ir.ui.view">
+        <field name="name">sunray.purchase.form</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.purchase_order_form"/>
+        <field name="arch" type="xml">
+        	<button name="print_quotation" position="attributes"> <attribute name="groups">purchase.group_purchase_user</attribute> </button>
+        	<button name="action_rfq_send" position="attributes"> <attribute name="groups">purchase.group_purchase_user</attribute> </button>
+        	<field name="name" position="before">
+            	<field name= "need_override" invisible = "1"/>
+            	<h3 attrs="{'invisible': [('need_override', '=', False)]}"><b>Needs Budget Override, The Budget Dept. has been notified </b></h3>
+            </field>
+        	<xpath expr="//button[@name='action_view_picking']" position="replace">
+        		<button type="object"
+                            name="action_view_picking"
+                            class="oe_stat_button"
+                            icon="fa-truck" attrs="{'invisible':[('state', 'in', ('submit','draft','sent','to approve')),('picking_ids','=',[])]}">
+                            <field name="picking_count" widget="statinfo" string="Shipment" help="Incoming Shipments"/>
+                            <field name="picking_ids" invisible="1"/>
+                        </button>
+        	</xpath>
+        	<xpath expr="//button[@name='action_view_invoice']" position="replace">
+        		<button type="object"  name="action_view_invoice"
+                     class="oe_stat_button" groups="account.group_account_invoice"
+                     icon="fa-pencil-square-o" attrs="{'invisible':[('state', 'in', ('submit','draft','sent','to approve')),('invoice_ids','=',[])]}">
+                     <field name="invoice_count" widget="statinfo" string="Vendor Bills"/>
+                     <field name='invoice_ids' invisible="1"/>
+                 </button>
+        	</xpath>
+        	<xpath expr="//field[@name='order_line']/tree/field[@name='price_subtotal']" position="after">
+            	<field name= "need_override" attrs="{'invisible': [('need_override', '=', False)]}" />
+            	<field name= "override_budget" attrs="{'invisible': [('need_override', '=', False)]}" groups="sunray.group_sale_account_budget"/>
+            	<button name="action_override_budget" type="object" string="Override Budget" groups="sunray.group_sale_account_budget" attrs="{'invisible': ['|',('need_override', '=', False),('override_budget', '=', True)]}"/>
+            </xpath>
+        	<xpath expr="//button[@name='action_rfq_send']" position="before">
+        		<button name="button_submit" string="Submit to Manager" type="object" states="draft" groups="base.group_user"/>
+        	</xpath>
+        	<xpath expr="//button[@name='button_confirm']" position="replace">
+        		<button name="button_confirm" type="object" states="submit" string="Approve Order" id="draft_confirm" groups="sunray.group_hr_line_manager,purchase.group_purchase_manager"/>
+        	</xpath>
+        	<xpath expr="//button[@name='button_cancel']" position="replace">
+        		<button name="button_cancel" type="object" states="submit" string="Decline Order" id="draft_decline" groups="sunray.group_hr_line_manager,purchase.group_purchase_manager"/>
+        	</xpath>
+        	
+        	<xpath expr="//button[@name='button_approve']" position="after">
+        		<button name="button_legal_reviewd" type="object" states='to approve' string="Reviewed" class="oe_highlight" groups="sunray.group_legal_team"/>
+        	</xpath>
+        	
+        	<xpath expr="//button[@name='button_approve']" position="after">
+        		<button name="button_cancel" type="object" states='to approve,legal_reviewed' string="Cancel Order" class="oe_highlight" groups="purchase.group_purchase_manager"/>
+        	</xpath>
+        	
+        	<xpath expr="//button[@name='button_approve']" position="replace">
+        		<button name="button_approve" type="object" states='legal_reviewed' string="Confirm Order" class="oe_highlight" groups="purchase.group_purchase_manager"/>
+        	</xpath>
+        	
+        	<xpath expr="//button[@name='button_approve']" position="after">
+        		<button name="button_cancel" type="object" states='purchase' string="Cancel Order" class="oe_highlight" groups="purchase.group_purchase_manager"/>
+        	</xpath>
+        	
+        	<xpath expr="//button[@name='button_done']" position="after">
+        		<button name="button_reset" type="object" states='purchase' string="Reset To Draft" groups="purchase.group_purchase_manager"/>
+        	</xpath>
+        	
+        	<xpath expr="//field[@name='order_line']/tree/field[@name='date_planned']" position="after">
+            	<field name="account_id" required = "1"/>
+            </xpath>
+            <xpath expr="//field[@name='order_line']/tree/field[@name='account_analytic_id']" position="replace">
+            	<field name="account_analytic_id" invisible = "1"/>
+            </xpath>
+            <xpath expr="//field[@name='order_line']/tree/field[@name='analytic_tag_ids']" position="replace">
+            	<field name="analytic_tag_ids" invisible = "1" widget="many2many_tags" options="{'color_field': 'color'}"/>
+            </xpath>
+            <field name="partner_id" position="after">
+            	<field name="project_id"/>
+            	<field name="employee_id" groups="sunray.group_hr_line_manager"/>
+            	<field name="department_name" invisible="0"/>
+            	<field name="request_date"/>
+            	
+            	<field name="manager_approval"/>
+            	<field name="approval_date"/>
+            </field>
+            <field name="company_id" position="after">
+            	<field name="client_id" domain="[('customer','=',True)]" required="0"/>
+            </field>
+            <field name="incoterm_id" position="after">
+            	<field name="stock_source"/>
+            	<field name="store_request_id"/>
+            </field>
+        </field>
+    </record>
+	
+	<!-- project issues action-->
+    <record model="ir.actions.act_window" id="sunray_project_issuesform_action">
+		<field name="name">Project Issues</field>
+		<field name="res_model">project.issues</field>
+		<field name="view_type">form</field>
+		<field name="view_mode">tree,form</field>
+		<field name="domain">[]</field>
+		<field name="context">{}</field>
+	</record>
+	
+	<!-- project issues tree view-->
+    <record id="project_issues_tree_view" model="ir.ui.view">
+		<field name="name">project.issues.tree</field>
+		<field name="model">project.issues</field>
+		<field name="type">tree</field>
+		<field name="arch" type="xml">
+			<field name="project_id"/>
+			<field name="partner_id"/>
+		</field>
+	</record>
+	
+	<record id="project_issues_form_view" model="ir.ui.view">
+    <field name="name">project.issues.form</field>
+    <field name="model">project.issues</field>
+    <field name="priority" eval="2"/>
+    <field name="arch" type="xml">
+        <form string="Action">
+        	<header>
+        		<field name="state" widget="statusbar" statusbar_visible="draft,wip,closed,on_hold,open" readonly="0" clickable="1"/>
+        	</header>
+			 <sheet>
+			 	<h1>
+                    <field name="name" default_focus="1" placeholder="Issue Title"/>
+                </h1>
+		 		<group colspan="2">
+		 			<field name="project_id" required="1" readonly="1"/>
+		 			<field name="partner_id"/>
+		 		</group>
+		 		<group col="4" colspan="4">
+		 			<field name="employee_id"/>
+		 			<field name="date"/>
+		 			<field name="project_action_priority" widget="priority"/>
+		 			<field name="project_issue_severity"/>
+                    <field name="description"/>
+                    <field name="comments"/>
+		 		</group>
+			 </sheet>
+			 <div class="oe_chatter">
+                    <field name="message_follower_ids" widget="mail_followers"/>
+                    <field name="activity_ids" widget="mail_activity"/>
+                    <field name="message_ids" widget="mail_thread"/>
+                </div>
+        </form>
+    </field>
+    </record>
+	
+	<!-- project action-->
+    <record model="ir.actions.act_window" id="sunray_project_actionform_action">
+		<field name="name">Project Action</field>
+		<field name="res_model">project.action</field>
+		<field name="view_type">form</field>
+		<field name="view_mode">tree,form</field>
+		<field name="domain">[]</field>
+		<field name="context">{}</field>
+	</record>
+	
+	<!-- project action tree view-->
+    <record id="project_action_tree_view" model="ir.ui.view">
+		<field name="name">project.action.tree</field>
+		<field name="model">project.action</field>
+		<field name="type">tree</field>
+		<field name="arch" type="xml">
+			<field name="project_id"/>
+			<field name="partner_id"/>
+		</field>
+	</record>
+	
+	<record id="project_action_form_view" model="ir.ui.view">
+    <field name="name">project.action.form</field>
+    <field name="model">project.action</field>
+    <field name="priority" eval="2"/>
+    <field name="arch" type="xml">
+        <form string="Action">
+        	<header>
+        		<field name="state" widget="statusbar" statusbar_visible="draft,wip,closed,on_hold,open" readonly="0" clickable="1"/>
+        	</header>
+			 <sheet>
+		 		<group colspan="2">
+		 			<field name="project_id" required="1" readonly="1"/>
+		 			<field name="partner_id"/>
+		 		</group>
+		 		<group col="4" colspan="4">
+		 			<field name="employee_id"/>
+		 			<field name="due_date"/>
+		 			<field name="project_action_priority" widget="priority"/>
+		 		</group>
+		 		<field name="project_action_line_ids">
+                   <tree editable="bottom">
+                       <field name="s_n" readonly="1" style="oe_left"/>
+                       <field name="action_items"/>
+                       <field name="comments"/>
+                   </tree>
+               </field>
+			 </sheet>
+			 <div class="oe_chatter">
+                    <field name="message_follower_ids" widget="mail_followers"/>
+                    <field name="activity_ids" widget="mail_activity"/>
+                    <field name="message_ids" widget="mail_thread"/>
+                </div>
+        </form>
+    </field>
+    </record>
+    
+    <!-- project ehs-->
+    	<record model="ir.actions.act_window" id="sunray_project_ehsform_action">
+        	<field name="name">Project ehs</field>
+        	<field name="res_model">project.ehs</field>
+        	<field name="view_type">form</field>
+        	<field name="view_mode">tree,form</field>
+        	<field name="domain">[]</field>
+        	<field name="context">{}</field>
+    	</record>
+    
+    <!-- project ehs tree view-->
+    	<record id="project_ehs_tree_view" model="ir.ui.view">
+        	<field name="name">project.ehs.tree</field>
+        	<field name="model">project.ehs</field>
+        	<field name="type">tree</field>
+        	<field name="arch" type="xml">
+            	<field name="project_id"/>
+            	<field name="partner_id"/>
+        	</field>
+    	</record>
+
+    <!-- project ehs form view--> 
+    	<record id="project_ehs_form_view" model="ir.ui.view">
+    		<field name="name">project.ehs.form</field>
+    		<field name="model">project.ehs</field>
+    		<field name="priority" eval="2"/>
+    		<field name="arch" type="xml">
+        <form string="Action">
+            <header>
+                <field name="project_ehs_state" widget="statusbar" statusbar_visible="draft,wip,closed,on_hold,open" readonly="0" clickable="1"/>
+            </header>
+             <sheet>
+                <h1>
+                    <field name="project_ehs_name" default_focus="1" placeholder="Issue Title"/>
+                </h1>
+                <group colspan="2">
+                    <field name="project_id" required="1" readonly="1"/>
+                    <field name="partner_id"/>
+                </group>
+                <group col="4" colspan="4">
+                    <field name="employee_id"/>
+                    <field name="date"/>
+                    <field name="project_ehs_priority" widget="priority"/>
+                    <field name="project_ehs_severity"/>
+                    <field name="project_ehs_description"/>
+                    <field name="comments"/>
+                </group>
+             </sheet>
+             <div class="oe_chatter">
+                    <field name="message_follower_ids" widget="mail_followers"/>
+                    <field name="activity_ids" widget="mail_activity"/>
+                    <field name="message_ids" widget="mail_thread"/>
+                </div>
+        </form>
+    </field>
+    </record>
+
+
+ <!-- project decision-->
+    <record model="ir.actions.act_window" id="sunray_project_decisionform_action">
+        <field name="name">Project Decision</field>
+        <field name="res_model">project.decision</field>
+        <field name="view_type">form</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[]</field>
+        <field name="context">{}</field>
+    </record>
+    
+    <!-- project decisions tree view-->
+    <record id="project_decision_tree_view" model="ir.ui.view">
+        <field name="name">project.decision.tree</field>
+        <field name="model">project.decision</field>
+        <field name="type">tree</field>
+        <field name="arch" type="xml">
+            <field name="project_id"/>
+            <field name="partner_id"/>
+        </field>
+    </record>
+
+    <!-- project decisions form view--> 
+    <record id="project_decision_form_view" model="ir.ui.view">
+    <field name="name">project.decision.form</field>
+    <field name="model">project.decision</field>
+    <field name="priority" eval="2"/>
+    <field name="arch" type="xml">
+        <form string="Action">
+            <header>
+                <field name="project_decision_state" widget="statusbar" statusbar_visible="draft,wip,closed,on_hold,open" readonly="0" clickable="1"/>
+            </header>
+             <sheet>
+        
+                <group colspan="2">
+                    <field name="decision_detail" default_focus="1"/>
+                    <field name="project_id" required="1" readonly="1"/>
+                    <field name="partner_id" readonly="1"/>
+                </group>
+                <group col="4" colspan="4">
+                    <field name="decision_impact"/>
+                    <field name="date"/>
+                    <field name="staff_id"/>
+                    <field name="employee_id"/>
+                    <field name="comments"/>
+                </group>
+             </sheet>
+             <div class="oe_chatter">
+                    <field name="message_follower_ids" widget="mail_followers"/>
+                    <field name="activity_ids" widget="mail_activity"/>
+                    <field name="message_ids" widget="mail_thread"/>
+                </div>
+        </form>
+    </field>
+    </record>
+
+
+    <!-- project change request -->
+    	<record model="ir.actions.act_window" id="sunray_project_change_request_form_action">
+        	<field name="name">Project Change Request</field>
+        	<field name="res_model">project.change_request</field>
+        	<field name="view_type">form</field>
+       	 	<field name="view_mode">tree,form</field>
+        	<field name="domain">[]</field>
+        	<field name="context">{}</field>
+    	</record>
+    
+    <!-- project change request tree view-->
+    	<record id="project_change_change_tree_view" model="ir.ui.view">
+        	<field name="name">project.change_request.tree</field>
+        	<field name="model">project.change_request</field>
+        	<field name="type">tree</field>
+        	<field name="arch" type="xml">
+            	<field name="project_id"/>
+            	<field name="partner_id"/>
+        	</field>
+    	</record>
+
+    <!-- project change request form view--> 
+    	<record id="project_change_request_form_view" model="ir.ui.view">
+    		<field name="name">project.change_request.form</field>
+    		<field name="model">project.change_request</field>
+    		<field name="priority" eval="2"/>
+    		<field name="arch" type="xml">
+        <form string="Action">
+            <sheet>
+                <group colspan="2">
+                    <field name="project_id" required="1" readonly="1"/>
+                    <field name="partner_id"/>
+                    <field name="employee_id"/>
+
+                </group>
+                <group col="4" colspan="4">
+                    <field name="date"/>
+                    <field name="project_change_request_priority" widget="priority"/>
+                </group>
+                <field name="project_change_request_line_ids">
+                   <tree editable="bottom">
+                       <field name="s_n" readonly="1" style="oe_left"/>
+                       <field name="project_change_request_description"/>
+                       <field name="project_change_request_decision"/>
+                       <field name="comments"/>
+                   </tree>
+               </field>
+             </sheet>
+             
+             <div class="oe_chatter">
+                    <field name="message_follower_ids" widget="mail_followers"/>
+                    <field name="activity_ids" widget="mail_activity"/>
+                    <field name="message_ids" widget="mail_thread"/>
+                </div>
+        </form>
+    </field>
+    </record>
+
+ <!-- project risk-->
+    	<record model="ir.actions.act_window" id="sunray_project_riskform_action">
+        	<field name="name">Project Risk</field>
+        	<field name="res_model">project.risk</field>
+        	<field name="view_type">form</field>
+        	<field name="view_mode">tree,form</field>
+        	<field name="domain">[]</field>
+        	<field name="context">{}</field>
+    	</record>
+    
+    <!-- project risk  tree view-->
+    	<record id="project_risk_tree_view" model="ir.ui.view">
+        	<field name="name">project.risk.tree</field>
+        	<field name="model">project.risk</field>
+        	<field name="type">tree</field>
+        	<field name="arch" type="xml">
+            	<field name="project_id"/>
+            	<field name="partner_id"/>
+        	</field>
+    	</record>
+
+    <!-- project risk form view -->
+    
+   	 <record id="project_risk_form_view" model="ir.ui.view">
+    		<field name="name">project.risk.form</field>
+    		<field name="model">project.risk</field>
+    		<field name="priority" eval="2"/>
+    		<field name="arch" type="xml">
+        <form string="Action">
+            <header>
+                <field name="state" widget="statusbar" readonly="0" clickable="1"/>
+            </header>
+             <sheet>
+                <group colspan="2">
+                    <field name="project_id" required="1" readonly="1"/>
+                    <field name="partner_id"/>
+                </group>
+
+                <field name="project_risk_line_ids">
+                    <tree editable="bottom">
+                        <field name = "risk_title"/>
+                        <field name ="risk_impact"/>
+                        <field name ="risk_status"/>
+                        <field name ="employee_id"/>
+                        <field name ="date"/>
+                        <field name ="risk_category"/>
+                        <field name ="mitigation"/>
+                        <field name ="date_closed"/>
+                    </tree>
+                </field>                    
+                    
+            </sheet>
+             
+             <div class="oe_chatter">
+                    <field name="message_follower_ids" widget="mail_followers"/>
+                    <field name="activity_ids" widget="mail_activity"/>
+                    <field name="message_ids" widget="mail_thread"/>
+                </div>
+        </form>
+
+    		</field>
+    	</record>
+    
+    <record model="ir.actions.act_window" id="sunray_mrp_production_action">
+		<field name="name">Manufacturing Orders</field>
+		<field name="res_model">mrp.production</field>
+		<field name="view_type">form</field>
+		<field name="view_mode">tree,form</field>
+		<field name="domain">[]</field>
+		<field name="context">{}</field>
+	</record>
+    
+	<!-- checklist ticket action-->
+    <record model="ir.actions.act_window" id="sunray_project_checklist_action">
+		<field name="name">Project Checklist</field>
+		<field name="res_model">project.checklist</field>
+		<field name="view_type">form</field>
+		<field name="view_mode">tree,form</field>
+		<field name="domain">[]</field>
+		<field name="context">{}</field>
+	</record>
+	
+	<!-- checklist.ticket  tree view-->
+    <record id="checklist_ticket_tree_view" model="ir.ui.view">
+		<field name="name">project.checklist.tree</field>
+		<field name="model">project.checklist</field>
+		<field name="type">tree</field>
+		<field name="arch" type="xml">
+			<field name="project_id"/>
+			<field name="partner_id"/>
+		</field>
+	</record>
+	
+	<record id="project_checklist_form_view" model="ir.ui.view">
+    <field name="name">project.checklist.form</field>
+    <field name="model">project.checklist</field>
+    <field name="priority" eval="2"/>
+    <field name="arch" type="xml">
+        <form string="Checklist">
+        	<header>
+        		<button name="button_select_all" string="Select All" type="object" class="btn btn-primary" groups="base.group_user" confirm="Please make sure ALL documents are complete otherwise Cancel"/>
+        	</header>
+			 <sheet>
+			 		<group colspan="2">
+			 			<field name="project_id" required="1" readonly="1"/>
+			 			<field name="partner_id"/>
+			 		</group>
+			 		
+			    	<group string="Review"></group>
+                    <field name="detailed_site_review"/><span>
+								Detailed site review
+								</span><br/><br/>
+                    <field name="detailed_system_design"/><span>
+								Detailed System design
+								</span><br/><br/>
+				    <field name="two_d_diagram"/><span>
+								2D Diagram
+								</span><br/><br/>
+				    <field name="cable_schedule"/><span>
+								Cable Schedule
+								</span><br/><br/>
+				    <field name="panel_layout"/><span>
+								Panel Layout
+								</span><br/><br/>
+				    <field name="ancillary_equipment_breakdown"/><span>
+								Ancillary Equipment breakdown
+								</span><br/><br/>
+								
+					<group string="Project Plan Checklist"></group>
+				    <field name="project_schedule"/><span>
+								Project Schedule
+								</span><br/><br/>
+				    <field name="purchase_stock_request_ancillaries_equipment"/><span>
+								Purchase or stock request for ancillaries’ equipment
+								</span><br/><br/>
+				    <field name="project_planning_form"/><span>
+								Project planning Form
+								</span><br/><br/>
+								
+					<group string="Project Execution"></group>
+					<field name="communication_with_clients"/><span>
+								Communication with clients
+								</span><br/><br/>
+				    <field name="technician_assignment"/><span>
+								Technician assignment
+								</span><br/><br/>
+				    <field name="execution"/><span>
+								Execution
+								</span><br/><br/>
+					<field name="quality_assurance"/><span>
+								Quality Assurance
+								</span><br/><br/>
+					<field name="commissioning_test"/><span>
+								Commissioning test
+								</span><br/><br/>
+				    <field name="job_completion_certificate"/><span>
+								Job Completion Certificate
+								</span><br/><br/>
+				    <field name="training"/><span>
+								Training
+								</span><br/><br/>
+			 </sheet>
+			 <div class="oe_chatter">
+                    <field name="message_follower_ids" widget="mail_followers"/>
+                    <field name="activity_ids" widget="mail_activity"/>
+                    <field name="message_ids" widget="mail_thread"/>
+                </div>
+        </form>
+    </field>
+    </record>
+	
+	<record id="sunray_res_partner_view_vendor_rating" model="ir.ui.view">
+        <field name="name">res.partner.view.sunray.vendor.rating</field>
+	        <field name="model">res.partner</field>
+	        <field name="inherit_id" ref="base.view_partner_form" />
+	        <field name="arch" type="xml">
+	        	<!--<xpath expr="//sheet" position="before">
+	            	<header>
+						<button name="button_submit" states="draft" string="Submit" type="object" />
+						<button name="button_validate" states="submit" string="Approve" type="object" groups="sunray.group_one_vendor_approval"/>
+						<button name="button_approve" states="validate" string="Confirm" type="object" groups="sunray.group_two_vendor_approval"/>
+						<button name="button_reject" states="submit,validate" string="Reject" type="object" groups="sunray.group_one_vendor_approval,sunray.group_one_vendor_approval"/>
+						<button name="button_reset" states="reject" string="Set to Draft" type="object" />
+						<field name="state" widget="statusbar" statusbar_visible="draft,submit,validate,approve" readonly="1"/>
+				    </header>
+	            </xpath>-->
+	           	<field name="vat" position="after">
+	           		<field name="vendor_registration" attrs="{'invisible': [('supplier', '!=', True)]}" />
+					<field name="tax_compliance" attrs="{'invisible': [('supplier', '!=', True)]}" />
+				  	<field name="due_diligence_form" attrs="{'invisible': [('supplier', '!=', True)]}" />
+				  	<field name="cac" attrs="{'invisible': [('supplier', '!=', True)]}" />
+				  	<field name="delivery_speed" attrs="{'invisible': [('supplier', '!=', True)]}" />
+				  	<field name="overall_vendor_rating" widget="priority" attrs="{'invisible': [('supplier', '!=', True)]}" />
+				</field>
+				<field name="function" position="before">
+		    		<field name="parent_account_number" readonly="1"/>
+				</field>
+	        </field>
+	</record>
+	
+	<record id="sunray_view_order_form" model="ir.ui.view">
+        <field name="name">sunray.sale.order.form</field>
+	        <field name="model">sale.order</field>
+	        <field name="inherit_id" ref="sale.view_order_form" />
+	        <field name="arch" type="xml">
+				<xpath expr="//field[@name='order_line']/tree/field[@name='product_id']" position="before">
+	            	<field name="type" required = "1"/>
+	            </xpath>
+	        </field>
+	</record>
+	
+	<record id="sunray_mrp_production_tree_view" model="ir.ui.view">
+        <field name="name">sunray.mrp.production.tree</field>
+        <field name="model">mrp.production</field>
+        <field name="inherit_id" ref="mrp.mrp_production_form_view"/>
+        <field name="arch" type="xml">
+        	<xpath expr="//button[@name='button_unreserve']" position="after">
+        		<button name="create_store_request" string="Request From Store" type="object" groups="base.group_user"/>
+        	</xpath>
+        	<field name="product_id" position="before">
+	    		<field name="project_id"/>
+			</field>
+	        <xpath expr="//field[@name='move_raw_ids']/tree/field[@name='quantity_done']" position="after">
+            	<field name="price_cost"/>
+            	<field name="price_subtotal"/>
+            </xpath>
+            <xpath expr="//field[@name='move_raw_ids']/tree/field[@name='product_uom_qty']" position="before">
+            	<field name="account_id"/>
+            	<field name="account_analytic_id"/>
+            </xpath>
+            <xpath expr="//notebook" position="before">
+                <group class="oe_subtotal oe_left">
+	                  <field name="project_budget" widget="monetary" options="{'currency_field': 'currency_id'}"/>
+	            </group>
+            </xpath>
+            <field name="move_raw_ids" position="after">
+	            <group class="oe_subtotal_footer oe_right">
+	                  <field name="total_cost" widget="monetary" options="{'currency_field': 'currency_id'}"/>
+	            </group>
+            </field>
+            <xpath expr="//field[@name='move_raw_ids']/tree" position="attributes">
+	                <attribute name="editable">1</attribute>
+	        </xpath>
+        </field>
+    </record>
+	
+	<record id="project.open_view_project_all" model="ir.actions.act_window">
+            <field name="name">Projects</field>
+            <field name="res_model">project.project</field>
+            <field name="view_type">form</field>
+            <field name="domain">[]</field>
+            <field name="view_mode">tree,kanban,form</field>
+            <field name="view_id" ref="project.view_project_kanban"/>
+            <field name="search_view_id" ref="project.view_project_project_filter"/>
+            <field name="target">main</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    Create a new project
+                </p><p>
+                    Or <a type="action" name="%(project.ir_actions_server_project_sample)d" tabindex="-1">activate a sample project</a> to play with.
+                </p>
+            </field>
+        </record>
+	
+	<record id="sunray_edit_project" model="ir.ui.view">
+        <field name="name">sunray.project.form</field>
+	        <field name="model">project.project</field>
+	        <field name="inherit_id" ref="project.edit_project" />
+	        <field name="arch" type="xml">
+	        	<xpath expr="//header" position="inside">
+	        		<!-- <button name="create_purchase_agreement" class="btn-primary" string="Create Purchase Agreement" type="object"/>-->
+	        		<button name="create_store_request" class="btn-primary" string="Create Store Request" type="object"/>
+	        		<button name="create_manufacturing_order" class="btn-primary" string="Create Manufacturing Order" type="object"/>
+	            	<field name="state" widget="statusbar" statusbar_visible="kick_off,project_plan,supply_chain_project_execution,qc_sign_off,customer_sign_off,close_out" clickable="1"/>
+	            </xpath>
+	        	<xpath expr="//button[@name='toggle_active']" position="before">
+		        	<button class="oe_stat_button" type="object" name="open_project_checklist" icon="fa-list">
+	                    <div class="o_stat_info">
+	                        <field name="checklist_count" class="o_stat_value"/>
+	                        <span class="o_stat_text">Checklist</span>
+	                    </div>
+	                </button>
+	                <button class="oe_stat_button" type="object" name="open_project_action" icon="fa-unsorted">
+	                    <div class="o_stat_info">
+	                        <field name="action_count" class="o_stat_value"/>
+	                        <span class="o_stat_text">Action</span>
+	                    </div>
+	                </button>
+	                <button class="oe_stat_button" type="object" name="open_project_issues" icon="fa-sticky-note-o">
+	                    <div class="o_stat_info">
+	                        <field name="issues_count" class="o_stat_value"/>
+	                        <span class="o_stat_text">Issues</span>
+	                    </div>
+	                </button>
+	                <button class="oe_stat_button" type="object" name="open_project_risk" icon="fa-exclamation-circle">
+				    		<div class="o_stat_info">
+				       			<field name="risk_count" class="o_stat_value"/>
+				       			<span class="o_stat_text">Risk</span>
+				     		</div>
+					</button>    
+					<button class="oe_stat_button" type="object" name="open_project_change_request" icon="fa-pencil-square-o">
+				    		<div class="o_stat_info">
+				         		<field name="change_request_count" class="o_stat_value"/>
+				         		<span class="o_stat_text">Change Request </span>
+				     		</div>
+					</button>
+					<button class="oe_stat_button" type="object" name="open_project_ehs" icon="fa-sort-asc">
+				        	<div class="o_stat_info">
+				                <field name="ehs_count" class="o_stat_value"/>
+				                <span class="o_stat_text">EHS</span>
+			             	</div>
+				    </button>
+ 					<button class="oe_stat_button" type="object" name="open_project_decision" icon="fa-arrows">
+		            	<div class="o_stat_info">
+		              		<field name="decision_count" class="o_stat_value"/>
+		                    <span class="o_stat_text">Decisions </span>
+		             	</div>
+     				</button>
+	                <button class="oe_stat_button" type="object" name="open_manfacturing_order" icon="fa-gears">
+	                    <div class="o_stat_info">
+	                        <field name="mo_count" class="o_stat_value"/>
+	                        <span class="o_stat_text">Manufacturing Orders</span>
+	                    </div>
+	                </button>
+	            </xpath>
+	           	<field name="user_id" position="before">
+	           		<field name="parent_project_id"/>
+				  	<field name="crm_lead_id"/>
+				</field>
+				<field name="user_id" position="after">
+					<field name="lead_technician_id"/>
+				  	<field name="quality_assurance_id"/>
+				  	<field name="project_engineers_id" widget="many2many_tags"/>
+				  	<field name="account_id"/>
+				  	<field name="account_analytic_id"/>
+				  	<field name="project_plan_file" widget="file"/>
+				  	<field name="project_budget" widget="Monetary"/>
+				</field>
+				<field name="partner_id" position="after">
+				  	<field name="monthly_maintenance_schedule"/>
+				  	<field name="client_site_visit"/>
+				  	<field name="internal_external_monthly"/>
+				</field>
+				<field name="message_follower_ids" position="after">
+				  	<field name="activity_ids" widget="mail_activity"/>
+	             	<field name="message_ids" widget="mail_thread"/>
+				</field>
+	        </field>
+	</record>
+	
+	<record id="sunray_project_project_view_form_simplified" model="ir.ui.view">
+        <field name="name">sunray.project.form</field>
+	        <field name="model">project.project</field>
+	        <field name="inherit_id" ref="project.project_project_view_form_simplified" />
+	        <field name="arch" type="xml">
+	           	<field name="user_id" position="before">
+				  	<field name="crm_lead_id"/>
+				</field>
+				<field name="user_id" position="after">
+				  	<field name="account_id"/>
+				  	<field name="account_analytic_id"/>
+				</field>
+	        </field>
+	</record>
+	
+	<record id="sunray_view_project" model="ir.ui.view">
+        <field name="name">sunray.project.tree</field>
+	        <field name="model">project.project</field>
+	        <field name="inherit_id" ref="project.view_project"/>
+	        <field name="arch" type="xml">
+	           	<field name="partner_id" position="after">
+	           		<field name="crm_lead_id"/>
+				  	<field name="state"/>
+				</field>
+	        </field>
+	</record>
+	
+	<record id="sunray_product_template_only_form_view" model="ir.ui.view">
+        <field name="name">sunray.product.template</field>
+	        <field name="model">product.template</field>
+	        <field name="inherit_id" ref="product.product_template_only_form_view"/>
+	        <field name="arch" type="xml">
+	           	<field name="barcode" position="after">
+				  	<field name="product_expiration_date"/>
+				</field>
+	        </field>
+	</record>
+	
+	<record id="sunray_view_hr_expense_sheet_form" model="ir.ui.view">
+            <field name="name">sunray.hr.expense.sheet.form</field>
+            <field name="model">hr.expense.sheet</field>
+            <field name="inherit_id" ref="hr_expense.view_hr_expense_sheet_form"/>
+            <field name="arch" type="xml">
+	            <xpath expr="//button[@name='approve_expense_sheets']" position="after">
+	                <button name="button_md_approval" string="Approve" type="object" class="btn-primary" states="approve"/>
+	            </xpath>
+	            <xpath expr="//button[@name='action_sheet_move_create']" position="replace">
+	                <button name="action_sheet_move_create" states="confirmed" string="Post Journal Entries" type="object" groups="account.group_account_manager" class="oe_highlight o_expense_sheet_post"/>
+	            </xpath>
+	            <xpath expr="//button[@name='action_sheet_move_create']" position="after">
+	            	<button name="%(hr_expense.hr_expense_refuse_wizard_action)d" states="confirmed" context="{'hr_expense_refuse_model':'hr.expense.sheet'}" string="Refuse" type="action" groups="hr_expense.group_hr_expense_user" />
+            	</xpath>
+            </field>
+    </record>
+	
+	<record model="ir.actions.act_window" id="store_req_action1_window">
+      <field name="name">Store Request</field>
+      <field name="res_model">stock.picking</field>
+      <field name="view_mode">tree,form</field>
+      <field name="context" eval='{"default_is_locked":False,"default_picking_type_id":ref("sunray.stock_picking_type_emp")}'/>
+    </record>
+     
+   	 <record id="store_req_action_tree" model="ir.actions.act_window.view">
+         <field eval="1" name="sequence"/>
+         <field name="view_mode">tree</field>
+         <field name="view_id" ref="stock.vpicktree"/>
+         <field name="act_window_id" ref="store_req_action1_window"/>
+     </record>
+	
+	    <record id="sunray_stock_form_view" model="ir.ui.view">
+            <field name="name">sunray.stock.form</field>
+            <field name="model">stock.picking</field>
+            <field eval="14" name="priority"/>
+            <field name="arch" type="xml">
+                <form string="Store Requests">
+                <header>
+                    <field name="id" invisible="1"/>
+                    
+                    <field name="show_mark_as_todo" invisible="1"/>
+                    <field name="man_confirm" invisible="1"/>
+                    <field name="show_check_availability" invisible="1"/>
+                    <field name="show_validate" invisible="1"/>
+                    <field name="show_lots_text" invisible="1"/>
+                    <button name="button_submit" attrs="{'invisible': [('state', '!=', 'draft')]}" string="Submit To Manager" type="object" class="oe_highlight" groups="base.group_user"/>
+                    <button name="action_confirm" attrs="{'invisible': [('state', '!=', 'submit')]}" string="Approve &amp; Mark To Do" type="object" class="oe_highlight" groups="sunray.group_hr_line_manager"/>
+                    <button name="action_assign" attrs="{'invisible': [('show_check_availability', '=', False)]}" string="Check Availability" type="object" class="oe_highlight" groups="base.group_user"/>
+                    <button name="button_validate" attrs="{'invisible': ['|',('show_validate', '=', False), ('need_approval', '=', True)]}" string="Validate" groups="stock.group_stock_user" type="object" class="oe_highlight"/>
+                    <button name="button_approve_srt" attrs="{'invisible': [('need_approval', '=', False)]}" string="Approve" groups="stock.group_stock_user" type="object" class="oe_highlight"/>
+                    <button name="do_print_picking" string="Print" groups="stock.group_stock_user" type="object" attrs="{'invisible': ['|', ('state', 'not in', ('assigned', 'partially_available')), ('is_locked', '=', False)]}"/>
+                    <button name="%(stock.action_report_delivery)d" string="Print" attrs="{'invisible': ['|', ('state', '!=', 'done'), ('is_locked', '=', False)]}" type="action" groups="base.group_user"/>
+                    <button name="%(stock.act_stock_return_picking)d" string="Return" attrs="{'invisible': ['|', ('state', '!=', 'done'), ('is_locked', '=', False)]}" type="action" groups="base.group_user"/>
+                    <button name="action_cancel" attrs="{'invisible': ['|', ('state', 'not in', ('assigned', 'confirmed', 'partially_available', 'draft', 'waiting')), ('is_locked', '=', False)]}" string="Cancel" groups="base.group_user" type="object"/>
+                    <field name="picking_type_code" invisible="1"/>
+                    <button name="do_unreserve" string="Unreserve" groups="base.group_user" type="object" attrs="{'invisible': ['|', '|', ('picking_type_code', '=', 'incoming'), ('state', 'not in', ('assigned', 'partially_available')), ('is_locked', '=', False)]}"/>
+                    <field name="show_operations" invisible="1" readonly="1"/>
+                    <field name="move_line_exist" invisible="1"/>
+                    <field name="has_packages" invisible="1"/>
+                    <!-- <button name="manager_confirm" groups="sunray.group_hr_line_manager" class="btn-primary" string="Manager Confirmation" type="object"  attrs="{'invisible': ['|',('man_confirm','=',True),('state', 'not in', ['confirmed'])]}"/> -->
+                    
+                    <button name="create_purchase_order" states="assigned,done" class="btn-primary" string="Create Quotation" type="object" groups="stock.group_stock_manager"/>
+                    <button name="create_purchase_agreement" states="assigned,done" class="btn-primary" string="Create Purchase Agreement" type="object" groups="stock.group_stock_manager"/>
+                    
+                    <button name="button_reset" attrs="{'invisible': ['|', ('state', 'in', ('draft','cancel')), ('is_locked', '=', False)]}" string="reset" groups="stock.group_stock_manager" type="object"/>
+                    <button name="button_scrap" type="object" string="Scrap" attrs="{'invisible': ['|', '|', '&amp;', ('picking_type_code', '!=', 'incoming'), ('state', 'in', ('draft', 'cancel', 'waiting')), '&amp;', ('picking_type_code', '=', 'incoming'), ('state', '!=', 'done'), ('is_locked', '=', False)]}"/>
+                    <button name="action_toggle_is_locked" attrs="{'invisible': ['|', ('state', 'in', ('draft','cancel')), ('is_locked', '=', False)]}" string="Unlock" groups="stock.group_stock_manager" type="object" help="If the picking is unlocked you can edit initial demand (for a draft picking) or done quantities (for a done picking)."/>
+                    <button name="action_toggle_is_locked" attrs="{'invisible': [('is_locked', '=', True)]}" string="Lock" class="oe_highlight" groups="stock.group_stock_manager" type="object"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,confirmed,partially_available,assigned,done" />
+                    <field name="picking_type_entire_packs" invisible="1"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <field name="has_scrap_move" invisible="True"/>
+                        <button name="action_see_move_scrap" string="Scraps" type="object"
+                            class="oe_stat_button" icon="fa-arrows-v"
+                            attrs="{'invisible': [('has_scrap_move', '=', False)]}"/>
+                        <button name="action_see_packages" string="Packages" type="object"
+                            class="oe_stat_button" icon="fa-cubes"
+                            attrs="{'invisible': [('has_packages', '=', False)]}"/>
+                        <button name="%(stock.action_stock_report)d" icon="fa-arrow-up" class="oe_stat_button" string="Up/Down Traceability" type="action" states="done" groups="stock.group_production_lot"/>
+                    </div>
+		            	<field name= "need_approval" invisible = "1"/>
+		            	<h3 attrs="{'invisible': [('need_approval', '=', False)]}"><b>Needs Budget Override, The Budget Dept. has been notified </b></h3>
+		            <h1 class="hidden-xs">
+                        <field name="name" attrs="{'invisible': [('name','=','/')]}" readonly="1"/>
+                    </h1>
+                    <group>
+                        <group>
+                        	<field name="is_locked" invisible="1"/>
+                        	<field name="employee_id" invisible="1"/>
+                        	<!-- <field name="man_confirm" readonly="1"/> -->
+                            <field name="partner_id" attrs="{'invisible': [('picking_type_code', '=', 'internal')]}"/>
+                            <field name="location_id" groups="stock.group_stock_user"  attrs="{'invisible': [('picking_type_code', '=', 'outgoing')]}"/>
+                            <field name="location_dest_id" groups="stock.group_stock_user" attrs="{'invisible': [('picking_type_code', '=', 'incoming')]}"/>
+                            <field name="backorder_id" readonly="1" attrs="{'invisible': [('backorder_id','=',False)]}"/>
+                            <field name="client_id" required="1"/>
+                        </group>
+                        <group>
+                            <field name="scheduled_date" attrs="{'readonly': [('id', '=', False)], 'required': [('id', '!=', False)]}"/>
+                            <field name="origin" placeholder="e.g. PO0032"/>
+                            <field name="owner_id" groups="sunray.group_hr_line_manager"/>
+                            <div groups="stock.group_tracking_owner" colspan="2" col="2">
+                                <button name="action_assign_owner" string="Assign Owner" type="object" attrs="{'invisible': ['|',('move_line_exist', '=', False),('state', 'not in', ('draft','assigned','confirmed'))]}"
+                                    class="oe_link"/>
+                            </div>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Detailed Operations" groups="stock.group_stock_user" attrs="{'invisible': [('show_operations', '=', False)]}">
+                            <field name="move_line_ids" attrs="{'readonly': [('state', '=', 'done'), ('is_locked', '=', True)]}" context="{'default_picking_id': id, 'default_location_id': location_id, 'default_location_dest_id': location_dest_id}">
+                                <tree editable="bottom" decoration-muted="(state == 'done' and is_locked == True)" decoration-danger="qty_done&gt;product_uom_qty and state!='done'" decoration-success="qty_done==product_uom_qty and state!='done' and not result_package_id">
+                                    <field name="product_id" required="1" attrs="{'readonly': ['|', ('state', '=', 'done'), ('move_id', '!=', False)]}"/>
+                                    <field name="move_id" invisible="1"/>
+                                    <field name="picking_type_entire_packs" invisible="1"/>
+                                    <field name="product_uom_id" force_save="1" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                                    <field name="package_id" attrs="{'readonly': [('picking_type_entire_packs', '=', True)]}" groups="stock.group_tracking_lot" domain="[('location_id', '=', location_id)]"/>
+                                    <field name="location_id" attrs="{'readonly': [('picking_type_entire_packs', '=', True)]}" groups="stock.group_stock_multi_locations,stock.group_tracking_lot" domain="[('id', 'child_of', parent.location_id)]"/>
+                                    <field name="location_dest_id" attrs="{'readonly': [('picking_type_entire_packs', '=', True)]}" groups="stock.group_stock_multi_locations,stock.group_tracking_lot" domain="[('id', 'child_of', parent.location_dest_id)]"/>
+                                    <field name="result_package_id" attrs="{'readonly': [('picking_type_entire_packs', '=', True)]}" groups="stock.group_tracking_lot" domain="['|', '|', ('location_id', '=', False), ('location_id', '=', location_dest_id), ('id', '=', package_id)]"/>
+                                    <field name="lots_visible" invisible="1"/>
+                                    <field name="owner_id" groups="stock.group_tracking_owner"/>
+                                    <field name="state" invisible="1"/>
+                                    <field name="lot_id" groups="stock.group_production_lot" attrs="{'column_invisible': [('parent.show_lots_text', '=', True)], 'invisible': [('lots_visible', '=', False)], 'readonly': [('picking_type_entire_packs', '=', True)]}" domain="[('product_id', '=', product_id)]" context="{'default_product_id': product_id}"/>
+                                    <field name="lot_name" groups="stock.group_production_lot" attrs="{'column_invisible': [('parent.show_lots_text', '=', False)], 'invisible': [('lots_visible', '=', False)], 'readonly': [('picking_type_entire_packs', '=', True)]}" context="{'default_product_id': product_id}"/>
+                                    <field name="is_initial_demand_editable" invisible="1"/>
+                                    <field name="product_uom_qty" readonly="1"/>
+                                    <field name="is_locked" invisible="1"/>
+                                    <field name="qty_done" attrs="{'readonly': ['|', ('state', 'in', ('done', 'cancel')), ('is_locked', '=', True), ('picking_type_entire_packs', '=', True)]}" force_save="1"/>
+                                </tree>
+                            </field>
+                            <!--  <field name="entire_package_detail_ids" context="{'picking_id': id, 'tree_view_ref': 'stock.view_quant_package_picking_tree'}" attrs="{'invisible': ['|', ('picking_type_entire_packs', '=', False), ('show_operations', '=', False)]}" readonly="0"/>
+                            --><button class="oe_highlight" name="put_in_pack" type="object" string="Put in Pack" attrs="{'invisible': [('state', 'in', ('done', 'cancel'))]}" groups="stock.group_tracking_lot"/>
+                        </page>
+                        <page string="Operations">
+                            <field name="id" invisible="1"/>
+                            <field name="move_lines" attrs="{'readonly': ['|', '&amp;', ('show_operations', '=', True), '|', ('is_locked', '=', True), ('state', '=', 'done'), '&amp;', ('state', '=', 'done'), ('is_locked', '=', True)]}" context="{'picking_type_code': picking_type_code, 'default_picking_id': id, 'form_view_ref':'stock.view_move_picking_form', 'address_in_id': partner_id,'default_is_initial_demand_editable': 'True', 'default_picking_type_id': picking_type_id, 'default_location_id': location_id, 'default_location_dest_id': location_dest_id}">
+                                <tree decoration-danger="state != 'done' and quantity_done > reserved_availability and show_reserved_availability" decoration-muted="scrapped == True or state == 'cancel' or (state == 'done' and is_locked == True)" string="Stock Moves" editable="bottom">
+                                    <field name="name" invisible="1"/>
+                                    <field name="date_expected" invisible="1"/>
+                                    <field name="state" invisible="1" readonly="0"/>
+                                    <field name="picking_type_id" invisible="1"/>
+                                    <field name="location_id" invisible="1"/>
+                                    <field name="location_dest_id" invisible="1"/>
+                                    <field name="scrapped" invisible="1"/>
+                                    <field name="picking_code" invisible="1"/>
+                                    <field name="product_type" invisible="1"/>
+                                    <field name="show_details_visible" invisible="1"/>
+                                    <field name="show_reserved_availability" invisible="1"/>
+                                    <field name="show_operations" invisible="1" readonly="1"/>
+                                    <field name="additional" invisible="1"/>
+                                    <field name="has_move_lines" invisible="1"/>
+                                    <!-- <field name="internal_transfer" invisible="1"/>-->
+                                    <field name="product_id" required="1" attrs="{'readonly': ['|', '&amp;', ('state', '!=', 'draft'), ('additional', '=', False), ('has_move_lines', '=', True)]}"/>
+                                    <field name="is_locked" invisible="1"/>
+                                    <field name="is_initial_demand_editable" invisible="1"/>
+                                    <field name="is_quantity_done_editable" invisible="1"/>
+                                    <field name="product_uom_qty" string="Initial Demand" attrs="{'readonly': [('is_initial_demand_editable', '=', False)]}"/>
+                                    <field name="reserved_availability" string="Reserved" attrs="{'column_invisible': ['|', ('parent.state','=', 'done'), ('parent.picking_type_code', '=', 'incoming')]}"/>
+                                    <field name="quantity_done" string="Done" attrs="{'readonly': [('is_quantity_done_editable', '=', False)]}"/>
+                                    <field name="product_uom" attrs="{'readonly': [('state', '!=', 'draft'), ('additional', '=', False)]}" options="{'no_open': True, 'no_create': True}" string="Unit of Measure"/>
+                                    <field name="price_cost" string="Cost Price"/>
+                                    <field name="price_subtotal" string="Price Subtotal"/>
+                                    <button name="action_show_details" string="Register lots, packs, location" type="object" icon="fa-list" attrs="{'invisible': [('show_details_visible', '=', False)]}" options='{"warn": true}'/>
+                                </tree>
+                            </field>
+                            <!-- <field name="entire_package_ids" context="{'picking_id': id, 'tree_view_ref': 'stock.view_quant_package_picking_tree'}" attrs="{'invisible': ['|', ('picking_type_entire_packs', '=', False), ('show_operations', '=', True)]}" readonly="0"/>
+                             --><button class="oe_highlight" name="put_in_pack" type="object" string="Put in Pack" attrs="{'invisible': [('state', 'in', ('done', 'cancel'))]}" groups="stock.group_tracking_lot"/>
+                        <group class="oe_subtotal_footer oe_right" colspan="2" name="total">
+                                <div class="oe_subtotal_footer_separator oe_inline o_td_label">
+                                    <label for="total_price"/>
+                                </div>
+                                <field name="total_price" nolabel="1" class="oe_subtotal_footer_separator" widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                        </group>   
+                        
+                        </page>
+                        <page string="Additional Info" name="extra" groups="stock.group_stock_user">
+                            <group>
+                                <group>
+                                    <field name="picking_type_code" invisible="1"/>
+                                    <field name="move_type" attrs="{'invisible': [('picking_type_code', '=', 'incoming')]}"/>
+                                    <field name="picking_type_id" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                                    <field name="project_id" readonly="1"/>
+                                </group>
+                                <group>
+                                    <field name="company_id" groups="base.group_multi_company" options="{'no_create': True}"/>
+                                    <field name="group_id" groups="base.group_no_one"/>
+                                    <field name="priority" attrs="{'invisible': [('picking_type_code', '=', 'incoming')]}"/>
+                                </group>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids" widget="mail_followers"/>
+                    <field name="activity_ids" widget="mail_activity"/>
+                    <field name="message_ids" widget="mail_thread"/>
+                </div>
+                </form>
+            </field>
+        </record>
+	
+	<record id="store_req_action_form" model="ir.actions.act_window.view">
+         <field eval="2" name="sequence"/>
+         <field name="view_mode">form</field>
+         <field name="view_id" ref="sunray_stock_form_view"/>
+         <field name="act_window_id" ref="store_req_action1_window"/>
+     </record>
+	
+	<menuitem name="Store Request" id="store_request" parent="stock.menu_stock_root"
+              action="store_req_action1_window"/>
+	
+  </data>
+</odoo>
