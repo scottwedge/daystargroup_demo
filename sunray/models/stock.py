@@ -34,8 +34,8 @@ class Partner(models.Model):
         [('contact', 'Contact'),
          ('invoice', 'Invoice address'),
          ('delivery', 'Shipping address'),
-         ('other', 'Other address'),
-         ("private", "Sub Account"),
+         ('other', 'Sub Account'),
+         ("private", "Private Address"),
         ], string='Address Type',
         default='contact',
         help="Used by Sales and Purchase Apps to select the relevant address depending on the context.")
@@ -584,6 +584,44 @@ class ProductTemplate(models.Model):
                                 return True
         return
 
+class SaleOrder(models.Model):
+    _inherit = "sale.order"
+    
+    state = fields.Selection([
+        ('draft', 'Quotation'),
+        ('manager_approval', 'Management Approval'),
+        ('sent', 'Quotation Sent'),
+        ('sale', 'Sales Order'),
+        ('done', 'Locked'),
+        ('cancel', 'Cancelled'),
+        ], string='Status', readonly=True, copy=False, index=True, track_visibility='onchange', track_sequence=3, default='draft')
+    
+    need_management_approval = fields.Boolean('Needs Management Approval', track_visibility="onchange", copy=False, default=False)
+    
+    @api.multi
+    def action_confirm(self):
+        res = super(SaleOrder, self).action_confirm()
+        self._check_approval()
+        return res
+    
+    @api.depends('amount_total')
+    def _check_approval(self):
+        if self.amount_total > 180:
+            self.need_management_approval = True
+            group_id = self.env['ir.model.data'].xmlid_to_object('sunray.group_sale_account_budget')
+            user_ids = []
+            partner_ids = []
+            for user in group_id.users:
+                user_ids.append(user.id)
+                partner_ids.append(user.partner_id.id)
+            self.message_subscribe(partner_ids=partner_ids)
+            subject = "Sales Order {} needs management approval".format(self.name)
+            self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
+            return False
+        else:
+            self.need_approval = False
+            
+            
 class SaleOrderLine(models.Model):
     _name = 'sale.order.line'
     _description = 'Sales Order Line'
@@ -645,6 +683,9 @@ class Project(models.Model):
     
     project_plan_file = fields.Binary(string='Project Plan', track_visibility="onchange", store=True)
     project_budget = fields.Float(string='Project Budget', track_visibility="onchange", store=True, related='crm_lead_id.budget')
+    
+    project_code_id = fields.Many2one(comodel_name='res.partner', string='Project Code', help="Client sub account code")
+    
     
     @api.model
     def create(self, vals):
@@ -1511,6 +1552,15 @@ class StockMove(models.Model):
 class MrpProduction(models.Model):
     _inherit = "mrp.production"    
     
+    state = fields.Selection([
+        ('unconfirmed', 'Unconfirmed'),
+        ('confirmed', 'Confirmed'),
+        ('planned', 'Planned'),
+        ('progress', 'In Progress'),
+        ('done', 'Done'),
+        ('cancel', 'Cancelled')], string='State',
+        copy=False, default='unconfirmed', track_visibility='onchange')
+    
     def _default_partner(self):
         return self.project_id.partner_id.id
     
@@ -1521,6 +1571,34 @@ class MrpProduction(models.Model):
     total_cost = fields.Float(string='Total Cost', compute='_total_cost', track_visibility='onchange', readonly=True)
     
     project_budget = fields.Float(string='Project Budget', related='project_id.project_budget', track_visibility='onchange', readonly=True)
+    
+    @api.model
+    def create(self, vals):
+        result = super(MrpProduction, self).create(vals)
+        result.mrp_created()
+        return result
+    
+    @api.multi
+    def mrp_created(self):
+        group_id = self.env['ir.model.data'].xmlid_to_object('sunray.group_head_projects','project.group_project_manager')
+        user_ids = []
+        partner_ids = []
+        for user in group_id.users:
+            user_ids.append(user.id)
+            partner_ids.append(user.partner_id.id)
+        self.message_subscribe(partner_ids=partner_ids)
+        subject = "Manufacturing Order {} has been created and needs approval".format(self.name)
+        self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
+        return {}
+    
+    @api.multi
+    def button_mrp_approved(self):
+        self.write({'state': 'confirmed'})
+        subject = "Manufacturing Order {} has been approved".format(self.name)
+        partner_ids = []
+        for partner in self.message_partner_ids:
+            partner_ids.append(partner.id)
+        self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
     
     @api.multi
     @api.depends('move_raw_ids.product_uom_qty')

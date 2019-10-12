@@ -25,3 +25,7 @@ access_project_ehs,project.ehs,model_project_ehs,base.group_user,1,1,1,0
 access_project_decision,project.decision,model_project_decision,base.group_user,1,1,1,0
 access_project_change_request,project.change_request,model_project_change_request,base.group_user,1,1,1,0
 access_project_change_request_line,project.change_request.line,model_project_change_request_line,base.group_user,1,1,1,0
+access_brand_type_emp,brand.type,model_brand_type,base.group_user,1,0,0,0
+access_brand_type_emp,brand.type,model_brand_type,stock.group_stock_manager,1,1,1,1
+access_item_type_emp,item.type,model_item_type,base.group_user,1,0,0,0
+access_item_type_emp,item.type,model_item_type,stock.group_stock_manager,1,1,1,1

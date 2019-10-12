@@ -343,6 +343,49 @@ class HelpdeskTicket(models.Model):
     
     project_id = fields.Many2one(comodel_name='project.project', string='Project')
     
+    
+class ItemType(models.Model):
+    _name = "item.type"
+    _description = "Item Types"
+    _order = "name"
+    _inherit = ['mail.thread']
+
+    name = fields.Char('Name', required=True, track_visibility='onchange')
+    code = fields.Char('Code', required=True, track_visibility='onchange')
+    active = fields.Boolean('Active', default='True')
+
+class BrandType(models.Model):
+    _name = "brand.type"
+    _description = "Brand Types"
+    _order = "name"
+    _inherit = ['mail.thread']
+
+    name = fields.Char('Name', required=True, track_visibility='onchange')
+    code = fields.Char('Code', required=True, track_visibility='onchange')
+    active = fields.Boolean('Active', default='True')
+
+class ProductTemplate(models.Model):
+    _inherit = 'product.template'
+    
+    business_unit = fields.Char(string='Business Unit')
+    manufacturer = fields.Char(string='Manufacturer')
+    dimension = fields.Char(string='Dimension (mm) (W x D x H)')
+    manufacturer_part_number = fields.Char(string='Manufacturer part number')
+    
+    brand = fields.Many2one('brand.type', string='Brand', track_visibility='onchange', index=True)
+    item_type = fields.Many2one('item.type', string='Item Type', track_visibility='onchange', index=True)
+    
+    @api.model
+    def create(self, vals):
+        brand = self.env['brand.type'].search([('id','=',vals['brand'])])
+        item = self.env['item.type'].search([('id','=',vals['item_type'])])
+        code = brand.code + item.code
+        
+        no = self.env['ir.sequence'].next_by_code('product.template')
+        item_code = code + str(no)
+        vals['default_code'] = item_code
+        return super(ProductTemplate, self).create(vals)
+    
 class Employee(models.Model):
     _name = "hr.employee"
     _description = "Employee"
