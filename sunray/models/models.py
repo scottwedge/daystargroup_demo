@@ -12,7 +12,9 @@ class Lead(models.Model):
     _name = "crm.lead"
     _inherit = 'crm.lead'
     
-    type_of_offer = fields.Selection([('saas', 'SaaS'), ('pass', 'PaaS '), ('sale', 'Sale ')], string='Type of Offer', required=False,default='saas')
+    type_of_offer = fields.Selection([('saas', 'SaaS'), ('pass', 'PaaS'),('battery', 'Battery'),
+                                      ('pass_diesel', 'PaaS Diesel'),('lease', 'Lease to'), ('own', 'Own'),
+                                      ('sale', 'Sale')], string='Type of Offer', required=False,default='saas')
     size = fields.Float(string='Size (kWp)')
     
     state = fields.Selection([
