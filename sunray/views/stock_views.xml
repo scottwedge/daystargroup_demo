@@ -627,6 +627,10 @@
 	        <field name="model">sale.order</field>
 	        <field name="inherit_id" ref="sale.view_order_form" />
 	        <field name="arch" type="xml">
+	        	<field name="name" position="before">
+	            	<field name= "need_management_approval" invisible = "1"/>
+	            	<h3 attrs="{'invisible': [('need_management_approval', '=', False)]}"><b>Needs Management Approval, The Management has been notified </b></h3>
+	            </field>
 				<xpath expr="//field[@name='order_line']/tree/field[@name='product_id']" position="before">
 	            	<field name="type" required = "1"/>
 	            </xpath>
@@ -641,6 +645,9 @@
         	<xpath expr="//button[@name='button_unreserve']" position="after">
         		<button name="create_store_request" string="Request From Store" type="object" groups="base.group_user"/>
         	</xpath>
+        	<xpath expr="//button[@name='action_assign']" position="before">
+        		<button name="button_mrp_approved" string="Approve MO" type="object" class="btn-primary" groups="sunray.group_head_projects,project.group_project_manager"/>
+       		</xpath>
         	<field name="product_id" position="before">
 	    		<field name="project_id"/>
 			</field>
@@ -761,6 +768,7 @@
 				  	<field name="project_budget" widget="Monetary"/>
 				</field>
 				<field name="partner_id" position="after">
+				  	<field name="project_code_id" domain="[('type','=','other')]"/>
 				  	<field name="monthly_maintenance_schedule"/>
 				  	<field name="client_site_visit"/>
 				  	<field name="internal_external_monthly"/>

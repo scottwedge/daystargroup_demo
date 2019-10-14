@@ -16,7 +16,7 @@
     # Check https://github.com/odoo/odoo/blob/master/odoo/addons/base/module/module_data.xml
     # for the full list
     'category': 'Sunray',
-    'version': '0.24',
+    'version': '0.27',
 
     # any module necessary for this one to work correctly
     'depends': ['base','hr','crm','sale','hr_expense','hr_holidays','project','purchase','helpdesk','stock','product','account_budget','purchase_requisition','mrp'],
@@ -28,6 +28,7 @@
         'data/data.xml',
         'views/views.xml',
         'views/stock_views.xml',
+        'views/vendor_request_info_template.xml',
         #'views/templates.xml',
         #'views/website_netcom_hr_recruitment_template.xml',
     ],
