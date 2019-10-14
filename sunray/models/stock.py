@@ -618,6 +618,7 @@ class SaleOrder(models.Model):
             subject = "Sales Order {} needs management approval".format(self.name)
             self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
             return False
+            raise ValidationError(_('Only your line manager can approve your leave request.'))
         else:
             self.need_approval = False
             

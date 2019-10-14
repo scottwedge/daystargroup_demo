@@ -52,6 +52,20 @@
         	<field name="company_id" eval="False"/>
         </record>
         
+        <record id="sunray.model_vendor_request" model="ir.model">
+            <field name="website_form_default_field_id" ref="crm.field_crm_lead__description" />
+            <field name="website_form_access">True</field>
+            <field name="website_form_label">Vendor Information</field>
+        </record>
+        <function model="ir.model.fields" name="formbuilder_whitelist">
+            <value>vendor.request</value>
+            <value eval="[
+                'email',
+                'name',
+                'phone',
+            ]"/>
+        </function>
+        
        <!-- <record model="mail.channel" id="channel_all_bom">
             <field name="name">BOM Creation for Engineers</field>
             <field name="public">private</field>

@@ -4,6 +4,7 @@ import datetime
 
 from datetime import date, timedelta
 from dateutil.relativedelta import relativedelta
+from ast import literal_eval
 from odoo.exceptions import UserError, AccessError, ValidationError
 from odoo import api, fields, models, _
 
@@ -435,7 +436,6 @@ class Job(models.Model):
 
 
 class VendorRequest(models.Model):
-    
     _name = "vendor.request"
     _description = "vendor request form"
     _order = "name"
@@ -462,6 +462,8 @@ class VendorRequest(models.Model):
     employee_id = fields.Many2one(comodel_name='hr.employee', string='Requesting Employee', default=_default_employee)
     
     vendor_registration = fields.Boolean ('Vendor fully Registered', track_visibility="onchange", readonly=True)
+    
+    checklist_count = fields.Integer(compute="_checklist_count",string="Checklist", store=False)
     
     @api.depends('is_company', 'parent_id.commercial_partner_id')
     def _compute_commercial_partner(self):
@@ -531,10 +533,31 @@ class VendorRequest(models.Model):
         return {}
     
     @api.multi
+    def open_checklist_ticket(self):
+        self.ensure_one()
+        action = self.env.ref('sunray.sunray_vendor_request_checklist_action').read()[0]
+        action['domain'] = literal_eval(action['domain'])
+        action['domain'].append(('name', 'child_of', self.id))
+        return action
+    
+    @api.multi
     def button_reject(self):
         self.write({'state': 'reject'})
         return {}
-
+    
+    @api.multi
+    def _checklist_count(self):
+        oe_checklist = self.env['vendor.internal.approval.checklist']
+        for pa in self:
+            domain = [('name', '=', pa.id)]
+            pres_ids = oe_checklist.search(domain)
+            pres = oe_checklist.browse(pres_ids)
+            checklist_count = 0
+            for pr in pres:
+                checklist_count+=1
+            pa.checklist_count = checklist_count
+        return True
+    
 class HolidaysRequest(models.Model):
     _name = "hr.leave"
     _inherit = "hr.leave"
@@ -1501,4 +1524,104 @@ class ProjectChangeRequestLine(models.Model):
     project_change_request_priority = fields.Selection([('0', '0'),('1', 'Low'), ('2', 'Medium'), ('3', 'High'), ('4', 'Urgent')], string='Priority', required=False)
 
     comments = fields.Char(string='Comments')
+    
+class VendorRequestersReport(models.Model):
+    _name = "vendor.requesters.report"
+    _description = 'Vendor Requesters Report'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
+    
+    def _get_employee_id(self):
+        employee_rec = self.env['hr.employee'].search([('user_id', '=', self.env.uid)], limit=1)
+        return employee_rec.id
+    
+    name = fields.Char(string='Customer Name', required=True)
+    code = fields.Char(string='Customer Code', required=True)
+    vendor_request_line = fields.One2many(comodel_name='vendor.requesters.report.line', inverse_name='line_id')
+    vendor_request_line_two = fields.One2many(comodel_name='vendor.requesters.report.line.two', inverse_name='line_two_id')
+    overview = fields.Text(string='Overview of matrial funds Code')
+    
+    requester_name_id = fields.Many2one(comodel_name='hr.employee', string="Requester's name", default=_get_employee_id, required=True) 
+    position = fields.Many2one(comodel_name='hr.job', string="Position", related="requester_name_id.job_id") 
+    date = fields.Date(string='Date')
+    signature = fields.Many2one(comodel_name='res.users', string="Signature") 
+    
+class VendorRequestersReportLine(models.Model):
+    _name = "vendor.requesters.report.line"
+    
+    line_id = fields.Many2one(comodel_name='vendor.requesters.report')
+    individuals_searched = fields.Char(string='Individuals searched')
+    investors_senior_management = fields.Char(string='Investors or senior management?')
+    findings = fields.Selection([('none', 'None'), ('yes', 'Yes ')], string='Findings (None/Yes)')
+    description = fields.Char(string='Description')
+    
+class VendorRequestersReportLineTwo(models.Model):
+    _name = "vendor.requesters.report.line.two"
+    
+    line_two_id = fields.Many2one(comodel_name='vendor.requesters.report')
+    entities_searched = fields.Char(string='Entities searched')
+    parent_entities = fields.Char(string='Parent entities or ultimate parent entities?')
+    findings = fields.Selection([('none', 'None'), ('yes', 'Yes ')], string='Findings (None/Yes)')
+    description = fields.Char(string='Description')
+    
+class VendorInternalApprovalChecklist(models.Model):
+    _name = "vendor.internal.approval.checklist"
+    _description = 'Vendor Internal Approval Checklist'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
+    
+    
+    @api.model
+    def _get_default_partner(self):
+        ctx = self._context
+        if ctx.get('active_model') == 'vendor.request':
+            return self.env['vendor.request'].browse(ctx.get('active_ids')[0]).id
+
+    
+    name = fields.Many2one(comodel_name='vendor.request', string='Vendor Request', default=_get_default_partner)
+    
+    @api.multi
+    def button_select_all(self):
+        self.write({'completed_vendor_information': True})
+        self.write({'report_of_proposers_follow_up': True})
+        self.write({'true_copy_incorporation': True})
+        self.write({'true_copy_memorandum': True})
+        self.write({'true_copy_form_c02': True})
+        self.write({'Vat_cert': True})
+        self.write({'sign_and_stamp': True})
+        self.write({'current_dpr': True})
+        self.write({'commercial_certificate': True})
+        self.write({'proposers_report': True})
+        self.write({'copies_of_required_specialist': True})
+        self.write({'evidence_of_tax': True})
+        self.write({'code_of_conduct': True})
+        self.write({'specific_references': True})
+        self.write({'latest_financials': True})
+        return {}
+    
+    completed_vendor_information = fields.Boolean(string="COMPLETED VENDOR INFORMATION FORM (AS  ATTACHED)")
+    report_of_proposers_follow_up = fields.Boolean(string="REPORT OF PROPOSER'S FOLLOW UP REVIEW OF SECTIONS 4 & 5")
+    true_copy_incorporation = fields.Boolean(string="COPY OF CERTIFICATE OF INCORPORATION / BUSINESS NAME REGISTRATION CERTIFICATE")
+    true_copy_memorandum = fields.Boolean(string="CERTIFIED TRUE COPY OF MEMORANDUM AND ARTICLE OF  ASSOCIATION FOR LIMITED LIABILITY COMPANIES")
+    true_copy_form_c02 = fields.Boolean(string="CERTIFIED TRUE COPY OF FORM C02 AND C07 FOR LIMITED LIABILITY COMPANIES")
+    Vat_cert = fields.Boolean(string="VAT CERTIFICATE / FIRS REGISTRATION CERTIFICATE")
+    sign_and_stamp = fields.Boolean(string="SIGN AND STAMP THE FOLLOWING SUNRAY VENRURES GENERAL TERMS & CONDITIONS BY AUTHORIZED STAFF")
+
+    current_dpr = fields.Boolean(string="CURRENT DPR CERTIFICATE (If Applicable)")
+    commercial_certificate = fields.Boolean(string="COMMERCIAL PROPOSAL OR WEBSITE REVIEW (COMPANY PROFILE INCLUDING DETAILS OF MANAGEMENT TEAM, REFERENCES & CASE STUDIES)")
+    proposers_report = fields.Boolean(string="PROPOSER'S REPORT CONFIRMING CLEAN REVIEW ON INTERNET & OTHER AVAILABLE SOURCES (IF NOT CLEAN, FURTHER INFORMATION ON MATTERS IDENTIFIED)")
+    copies_of_required_specialist = fields.Boolean(string="COPIES OF REQUIRED SPECIALIST CERTIFICATIONS, REGISTRATIONS & LICENCES (If Applicable)")
+
+    recommendation_letters_from_applicant = fields.Boolean(string="RECOMMENDATION LETTER FROM APPLICANT BANKERS IN RESPECT TO THE OPERATION OF HIS/HER COMPANY'S ACCOUNT")
+    evidence_of_tax = fields.Boolean(string="EVIDENCE OF TAX PAYMENT")
+    code_of_conduct = fields.Boolean(string="CODE OF CONDUCT AND CODE OF ETHICS - SIGNED BY THE COMPANY'S MD OR AUTHORIZED STAFF")
+    specific_references = fields.Boolean(string="SPECIFIC REFERENCES")
+    latest_financials = fields.Boolean(string="LATEST FINANCIAL STATEMENTS / KEY KPIs")
+
+    
+    
+    
+    
+    
+    
+    
+    
                 
