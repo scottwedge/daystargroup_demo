@@ -19,7 +19,7 @@
     'version': '0.24',
 
     # any module necessary for this one to work correctly
-    'depends': ['base','hr','hr_expense','project','purchase','helpdesk','stock','product','account_budget','purchase_requisition','mrp'],
+    'depends': ['base','hr','crm','sale','hr_expense','hr_holidays','project','purchase','helpdesk','stock','product','account_budget','purchase_requisition','mrp'],
 
     # always loaded
     'data': [
