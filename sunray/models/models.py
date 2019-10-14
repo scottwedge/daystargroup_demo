@@ -1549,6 +1549,7 @@ class VendorRequestersReport(models.Model):
     
 class VendorRequestersReportLine(models.Model):
     _name = "vendor.requesters.report.line"
+    _description = 'Vendor requesters report line 1'
     
     line_id = fields.Many2one(comodel_name='vendor.requesters.report')
     individuals_searched = fields.Char(string='Individuals searched')
@@ -1558,6 +1559,7 @@ class VendorRequestersReportLine(models.Model):
     
 class VendorRequestersReportLineTwo(models.Model):
     _name = "vendor.requesters.report.line.two"
+    _description = 'Vendor requesters report line 2'
     
     line_two_id = fields.Many2one(comodel_name='vendor.requesters.report')
     entities_searched = fields.Char(string='Entities searched')
