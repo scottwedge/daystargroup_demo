@@ -16,7 +16,7 @@
     # Check https://github.com/odoo/odoo/blob/master/odoo/addons/base/module/module_data.xml
     # for the full list
     'category': 'Sunray',
-    'version': '0.26',
+    'version': '0.27',
 
     # any module necessary for this one to work correctly
     'depends': ['base','hr','crm','hr_expense','project','purchase','helpdesk','stock','product','account_budget','purchase_requisition','mrp'],
