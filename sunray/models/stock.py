@@ -55,8 +55,11 @@ class Partner(models.Model):
     
     @api.model
     def create(self, vals):
-        if 'customer' in vals and vals['customer'] == True:
+        if 'customer' in vals and vals['customer'] == True and vals['parent_id'] == False:
             vals['parent_account_number'] = self.env['ir.sequence'].next_by_code('res.partner') or '/'
+        else:
+            if 'customer' in vals and vals['customer'] == True and vals['type'] == 'other':
+                vals['parent_account_number'] = self.env['ir.sequence'].next_by_code('res.partner.sub') or '/'
         return super(Partner, self).create(vals)
     
     @api.multi
@@ -113,6 +116,46 @@ class Partner(models.Model):
     @api.multi
     def button_reject(self):
         self.write({'state': 'reject'})
+        return {}
+    
+    #this is the vendor checklist
+    completed_vendor_information = fields.Boolean(string="COMPLETED VENDOR INFORMATION FORM (AS  ATTACHED)")
+    report_of_proposers_follow_up = fields.Boolean(string="REPORT OF PROPOSER'S FOLLOW UP REVIEW OF SECTIONS 4 & 5")
+    true_copy_incorporation = fields.Boolean(string="COPY OF CERTIFICATE OF INCORPORATION / BUSINESS NAME REGISTRATION CERTIFICATE")
+    true_copy_memorandum = fields.Boolean(string="CERTIFIED TRUE COPY OF MEMORANDUM AND ARTICLE OF  ASSOCIATION FOR LIMITED LIABILITY COMPANIES")
+    true_copy_form_c02 = fields.Boolean(string="CERTIFIED TRUE COPY OF FORM C02 AND C07 FOR LIMITED LIABILITY COMPANIES")
+    Vat_cert = fields.Boolean(string="VAT CERTIFICATE / FIRS REGISTRATION CERTIFICATE")
+    sign_and_stamp = fields.Boolean(string="SIGN AND STAMP THE FOLLOWING SUNRAY VENRURES GENERAL TERMS & CONDITIONS BY AUTHORIZED STAFF")
+
+    current_dpr = fields.Boolean(string="CURRENT DPR CERTIFICATE (If Applicable)")
+    commercial_certificate = fields.Boolean(string="COMMERCIAL PROPOSAL OR WEBSITE REVIEW (COMPANY PROFILE INCLUDING DETAILS OF MANAGEMENT TEAM, REFERENCES & CASE STUDIES)")
+    proposers_report = fields.Boolean(string="PROPOSER'S REPORT CONFIRMING CLEAN REVIEW ON INTERNET & OTHER AVAILABLE SOURCES (IF NOT CLEAN, FURTHER INFORMATION ON MATTERS IDENTIFIED)")
+    copies_of_required_specialist = fields.Boolean(string="COPIES OF REQUIRED SPECIALIST CERTIFICATIONS, REGISTRATIONS & LICENCES (If Applicable)")
+
+    recommendation_letters_from_applicant = fields.Boolean(string="RECOMMENDATION LETTER FROM APPLICANT BANKERS IN RESPECT TO THE OPERATION OF HIS/HER COMPANY'S ACCOUNT")
+    evidence_of_tax = fields.Boolean(string="EVIDENCE OF TAX PAYMENT")
+    code_of_conduct = fields.Boolean(string="CODE OF CONDUCT AND CODE OF ETHICS - SIGNED BY THE COMPANY'S MD OR AUTHORIZED STAFF")
+    specific_references = fields.Boolean(string="SPECIFIC REFERENCES")
+    latest_financials = fields.Boolean(string="LATEST FINANCIAL STATEMENTS / KEY KPIs")
+    
+    @api.multi
+    def button_select_all(self):
+        self.write({'completed_vendor_information': True})
+        self.write({'report_of_proposers_follow_up': True})
+        self.write({'true_copy_incorporation': True})
+        self.write({'true_copy_memorandum': True})
+        self.write({'true_copy_form_c02': True})
+        self.write({'Vat_cert': True})
+        self.write({'sign_and_stamp': True})
+        self.write({'current_dpr': True})
+        self.write({'commercial_certificate': True})
+        self.write({'proposers_report': True})
+        self.write({'copies_of_required_specialist': True})
+        self.write({'evidence_of_tax': True})
+        self.write({'recommendation_letters_from_applicant': True})
+        self.write({'code_of_conduct': True})
+        self.write({'specific_references': True})
+        self.write({'latest_financials': True})
         return {}
     
 class HrExpenseSheet(models.Model):
