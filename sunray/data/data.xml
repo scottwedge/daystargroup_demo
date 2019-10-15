@@ -52,6 +52,14 @@
         	<field name="company_id" eval="False"/>
         </record>
         
+        <record id="seq_site_code" model="ir.sequence">
+        	<field name="name">SIte Code</field>
+        	<field name="code">project.site.code</field>
+        	<field name="prefix"></field>
+        	<field name="padding">4</field>
+        	<field name="company_id" eval="False"/>
+        </record>
+        
         <record id="sunray.model_vendor_request" model="ir.model">
             <field name="website_form_default_field_id" ref="crm.field_crm_lead__description" />
             <field name="website_form_access">True</field>

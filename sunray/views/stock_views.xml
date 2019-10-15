@@ -328,7 +328,13 @@
             <field name="partner_id"/>
         </field>
     </record>
-
+	
+	<record model="ir.actions.act_window" id="site_location_action_window">
+      <field name="name">Site Location</field>
+      <field name="res_model">site.location</field>
+      <field name="view_mode">tree,form</field>
+    </record>
+	
     <!-- project decisions form view--> 
     <record id="project_decision_form_view" model="ir.ui.view">
     <field name="name">project.decision.form</field>
@@ -515,6 +521,34 @@
 		</field>
 	</record>
 	
+	<record model="ir.ui.view" id="site_location_tree_view">
+        <field name="name">site.location.tree</field>
+        <field name="model">site.location</field>
+        <field name="type">tree</field>
+        <field name="arch" type="xml">
+            <field name="name"/>
+            <field name="code"/>
+            <field name="active"/>
+        </field>
+    </record>
+	
+	<record model="ir.ui.view" id="site_location_form_view">
+        <field name="name">site location</field>
+        <field name="model">site.location</field>
+        <field name="type">form</field>
+        <field name="arch" type="xml">
+            <form string = "Site Location">
+                <sheet>
+                    <group col="4" colspan="2">
+                        <field name="name"/>
+                        <field name="code"/>
+                        <field name="active"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+	
 	<record id="project_checklist_form_view" model="ir.ui.view">
     <field name="name">project.checklist.form</field>
     <field name="model">project.checklist</field>
@@ -618,6 +652,7 @@
 				</field>
 				<field name="function" position="before">
 		    		<field name="parent_account_number" readonly="1"/>
+		    		<field name="client_code" readonly="0"/>
 				</field>
 	        </field>
 	</record>
@@ -753,6 +788,12 @@
 	                        <span class="o_stat_text">Manufacturing Orders</span>
 	                    </div>
 	                </button>
+	                <button class="oe_stat_button" type="object" name="open_parent_project" icon="fa-gears">
+	                    <div class="o_stat_info">
+	                        <field name="parent_project_count" class="o_stat_value"/>
+	                        <span class="o_stat_text">Parent Project</span>
+	                    </div>
+	                </button>
 	            </xpath>
 	           	<field name="user_id" position="before">
 	           		<field name="parent_project_id"/>
@@ -768,10 +809,12 @@
 				  	<field name="project_budget" widget="Monetary"/>
 				</field>
 				<field name="partner_id" position="after">
+					<field name="site_location_id"/>
 				  	<field name="project_code_id" domain="[('type','=','other')]"/>
 				  	<field name="monthly_maintenance_schedule"/>
 				  	<field name="client_site_visit"/>
 				  	<field name="internal_external_monthly"/>
+				  	<field name="default_site_code"/>
 				</field>
 				<field name="message_follower_ids" position="after">
 				  	<field name="activity_ids" widget="mail_activity"/>
@@ -1029,6 +1072,8 @@
 	
 	<menuitem name="Store Request" id="store_request" parent="stock.menu_stock_root"
               action="store_req_action1_window"/>
-	
+	<menuitem name="Site_Location" id="site_location_id" parent="stock.menu_product_in_config_stock"
+              action="site_location_action_window"/>
+              
   </data>
 </odoo>

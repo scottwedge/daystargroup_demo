@@ -49,6 +49,8 @@ class Partner(models.Model):
     
     parent_account_number = fields.Char(string='Parent Account Number', required=False, index=True, copy=False, store=True)
     
+    client_code = fields.Char(string='Client Code', required=False, index=True, copy=False, store=True)
+    
     vendor_registration = fields.Boolean ('Vendor fully Registered', track_visibility="onchange", readonly=True)
     
     @api.model
@@ -629,7 +631,17 @@ class SaleOrderLine(models.Model):
     _inherit = ['sale.order.line']
     
     type = fields.Selection([('sale', 'Sale'), ('lease', 'Lease')], string='Type', required=True, default='sale')
-    
+
+class SiteLocation(models.Model):
+    _name = "site.location"
+    _description = "Site Location"
+    _order = "name"
+    _inherit = ['mail.thread']
+
+    name = fields.Many2one(comodel_name='res.country.state', string='Site location (State)', required=True, track_visibility='onchange')
+    code = fields.Char('Code', required=True, track_visibility='onchange')
+    active = fields.Boolean('Active', default='True')
+
 class Project(models.Model):
     _name = "project.project"
     _inherit = ['project.project', 'mail.activity.mixin', 'rating.mixin']
@@ -666,6 +678,8 @@ class Project(models.Model):
     
     mo_count = fields.Integer(compute="_mo_count",string="Manufacturing Orders", store=False)
     
+    parent_project_count = fields.Integer(compute="_parent_project_count",string="Parent Project(s)", store=False)
+    
     crm_lead_id = fields.Many2one(comodel_name='crm.lead', string='Lead')
     
     parent_project_id = fields.Many2one(comodel_name='project.project', string='Parent Project')
@@ -687,12 +701,32 @@ class Project(models.Model):
     
     project_code_id = fields.Many2one(comodel_name='res.partner', string='Project Code', help="Client sub account code")
     
+    site_location_id = fields.Many2one(comodel_name='site.location', string='Site Location')
+    
+    default_site_code = fields.Char(string='Site Code')
+    
+    #@api.model
+    #def create(self, vals):
+     #   site = self.env['site.location'].search([('id','=',vals['site_location_id'])])
+      #  client = self.env['res.partner'].search([('id','=',vals['partner_id'])])
+       # code = site.code + client.client_code
+       # 
+        #no = self.env['ir.sequence'].next_by_code('project.site.code')
+        #site_code = code + str(no)
+        #vals['default_site_code'] = site_code
+        #return super(Project, self).create(vals)
     
     @api.model
     def create(self, vals):
-        result = super(Project, self).create(vals)
-        result.send_project_commencement_mail()
-        return result
+        site = self.env['site.location'].search([('id','=',vals['site_location_id'])])
+        client = self.env['res.partner'].search([('id','=',vals['partner_id'])])
+        code = client.client_code + site.code
+        
+        no = self.env['ir.sequence'].next_by_code('project.site.code')
+        site_code = code + str(no)
+        vals['default_site_code'] = site_code
+        self.send_project_commencement_mail()
+        return super(Project, self).create(vals)
     
     @api.multi
     def send_project_commencement_mail(self):
@@ -811,6 +845,20 @@ class Project(models.Model):
         return True
     
     @api.multi
+    def _parent_project_count(self):
+        oe_checklist = self.env['project.project']
+        for pa in self:
+                domain = [('id', '=', pa.id)]
+                pres_ids = oe_checklist.search(domain)
+                pres = oe_checklist.browse(pres_ids)
+                parent_project_count = 0
+                for pr in pres:
+                    parent_project_count+=1
+                pa.parent_project_count = parent_project_count
+        return True
+    
+    
+    @api.multi
     def open_project_checklist(self):
         self.ensure_one()
         action = self.env.ref('sunray.sunray_project_checklist_action').read()[0]
@@ -870,6 +918,14 @@ class Project(models.Model):
     def open_project_ehs(self):
         self.ensure_one()
         action = self.env.ref('sunray.sunray_project_ehsform_action').read()[0]
+        action['domain'] = literal_eval(action['domain'])
+        action['domain'].append(('partner_id', 'child_of', self.partner_id.id))
+        return action
+    
+    @api.multi
+    def open_parent_project(self):
+        self.ensure_one()
+        action = self.env.ref('project.open_view_project_all').read()[0]
         action['domain'] = literal_eval(action['domain'])
         action['domain'].append(('partner_id', 'child_of', self.partner_id.id))
         return action

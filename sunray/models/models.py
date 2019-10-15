@@ -1596,6 +1596,7 @@ class VendorInternalApprovalChecklist(models.Model):
         self.write({'proposers_report': True})
         self.write({'copies_of_required_specialist': True})
         self.write({'evidence_of_tax': True})
+        self.write({'recommendation_letters_from_applicant': True})
         self.write({'code_of_conduct': True})
         self.write({'specific_references': True})
         self.write({'latest_financials': True})
