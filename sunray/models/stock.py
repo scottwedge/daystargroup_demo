@@ -687,7 +687,7 @@ class SiteLocation(models.Model):
 
 class Project(models.Model):
     _name = "project.project"
-    _inherit = ['project.project', 'mail.activity.mixin', 'rating.mixin']
+    _inherit = ['project.project', 'mail.thread', 'mail.activity.mixin', 'rating.mixin']
     _description = "Project"
     
     def _default_analytic(self):
@@ -759,6 +759,7 @@ class Project(models.Model):
         #vals['default_site_code'] = site_code
         #return super(Project, self).create(vals)
     
+    '''
     @api.model
     def create(self, vals):
         site = self.env['site.location'].search([('id','=',vals['site_location_id'])])
@@ -768,12 +769,30 @@ class Project(models.Model):
         no = self.env['ir.sequence'].next_by_code('project.site.code')
         site_code = code + str(no)
         vals['default_site_code'] = site_code
-        self.send_project_commencement_mail()
+        
+        result = super(PurchaseOrder, self).create(vals)
+        result.send_store_request_mail()
+        return result
+    '''
+    
+    @api.model
+    def create(self, vals):
+        site = self.env['site.location'].search([('id','=',vals['site_location_id'])])
+        client = self.env['res.partner'].search([('id','=',vals['partner_id'])])
+        code = client.client_code + site.code
+        
+        no = self.env['ir.sequence'].next_by_code('project.site.code')
+        site_code = code + str(no)
+        vals['default_site_code'] = site_code
+        
+        a = super(Project, self).create(vals)
+        a.send_project_commencement_mail()
+        return a
         return super(Project, self).create(vals)
     
     @api.multi
     def send_project_commencement_mail(self):
-        config = self.env['mail.template'].sudo().search([('name','=','Project Commencement Email')], limit=1)
+        config = self.env['mail.template'].sudo().search([('name','=','Project')], limit=1)
         mail_obj = self.env['mail.mail']
         if config:
             values = config.generate_email(self.id)
