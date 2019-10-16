@@ -743,7 +743,7 @@ class Project(models.Model):
     
     monthly_maintenance_schedule = fields.Datetime(string="Monthly Maintenance Schedule", track_visibility="onchange")
     client_site_visit = fields.Datetime(string="Client Site Visit", track_visibility="onchange")
-    internal_external_monthly = fields.Datetime(string="Internal External Monthly", track_visibility="onchange")
+    internal_external_monthly = fields.Date(string="Internal External Monthly", track_visibility="onchange")
     
     lead_technician_id = fields.Many2one(comodel_name='res.users', string='Lead Technician')
     quality_assurance_id = fields.Many2one(comodel_name='res.users', string='Quality Assurance Engineer')
