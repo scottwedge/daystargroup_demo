@@ -723,6 +723,7 @@
 	            </field>
 				<xpath expr="//field[@name='order_line']/tree/field[@name='product_id']" position="before">
 	            	<field name="type" required = "1"/>
+	            	<field name="project_id" required = "0"/>
 	            </xpath>
 	        </field>
 	</record>
@@ -793,7 +794,7 @@
 	        <field name="arch" type="xml">
 	        	<xpath expr="//header" position="inside">
 	        		<!-- <button name="create_purchase_agreement" class="btn-primary" string="Create Purchase Agreement" type="object"/>-->
-	        		<button name="create_store_request" class="btn-primary" string="Create Store Request" type="object"/>
+	        		<!-- <button name="create_store_request" class="btn-primary" string="Create Store Request" type="object"/>  -->
 	        		<button name="create_manufacturing_order" class="btn-primary" string="Create Manufacturing Order" type="object"/>
 	            	<field name="state" widget="statusbar" statusbar_visible="kick_off,project_plan,supply_chain_project_execution,qc_sign_off,customer_sign_off,close_out" clickable="1"/>
 	            </xpath>
@@ -846,12 +847,12 @@
 	                        <span class="o_stat_text">Manufacturing Orders</span>
 	                    </div>
 	                </button>
-	                <button class="oe_stat_button" type="object" name="open_parent_project" icon="fa-gears">
+	                <!-- <button class="oe_stat_button" type="object" name="open_parent_project" icon="fa-gears">
 	                    <div class="o_stat_info">
 	                        <field name="parent_project_count" class="o_stat_value"/>
 	                        <span class="o_stat_text">Parent Project</span>
 	                    </div>
-	                </button>
+	                </button>  -->
 	            </xpath>
 	           	<field name="user_id" position="before">
 	           		<field name="parent_project_id"/>
@@ -861,8 +862,8 @@
 					<field name="lead_technician_id"/>
 				  	<field name="quality_assurance_id"/>
 				  	<field name="project_engineers_id" widget="many2many_tags"/>
-				  	<field name="account_id"/>
-				  	<field name="account_analytic_id"/>
+				  	<!-- <field name="account_id"/>
+				  	<field name="account_analytic_id"/> -->
 				  	<field name="project_plan_file" widget="file"/>
 				  	<field name="project_budget" widget="Monetary"/>
 				</field>
@@ -893,9 +894,13 @@
 				  	<field name="crm_lead_id"/>
 				</field>
 				<field name="user_id" position="after">
+				  	<field name="partner_id" required="1"/>
+				  	<field name="site_location_id" required="1"/>
+				</field>
+				<!-- <field name="user_id" position="after">
 				  	<field name="account_id"/>
 				  	<field name="account_analytic_id"/>
-				</field>
+				</field> -->
 	        </field>
 	</record>
 	

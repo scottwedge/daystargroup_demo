@@ -413,7 +413,7 @@ class PurchaseOrder(models.Model):
         for user in group_id.users:
             user_ids.append(user.id)
             partner_ids.append(user.partner_id.id)
-        self.message_subscribe_users(partner_ids=partner_ids)
+        self.message_subscribe(partner_ids=partner_ids)
         subject = "Purchase Order {} needs a review from legal team".format(self.name)
         self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
         return False
@@ -421,7 +421,7 @@ class PurchaseOrder(models.Model):
     @api.multi
     def button_legal_reviewd(self):
         self.write({'state': 'legal_reviewed'})
-        subject = "Legal team review has been Done, Purchase Order {} can be approved now".format(self.name)
+        subject = "Legal team review has been Done, Purchase Order {} can be confirmed now".format(self.name)
         partner_ids = []
         for partner in self.message_partner_ids:
             partner_ids.append(partner.id)
@@ -454,7 +454,7 @@ class PurchaseOrder(models.Model):
             for user in group_id.users:
                 user_ids.append(user.id)
                 partner_ids.append(user.partner_id.id)
-            self.message_subscribe_users(user_ids=user_ids)
+            self.message_subscribe(partner_ids=partner_ids)
             subject = "Purchase Order {} needs a budget override".format(self.name)
             self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
             return False
@@ -466,7 +466,7 @@ class PurchaseOrder(models.Model):
             if order.state not in ['draft','submit', 'sent']:
                 continue
             #self._check_line_manager()
-            #self._check_line_manager()
+            self._check_line_manager()
             #if self._check_budget() == False and self.need_override:
              #   return {}
             self.approval_date = date.today()
@@ -486,7 +486,7 @@ class PurchaseOrder(models.Model):
     def button_approve(self):
         res = super(PurchaseOrder, self).button_approve()
         self._check_vendor_registration()
-        #self.button_submit_legal()
+        self.button_submit_legal()
         return res
     
     #NOT TO BE USED YET AND DO NOT DELETE THIS 
@@ -651,7 +651,7 @@ class SaleOrder(models.Model):
     
     @api.depends('amount_total')
     def _check_approval(self):
-        if self.amount_total > 180:
+        if self.amount_total > 1807500.00:
             self.need_management_approval = True
             group_id = self.env['ir.model.data'].xmlid_to_object('sunray.group_sale_account_budget')
             user_ids = []
@@ -662,8 +662,9 @@ class SaleOrder(models.Model):
             self.message_subscribe(partner_ids=partner_ids)
             subject = "Sales Order {} needs management approval".format(self.name)
             self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
+            self.state = self.state
             return False
-            raise ValidationError(_('Only your line manager can approve your leave request.'))
+            #raise ValidationError(_('Only your line manager can approve your leave request.'))
         else:
             self.need_approval = False
             
@@ -674,6 +675,7 @@ class SaleOrderLine(models.Model):
     _inherit = ['sale.order.line']
     
     type = fields.Selection([('sale', 'Sale'), ('lease', 'Lease')], string='Type', required=True, default='sale')
+    project_id = fields.Many2one(comodel_name="project.project", string="Site Location")
 
 class SiteLocation(models.Model):
     _name = "site.location"
@@ -692,6 +694,16 @@ class Project(models.Model):
     
     def _default_analytic(self):
         return self.env['account.analytic.account'].search([('name','=','Sunray')])
+    
+    @api.multi
+    def name_get(self):
+        res = []
+        for project in self:
+            result = project.name
+            if project.default_site_code:
+                result = str(project.default_site_code) + " " + "-" + " " + str(project.name)
+            res.append((project.id, result))
+        return res
     
     #def _default_account(self):
     #    return self.product_id.property_account_expense_id
@@ -727,8 +739,8 @@ class Project(models.Model):
     
     parent_project_id = fields.Many2one(comodel_name='project.project', string='Parent Project')
     
-    account_analytic_id = fields.Many2one('account.analytic.account', string='Analytic Acount', required=False, default=_default_analytic, track_visibility="always")
-    account_id = fields.Many2one('account.account', string='Account',  domain = [('user_type_id', 'in', [5,8,17,16])])
+    #account_analytic_id = fields.Many2one('account.analytic.account', string='Analytic Acount', required=False, default=_default_analytic, track_visibility="always")
+    #account_id = fields.Many2one('account.account', string='Account',  domain = [('user_type_id', 'in', [5,8,17,16])])
     
     monthly_maintenance_schedule = fields.Datetime(string="Monthly Maintenance Schedule", track_visibility="onchange")
     client_site_visit = fields.Datetime(string="Client Site Visit", track_visibility="onchange")
@@ -744,7 +756,7 @@ class Project(models.Model):
     
     project_code_id = fields.Many2one(comodel_name='res.partner', string='Project Code', help="Client sub account code")
     
-    site_location_id = fields.Many2one(comodel_name='site.location', string='Site Location')
+    site_location_id = fields.Many2one(comodel_name='res.country.state', string='Site Location')
     
     default_site_code = fields.Char(string='Site Code')
     
@@ -777,9 +789,9 @@ class Project(models.Model):
     
     @api.model
     def create(self, vals):
-        site = self.env['site.location'].search([('id','=',vals['site_location_id'])])
+        site = self.env['res.country.state'].search([('id','=',vals['site_location_id'])])
         client = self.env['res.partner'].search([('id','=',vals['partner_id'])])
-        code = client.client_code + site.code
+        code = client.parent_account_number + site.code
         
         no = self.env['ir.sequence'].next_by_code('project.site.code')
         site_code = code + str(no)
