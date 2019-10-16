@@ -1463,6 +1463,15 @@ class Picking(models.Model):
     
     total_price = fields.Float(string='Total', compute='_total_price', readonly=True, store=True)
     
+    total_cost = fields.Float(string='Total Cost', compute='_total_cost', track_visibility='onchange', readonly=True)
+    
+    @api.multi
+    @api.depends('move_ids_without_package.product_uom_qty')
+    def _total_cost(self):
+        for a in self:
+            for line in a.move_ids_without_package:
+                a.total_cost += line.price_cost * line.product_uom_qty
+    
     @api.depends('total_price')
     def check_approval(self):
         if self.total_price > 1800000:
