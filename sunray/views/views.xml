@@ -62,6 +62,7 @@
             	<button name="%(crm.action_crm_lead2opportunity_partner)d" string="Convert to Opportunity" type="action"
                             help="Convert to Opportunity" class="oe_highlight" attrs="{'invisible': ['|', ('type', '=', 'opportunity'), ('active', '=', False)]}"/>
             </xpath> -->
+
             <xpath expr="//button[@name='toggle_active']" position="replace">
             	<button name="toggle_active"
                         string="Restore"
