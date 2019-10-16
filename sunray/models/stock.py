@@ -1691,6 +1691,8 @@ class MrpProduction(models.Model):
     
     project_budget = fields.Float(string='Project Budget', related='project_id.project_budget', track_visibility='onchange', readonly=True)
     
+    approved_mo = fields.Boolean ('Approved MO', track_visibility="onchange", readonly=True)
+    
     @api.model
     def create(self, vals):
         result = super(MrpProduction, self).create(vals)
@@ -1713,6 +1715,7 @@ class MrpProduction(models.Model):
     @api.multi
     def button_mrp_approved(self):
         self.write({'state': 'confirmed'})
+        self.approved_mo = True
         subject = "Manufacturing Order {} has been approved".format(self.name)
         partner_ids = []
         for partner in self.message_partner_ids:
