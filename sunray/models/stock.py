@@ -662,7 +662,6 @@ class SaleOrder(models.Model):
             self.message_subscribe(partner_ids=partner_ids)
             subject = "Sales Order {} needs management approval".format(self.name)
             self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
-            self.state = self.state
             return False
             #raise ValidationError(_('Only your line manager can approve your leave request.'))
         else:
@@ -760,7 +759,7 @@ class Project(models.Model):
     
     default_site_code = fields.Char(string='Site Code') 
     
-    
+    client_type = fields.Char(string='Client Type')
     site_area = fields.Char(string='Site Area')
     site_address = fields.Char(string='Site Address')
     site_type = fields.Char(string='Site Type')
