@@ -58,10 +58,10 @@
 				<button name="button_reset" states="reject" string="Set to Draft" type="object" />
 				<field name="state" widget="statusbar" statusbar_visible="draft,submit,approve" readonly="1"/>
             </xpath>
-            <xpath expr="//button[@name='137']" position="replace">
+            <!-- <xpath expr="//button[@name='137']" position="replace">
             	<button name="%(crm.action_crm_lead2opportunity_partner)d" string="Convert to Opportunity" type="action"
                             help="Convert to Opportunity" class="oe_highlight" attrs="{'invisible': ['|', ('type', '=', 'opportunity'), ('active', '=', False)]}"/>
-            </xpath>
+            </xpath> -->
             <xpath expr="//button[@name='toggle_active']" position="replace">
             	<button name="toggle_active"
                         string="Restore"
