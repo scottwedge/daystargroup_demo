@@ -49,12 +49,17 @@ class Partner(models.Model):
     
     parent_account_number = fields.Char(string='Parent Account Number', required=False, index=True, copy=False, store=True)
     
+    client_code = fields.Char(string='Client Code', required=False, index=True, copy=False, store=True)
+    
     vendor_registration = fields.Boolean ('Vendor fully Registered', track_visibility="onchange", readonly=True)
     
     @api.model
     def create(self, vals):
-        if 'customer' in vals and vals['customer'] == True:
+        if 'customer' in vals and vals['customer'] == True and vals['parent_id'] == False:
             vals['parent_account_number'] = self.env['ir.sequence'].next_by_code('res.partner') or '/'
+        else:
+            if 'customer' in vals and vals['customer'] == True and vals['type'] == 'other':
+                vals['parent_account_number'] = self.env['ir.sequence'].next_by_code('res.partner.sub') or '/'
         return super(Partner, self).create(vals)
     
     @api.multi
@@ -111,6 +116,46 @@ class Partner(models.Model):
     @api.multi
     def button_reject(self):
         self.write({'state': 'reject'})
+        return {}
+    
+    #this is the vendor checklist
+    completed_vendor_information = fields.Boolean(string="COMPLETED VENDOR INFORMATION FORM (AS  ATTACHED)")
+    report_of_proposers_follow_up = fields.Boolean(string="REPORT OF PROPOSER'S FOLLOW UP REVIEW OF SECTIONS 4 & 5")
+    true_copy_incorporation = fields.Boolean(string="COPY OF CERTIFICATE OF INCORPORATION / BUSINESS NAME REGISTRATION CERTIFICATE")
+    true_copy_memorandum = fields.Boolean(string="CERTIFIED TRUE COPY OF MEMORANDUM AND ARTICLE OF  ASSOCIATION FOR LIMITED LIABILITY COMPANIES")
+    true_copy_form_c02 = fields.Boolean(string="CERTIFIED TRUE COPY OF FORM C02 AND C07 FOR LIMITED LIABILITY COMPANIES")
+    Vat_cert = fields.Boolean(string="VAT CERTIFICATE / FIRS REGISTRATION CERTIFICATE")
+    sign_and_stamp = fields.Boolean(string="SIGN AND STAMP THE FOLLOWING SUNRAY VENRURES GENERAL TERMS & CONDITIONS BY AUTHORIZED STAFF")
+
+    current_dpr = fields.Boolean(string="CURRENT DPR CERTIFICATE (If Applicable)")
+    commercial_certificate = fields.Boolean(string="COMMERCIAL PROPOSAL OR WEBSITE REVIEW (COMPANY PROFILE INCLUDING DETAILS OF MANAGEMENT TEAM, REFERENCES & CASE STUDIES)")
+    proposers_report = fields.Boolean(string="PROPOSER'S REPORT CONFIRMING CLEAN REVIEW ON INTERNET & OTHER AVAILABLE SOURCES (IF NOT CLEAN, FURTHER INFORMATION ON MATTERS IDENTIFIED)")
+    copies_of_required_specialist = fields.Boolean(string="COPIES OF REQUIRED SPECIALIST CERTIFICATIONS, REGISTRATIONS & LICENCES (If Applicable)")
+
+    recommendation_letters_from_applicant = fields.Boolean(string="RECOMMENDATION LETTER FROM APPLICANT BANKERS IN RESPECT TO THE OPERATION OF HIS/HER COMPANY'S ACCOUNT")
+    evidence_of_tax = fields.Boolean(string="EVIDENCE OF TAX PAYMENT")
+    code_of_conduct = fields.Boolean(string="CODE OF CONDUCT AND CODE OF ETHICS - SIGNED BY THE COMPANY'S MD OR AUTHORIZED STAFF")
+    specific_references = fields.Boolean(string="SPECIFIC REFERENCES")
+    latest_financials = fields.Boolean(string="LATEST FINANCIAL STATEMENTS / KEY KPIs")
+    
+    @api.multi
+    def button_select_all(self):
+        self.write({'completed_vendor_information': True})
+        self.write({'report_of_proposers_follow_up': True})
+        self.write({'true_copy_incorporation': True})
+        self.write({'true_copy_memorandum': True})
+        self.write({'true_copy_form_c02': True})
+        self.write({'Vat_cert': True})
+        self.write({'sign_and_stamp': True})
+        self.write({'current_dpr': True})
+        self.write({'commercial_certificate': True})
+        self.write({'proposers_report': True})
+        self.write({'copies_of_required_specialist': True})
+        self.write({'evidence_of_tax': True})
+        self.write({'recommendation_letters_from_applicant': True})
+        self.write({'code_of_conduct': True})
+        self.write({'specific_references': True})
+        self.write({'latest_financials': True})
         return {}
     
 class HrExpenseSheet(models.Model):
@@ -368,7 +413,7 @@ class PurchaseOrder(models.Model):
         for user in group_id.users:
             user_ids.append(user.id)
             partner_ids.append(user.partner_id.id)
-        self.message_subscribe_users(user_ids=user_ids)
+        self.message_subscribe_users(partner_ids=partner_ids)
         subject = "Purchase Order {} needs a review from legal team".format(self.name)
         self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
         return False
@@ -420,8 +465,8 @@ class PurchaseOrder(models.Model):
         for order in self:
             if order.state not in ['draft','submit', 'sent']:
                 continue
-            self._check_line_manager()
-            self._check_line_manager()
+            #self._check_line_manager()
+            #self._check_line_manager()
             #if self._check_budget() == False and self.need_override:
              #   return {}
             self.approval_date = date.today()
@@ -441,7 +486,7 @@ class PurchaseOrder(models.Model):
     def button_approve(self):
         res = super(PurchaseOrder, self).button_approve()
         self._check_vendor_registration()
-        self.button_submit_legal()
+        #self.button_submit_legal()
         return res
     
     #NOT TO BE USED YET AND DO NOT DELETE THIS 
@@ -629,10 +674,20 @@ class SaleOrderLine(models.Model):
     _inherit = ['sale.order.line']
     
     type = fields.Selection([('sale', 'Sale'), ('lease', 'Lease')], string='Type', required=True, default='sale')
-    
+
+class SiteLocation(models.Model):
+    _name = "site.location"
+    _description = "Site Location"
+    _order = "name"
+    _inherit = ['mail.thread']
+
+    name = fields.Many2one(comodel_name='res.country.state', string='Site location (State)', required=True, track_visibility='onchange')
+    code = fields.Char('Code', required=True, track_visibility='onchange')
+    active = fields.Boolean('Active', default='True')
+
 class Project(models.Model):
     _name = "project.project"
-    _inherit = ['project.project', 'mail.activity.mixin', 'rating.mixin']
+    _inherit = ['project.project', 'mail.thread', 'mail.activity.mixin', 'rating.mixin']
     _description = "Project"
     
     def _default_analytic(self):
@@ -666,6 +721,8 @@ class Project(models.Model):
     
     mo_count = fields.Integer(compute="_mo_count",string="Manufacturing Orders", store=False)
     
+    parent_project_count = fields.Integer(compute="_parent_project_count",string="Parent Project(s)", store=False)
+    
     crm_lead_id = fields.Many2one(comodel_name='crm.lead', string='Lead')
     
     parent_project_id = fields.Many2one(comodel_name='project.project', string='Parent Project')
@@ -687,16 +744,55 @@ class Project(models.Model):
     
     project_code_id = fields.Many2one(comodel_name='res.partner', string='Project Code', help="Client sub account code")
     
+    site_location_id = fields.Many2one(comodel_name='site.location', string='Site Location')
+    
+    default_site_code = fields.Char(string='Site Code')
+    
+    #@api.model
+    #def create(self, vals):
+     #   site = self.env['site.location'].search([('id','=',vals['site_location_id'])])
+      #  client = self.env['res.partner'].search([('id','=',vals['partner_id'])])
+       # code = site.code + client.client_code
+       # 
+        #no = self.env['ir.sequence'].next_by_code('project.site.code')
+        #site_code = code + str(no)
+        #vals['default_site_code'] = site_code
+        #return super(Project, self).create(vals)
+    
+    '''
+    @api.model
+    def create(self, vals):
+        site = self.env['site.location'].search([('id','=',vals['site_location_id'])])
+        client = self.env['res.partner'].search([('id','=',vals['partner_id'])])
+        code = client.client_code + site.code
+        
+        no = self.env['ir.sequence'].next_by_code('project.site.code')
+        site_code = code + str(no)
+        vals['default_site_code'] = site_code
+        
+        result = super(PurchaseOrder, self).create(vals)
+        result.send_store_request_mail()
+        return result
+    '''
     
     @api.model
     def create(self, vals):
-        result = super(Project, self).create(vals)
-        result.send_project_commencement_mail()
-        return result
+        site = self.env['site.location'].search([('id','=',vals['site_location_id'])])
+        client = self.env['res.partner'].search([('id','=',vals['partner_id'])])
+        code = client.client_code + site.code
+        
+        no = self.env['ir.sequence'].next_by_code('project.site.code')
+        site_code = code + str(no)
+        vals['default_site_code'] = site_code
+        
+        a = super(Project, self).create(vals)
+        a.send_project_commencement_mail()
+        return a
+        return super(Project, self).create(vals)
     
     @api.multi
     def send_project_commencement_mail(self):
-        config = self.env['mail.template'].sudo().search([('name','=','Project Commencement Email')], limit=1)
+        config = self.env['mail.template'].sudo().search([('name','=','Project')], limit=1)
         mail_obj = self.env['mail.mail']
         if config:
             values = config.generate_email(self.id)
@@ -811,6 +907,20 @@ class Project(models.Model):
         return True
     
     @api.multi
+    def _parent_project_count(self):
+        oe_checklist = self.env['project.project']
+        for pa in self:
+                domain = [('id', '=', pa.id)]
+                pres_ids = oe_checklist.search(domain)
+                pres = oe_checklist.browse(pres_ids)
+                parent_project_count = 0
+                for pr in pres:
+                    parent_project_count+=1
+                pa.parent_project_count = parent_project_count
+        return True
+    
+    
+    @api.multi
     def open_project_checklist(self):
         self.ensure_one()
         action = self.env.ref('sunray.sunray_project_checklist_action').read()[0]
@@ -870,6 +980,14 @@ class Project(models.Model):
     def open_project_ehs(self):
         self.ensure_one()
         action = self.env.ref('sunray.sunray_project_ehsform_action').read()[0]
+        action['domain'] = literal_eval(action['domain'])
+        action['domain'].append(('partner_id', 'child_of', self.partner_id.id))
+        return action
+    
+    @api.multi
+    def open_parent_project(self):
+        self.ensure_one()
+        action = self.env.ref('project.open_view_project_all').read()[0]
         action['domain'] = literal_eval(action['domain'])
         action['domain'].append(('partner_id', 'child_of', self.partner_id.id))
         return action
@@ -1573,6 +1691,8 @@ class MrpProduction(models.Model):
     
     project_budget = fields.Float(string='Project Budget', related='project_id.project_budget', track_visibility='onchange', readonly=True)
     
+    approved_mo = fields.Boolean ('Approved MO', track_visibility="onchange", readonly=True)
+    
     @api.model
     def create(self, vals):
         result = super(MrpProduction, self).create(vals)
@@ -1595,6 +1715,7 @@ class MrpProduction(models.Model):
     @api.multi
     def button_mrp_approved(self):
         self.write({'state': 'confirmed'})
+        self.approved_mo = True
         subject = "Manufacturing Order {} has been approved".format(self.name)
         partner_ids = []
         for partner in self.message_partner_ids:

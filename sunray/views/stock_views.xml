@@ -328,7 +328,13 @@
             <field name="partner_id"/>
         </field>
     </record>
-
+	
+	<record model="ir.actions.act_window" id="site_location_action_window">
+      <field name="name">Site Location</field>
+      <field name="res_model">site.location</field>
+      <field name="view_mode">tree,form</field>
+    </record>
+	
     <!-- project decisions form view--> 
     <record id="project_decision_form_view" model="ir.ui.view">
     <field name="name">project.decision.form</field>
@@ -515,6 +521,34 @@
 		</field>
 	</record>
 	
+	<record model="ir.ui.view" id="site_location_tree_view">
+        <field name="name">site.location.tree</field>
+        <field name="model">site.location</field>
+        <field name="type">tree</field>
+        <field name="arch" type="xml">
+            <field name="name"/>
+            <field name="code"/>
+            <field name="active"/>
+        </field>
+    </record>
+	
+	<record model="ir.ui.view" id="site_location_form_view">
+        <field name="name">site location</field>
+        <field name="model">site.location</field>
+        <field name="type">form</field>
+        <field name="arch" type="xml">
+            <form string = "Site Location">
+                <sheet>
+                    <group col="4" colspan="2">
+                        <field name="name"/>
+                        <field name="code"/>
+                        <field name="active"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+	
 	<record id="project_checklist_form_view" model="ir.ui.view">
     <field name="name">project.checklist.form</field>
     <field name="model">project.checklist</field>
@@ -618,7 +652,63 @@
 				</field>
 				<field name="function" position="before">
 		    		<field name="parent_account_number" readonly="1"/>
+		    		<field name="client_code" readonly="0"/>
 				</field>
+				<xpath expr="//notebook" position="inside">
+					<page string="Vendor Checklist" name="extra" attrs="{'invisible': [('supplier', '!=', True)]}">
+                    	<group string="REQUIRED DOCUMENTS"/>
+	                    <field name="completed_vendor_information"/><span>
+									COMPLETED VENDOR INFORMATION FORM (AS  ATTACHED)
+									</span><br/><br/>
+	                    <field name="report_of_proposers_follow_up"/><span>
+									REPORT OF PROPOSER'S FOLLOW UP REVIEW OF SECTIONS 4 and 5
+									</span><br/><br/>
+					    <field name="true_copy_incorporation"/><span>
+									COPY OF CERTIFICATE OF INCORPORATION / BUSINESS NAME REGISTRATION CERTIFICATE
+									</span><br/><br/>
+					    <field name="true_copy_memorandum"/><span>
+									CERTIFIED TRUE COPY OF MEMORANDUM AND ARTICLE OF  ASSOCIATION FOR LIMITED LIABILITY COMPANIES
+									</span><br/><br/>
+					    <field name="true_copy_form_c02"/><span>
+									CERTIFIED TRUE COPY OF FORM C02 AND C07 FOR LIMITED LIABILITY COMPANIES
+									</span><br/><br/>
+					    <field name="Vat_cert"/><span>
+									VAT CERTIFICATE / FIRS REGISTRATION CERTIFICATE
+									</span><br/><br/>
+					    <field name="sign_and_stamp"/><span>
+									SIGN AND STAMP THE FOLLOWING SUNRAY VENRURES GENERAL TERMS and CONDITIONS BY AUTHORIZED STAFF 
+									</span><br/><br/>
+						<group string="DOCUMENTS ABOVE USD 10,000 CONTRACT"/>
+						<field name="current_dpr"/><span>
+									CURRENT DPR CERTIFICATE (If Applicable)
+									</span><br/><br/>
+						<field name="current_dpr"/><span>
+									COMMERCIAL PROPOSAL OR WEBSITE REVIEW (COMPANY PROFILE INCLUDING DETAILS OF MANAGEMENT TEAM, REFERENCES and CASE STUDIES)
+									</span><br/><br/>
+						<field name="proposers_report"/><span>
+									PROPOSER'S REPORT CONFIRMING CLEAN REVIEW ON INTERNET and OTHER AVAILABLE SOURCES (IF NOT CLEAN, FURTHER INFORMATION ON MATTERS IDENTIFIED)
+									</span><br/><br/>
+					    <field name="copies_of_required_specialist"/><span>
+									COPIES OF REQUIRED SPECIALIST CERTIFICATIONS, REGISTRATIONS and LICENCES (If Applicable)
+									</span><br/><br/>
+						<group string="DOCUMENTS ABOVE USD 100,000 CONTRACT"/>
+					    <field name="recommendation_letters_from_applicant"/><span>
+									RECOMMENDATION LETTER FROM APPLICANT BANKERS IN RESPECT TO THE OPERATION OF HIS/HER COMPANY'S ACCOUNT
+									</span><br/><br/>
+						<field name="evidence_of_tax"/><span>
+									EVIDENCE OF TAX PAYMENT
+									</span><br/><br/>
+						<field name="code_of_conduct"/><span>
+									CODE OF CONDUCT AND CODE OF ETHICS - SIGNED BY THE COMPANY'S MD OR AUTHORIZED STAFF
+									</span><br/><br/>
+						<field name="specific_references"/><span>
+									SPECIFIC REFERENCES
+									</span><br/><br/>
+						<field name="latest_financials"/><span>
+									LATEST FINANCIAL STATEMENTS / KEY KPIs
+									</span><br/><br/>
+                    </page>
+				</xpath>
 	        </field>
 	</record>
 	
@@ -642,11 +732,14 @@
         <field name="model">mrp.production</field>
         <field name="inherit_id" ref="mrp.mrp_production_form_view"/>
         <field name="arch" type="xml">
-        	<xpath expr="//button[@name='button_unreserve']" position="after">
+        	<!-- <xpath expr="//button[@name='button_unreserve']" position="after">
         		<button name="create_store_request" string="Request From Store" type="object" groups="base.group_user"/>
-        	</xpath>
+        	</xpath> -->
+        	<field name="name" position="before">
+				  	<field name="approved_mo" invisible="1"/>
+				</field>
         	<xpath expr="//button[@name='action_assign']" position="before">
-        		<button name="button_mrp_approved" string="Approve MO" type="object" class="btn-primary" groups="sunray.group_head_projects,project.group_project_manager"/>
+        		<button name="button_mrp_approved" string="Approve MO" type="object" class="btn-primary" groups="sunray.group_head_projects,project.group_project_manager" attrs="{'invisible': [('approved_mo', '=', True)]}"/>
        		</xpath>
         	<field name="product_id" position="before">
 	    		<field name="project_id"/>
@@ -753,6 +846,12 @@
 	                        <span class="o_stat_text">Manufacturing Orders</span>
 	                    </div>
 	                </button>
+	                <button class="oe_stat_button" type="object" name="open_parent_project" icon="fa-gears">
+	                    <div class="o_stat_info">
+	                        <field name="parent_project_count" class="o_stat_value"/>
+	                        <span class="o_stat_text">Parent Project</span>
+	                    </div>
+	                </button>
 	            </xpath>
 	           	<field name="user_id" position="before">
 	           		<field name="parent_project_id"/>
@@ -767,11 +866,16 @@
 				  	<field name="project_plan_file" widget="file"/>
 				  	<field name="project_budget" widget="Monetary"/>
 				</field>
+				<field name="partner_id" position="replace">
+					<field name="partner_id" required="1"/>
+				</field>
 				<field name="partner_id" position="after">
+					<field name="site_location_id" required="1"/>
 				  	<field name="project_code_id" domain="[('type','=','other')]"/>
 				  	<field name="monthly_maintenance_schedule"/>
 				  	<field name="client_site_visit"/>
 				  	<field name="internal_external_monthly"/>
+				  	<field name="default_site_code" readonly="1"/>
 				</field>
 				<field name="message_follower_ids" position="after">
 				  	<field name="activity_ids" widget="mail_activity"/>
@@ -1029,6 +1133,8 @@
 	
 	<menuitem name="Store Request" id="store_request" parent="stock.menu_stock_root"
               action="store_req_action1_window"/>
-	
+	<menuitem name="Site_Location" id="site_location_id" parent="stock.menu_product_in_config_stock"
+              action="site_location_action_window"/>
+              
   </data>
 </odoo>

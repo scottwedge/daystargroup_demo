@@ -180,7 +180,7 @@
 		<field name="name">Vendor Request checklist</field>
 		<field name="res_model">vendor.internal.approval.checklist</field>
 		<field name="view_type">form</field>
-		<field name="view_mode">tree,form</field>
+		<field name="view_mode">form,tree</field>
 		<field name="domain">[]</field>
 		<field name="context">{}</field>
 	</record>
