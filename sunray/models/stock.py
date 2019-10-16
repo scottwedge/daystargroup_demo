@@ -413,7 +413,7 @@ class PurchaseOrder(models.Model):
         for user in group_id.users:
             user_ids.append(user.id)
             partner_ids.append(user.partner_id.id)
-        self.message_subscribe_users(user_ids=user_ids)
+        self.message_subscribe_users(partner_ids=partner_ids)
         subject = "Purchase Order {} needs a review from legal team".format(self.name)
         self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
         return False
