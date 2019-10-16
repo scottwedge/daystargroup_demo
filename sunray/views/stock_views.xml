@@ -723,10 +723,28 @@
 	            </field>
 				<xpath expr="//field[@name='order_line']/tree/field[@name='product_id']" position="before">
 	            	<field name="type" required = "1"/>
-	            	<field name="project_id" required = "0"/>
+	            	<field name="project_id" required = "0" domain="[('partner_id','=', parent.partner_id)]"/>
 	            </xpath>
 	        </field>
 	</record>
+	
+	<record id="sunray_picking_view_picking_form" model="ir.ui.view">
+	    <field name="name">sunray.stock.picking.form</field>
+	    <field name="model">stock.picking</field>
+	    <field name="inherit_id" ref="stock.view_picking_form"/>
+	    <field name="arch" type="xml">
+	    	<xpath expr="//field[@name='move_ids_without_package']/tree/field[@name='quantity_done']" position="after">
+            	<field name="price_cost"/>
+            	<field name="price_subtotal"/>
+            </xpath>
+			 <field name="move_ids_without_package" position="after">
+	            <group class="oe_subtotal_footer oe_right">
+	                  <field name="total_cost" widget="monetary" options="{'currency_field': 'currency_id'}"/>
+	            </group>
+            </field>
+	    </field>
+	</record>
+	
 	
 	<record id="sunray_mrp_production_tree_view" model="ir.ui.view">
         <field name="name">sunray.mrp.production.tree</field>
@@ -795,7 +813,7 @@
 	        	<xpath expr="//header" position="inside">
 	        		<!-- <button name="create_purchase_agreement" class="btn-primary" string="Create Purchase Agreement" type="object"/>-->
 	        		<!-- <button name="create_store_request" class="btn-primary" string="Create Store Request" type="object"/>  -->
-	        		<button name="create_manufacturing_order" class="btn-primary" string="Create Manufacturing Order" type="object"/>
+	        		<!-- <button name="create_manufacturing_order" class="btn-primary" string="Create Manufacturing Order" type="object"/> -->
 	            	<field name="state" widget="statusbar" statusbar_visible="kick_off,project_plan,supply_chain_project_execution,qc_sign_off,customer_sign_off,close_out" clickable="1"/>
 	            </xpath>
 	        	<xpath expr="//button[@name='toggle_active']" position="before">
@@ -881,6 +899,7 @@
 							<field name="monthly_maintenance_schedule"/>
 						  	<field name="client_site_visit"/>
 						  	<field name="internal_external_monthly"/>
+						  	<field name="client_type"/>
 						  	<field name="site_area"/>
 						  	<field name="site_address"/>
 						  	<field name="site_type"/>

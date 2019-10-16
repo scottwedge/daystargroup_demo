@@ -382,11 +382,12 @@ class ProductTemplate(models.Model):
     def create(self, vals):
         brand = self.env['brand.type'].search([('id','=',vals['brand'])])
         item = self.env['item.type'].search([('id','=',vals['item_type'])])
-        code = brand.code + item.code
+        if brand and item:
+            code = brand.code + item.code
         
-        no = self.env['ir.sequence'].next_by_code('product.template')
-        item_code = code + str(no)
-        vals['default_code'] = item_code
+            no = self.env['ir.sequence'].next_by_code('product.template')
+            item_code = code + str(no)
+            vals['default_code'] = item_code
         return super(ProductTemplate, self).create(vals)
     
 class Employee(models.Model):
