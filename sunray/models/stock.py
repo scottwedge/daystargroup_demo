@@ -47,19 +47,27 @@ class Partner(models.Model):
     
     overall_vendor_rating = fields.Selection([('0', '0'),('1', '1'), ('2', '2'), ('3', '3'), ('4', '4'), ('5', '5')], string='Overall Vendor Rating', required=False)
     
-    parent_account_number = fields.Char(string='Parent Account Number', required=False, index=True, copy=False, store=True)
+    parent_account_number = fields.Char(string='Customer Code', required=False, index=True, copy=False, store=True)
     
     client_code = fields.Char(string='Client Code', required=False, index=True, copy=False, store=True)
     
     vendor_registration = fields.Boolean ('Vendor fully Registered', track_visibility="onchange", readonly=True)
     
+    tin = fields.Char(string='Tin', required=False, index=True, copy=False, store=True)
+    wht_rate = fields.Float(string='WHT Rate', required=False, index=True, copy=False, store=True)
+    transaction_class = fields.Selection([('suply', 'Supply'),('service', 'Service'), ('contract', 'Contract'), ('licencing', 'Licencing'), ('rent', 'Rent'), ('prof', 'Professional/Consultancy service')], string='Transaction Class', required=False, index=True, copy=False, store=True)
+    transaction_authority = fields.Char(string='Tax Authoritiy', required=False, index=True, copy=False, store=True)
+    iban = fields.Char(string='IBAN', required=False, index=True, copy=False, store=True)
+    transaction_description = fields.Char(string='Transaction Description', required=False, index=True, copy=False, store=True)
+    
     @api.model
     def create(self, vals):
         if 'customer' in vals and vals['customer'] == True and vals['parent_id'] == False:
             vals['parent_account_number'] = self.env['ir.sequence'].next_by_code('res.partner') or '/'
-        else:
-            if 'customer' in vals and vals['customer'] == True and vals['type'] == 'other':
+        elif 'customer' in vals and vals['customer'] == True and vals['type'] == 'other':
                 vals['parent_account_number'] = self.env['ir.sequence'].next_by_code('res.partner.sub') or '/'
+        elif 'supplier' in vals and vals['supplier'] == True and vals['parent_id'] == False:
+                vals['ref'] = self.env['ir.sequence'].next_by_code('res.partner.vendor') or '/'        
         return super(Partner, self).create(vals)
     
     @api.multi
@@ -755,7 +763,7 @@ class Project(models.Model):
     
     project_code_id = fields.Many2one(comodel_name='res.partner', string='Project Code', help="Client sub account code")
     
-    site_location_id = fields.Many2one(comodel_name='res.country.state', string='Site Location')
+    site_location_id = fields.Many2one(comodel_name='res.country.state', string='Site Location', domain=[('country_id.name','=','Nigeria')])
     
     default_site_code = fields.Char(string='Site Code') 
     
@@ -767,11 +775,10 @@ class Project(models.Model):
     country_id = fields.Many2one(comodel_name='res.country', string="Country")
     project_status = fields.Char(string='Status')
     commissioning_date = fields.Date(string='Commissioning date')
-    coordinates = fields.Date(string='Coordinates')
+    coordinates = fields.Float(string='Coordinates')
     
-    type_of_offer = fields.Selection([('saas', 'SaaS'), ('pass', 'PaaS'),('battery', 'Battery'),
-                                      ('pass_diesel', 'PaaS Diesel'),('lease', 'Lease to'), ('own', 'Own'),
-                                      ('sale', 'Sale')], string='Type of Offer', required=False,default='saas')
+    type_of_offer = fields.Selection([('lease_to_own', 'Lease to Own'), ('pass_battery', 'PaaS Battery'), ('paas_diesel', 'PaaS Diesel'),
+                                      ('pass_diesel', 'PaaS Diesel'), ('saas', 'SaaS'), ('sale', 'Sale')], string='Type of Offer', required=False,default='saas')
     atm_power_at_night = fields.Selection([('yes', 'Yes'), ('no', 'No'),], string='Does the system power ATM night/we?', required=False,default='yes')
     
     pv_installed_capacity = fields.Float(string='PV installed capacity (kWp)')

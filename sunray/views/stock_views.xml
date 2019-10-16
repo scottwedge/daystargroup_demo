@@ -643,12 +643,18 @@
 				    </header>
 	            </xpath>-->
 	           	<field name="vat" position="after">
+	           		<field name="tin" attrs="{'invisible': [('supplier', '!=', True)]}" />
 	           		<field name="vendor_registration" attrs="{'invisible': [('supplier', '!=', True)]}" />
 					<field name="tax_compliance" attrs="{'invisible': [('supplier', '!=', True)]}" />
 				  	<field name="due_diligence_form" attrs="{'invisible': [('supplier', '!=', True)]}" />
 				  	<field name="cac" attrs="{'invisible': [('supplier', '!=', True)]}" />
 				  	<field name="delivery_speed" attrs="{'invisible': [('supplier', '!=', True)]}" />
 				  	<field name="overall_vendor_rating" widget="priority" attrs="{'invisible': [('supplier', '!=', True)]}" />
+				  	<field name="wht_rate" attrs="{'invisible': [('supplier', '!=', True)]}" />
+				  	<field name="transaction_authority" attrs="{'invisible': [('supplier', '!=', True)]}" />
+				  	<field name="transaction_class" attrs="{'invisible': [('supplier', '!=', True)]}" />
+				  	<field name="transaction_description" attrs="{'invisible': [('supplier', '!=', True)]}" />
+				  	<field name="iban" attrs="{'invisible': [('supplier', '!=', True)]}" />
 				</field>
 				<field name="function" position="before">
 		    		<field name="parent_account_number" readonly="1"/>
