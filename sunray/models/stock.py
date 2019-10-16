@@ -486,7 +486,7 @@ class PurchaseOrder(models.Model):
     def button_approve(self):
         res = super(PurchaseOrder, self).button_approve()
         self._check_vendor_registration()
-        self.button_submit_legal()
+        #self.button_submit_legal()
         return res
     
     #NOT TO BE USED YET AND DO NOT DELETE THIS 
