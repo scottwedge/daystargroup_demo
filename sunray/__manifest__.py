@@ -16,15 +16,19 @@
     # Check https://github.com/odoo/odoo/blob/master/odoo/addons/base/module/module_data.xml
     # for the full list
     'category': 'Sunray',
+<<<<<<< HEAD
     'version': '0.41',
 
+=======
+    'version': '0.40',
+>>>>>>> 38bc9ac8ae7c442b24cf8ad69512e2f68d782cb5
     # any module necessary for this one to work correctly
     'depends': ['base','hr','crm','sale','hr_expense','hr_holidays','project','purchase','helpdesk','stock','product','account_budget','purchase_requisition','mrp'],
 
     # always loaded
     'data': [
         'security/sunray_security.xml',
-        #'security/ir.model.access.csv',
+        'security/ir.model.access.csv',
         'data/data.xml',
         'views/views.xml',
         'views/stock_views.xml',
