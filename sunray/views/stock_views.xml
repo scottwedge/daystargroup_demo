@@ -863,13 +863,16 @@
 				  	<field name="project_plan_file" widget="file"/>
 				  	<field name="project_budget" widget="Monetary"/>
 				</field>
+				<field name="partner_id" position="replace">
+					<field name="partner_id" required="1"/>
+				</field>
 				<field name="partner_id" position="after">
-					<field name="site_location_id"/>
+					<field name="site_location_id" required="1"/>
 				  	<field name="project_code_id" domain="[('type','=','other')]"/>
 				  	<field name="monthly_maintenance_schedule"/>
 				  	<field name="client_site_visit"/>
 				  	<field name="internal_external_monthly"/>
-				  	<field name="default_site_code"/>
+				  	<field name="default_site_code" readonly="1"/>
 				</field>
 				<field name="message_follower_ids" position="after">
 				  	<field name="activity_ids" widget="mail_activity"/>

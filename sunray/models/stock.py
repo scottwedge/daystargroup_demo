@@ -465,8 +465,8 @@ class PurchaseOrder(models.Model):
         for order in self:
             if order.state not in ['draft','submit', 'sent']:
                 continue
-            self._check_line_manager()
-            self._check_line_manager()
+            #self._check_line_manager()
+            #self._check_line_manager()
             #if self._check_budget() == False and self.need_override:
              #   return {}
             self.approval_date = date.today()
