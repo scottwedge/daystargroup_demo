@@ -758,7 +758,29 @@ class Project(models.Model):
     
     site_location_id = fields.Many2one(comodel_name='res.country.state', string='Site Location')
     
-    default_site_code = fields.Char(string='Site Code')
+    default_site_code = fields.Char(string='Site Code') 
+    
+    
+    site_area = fields.Char(string='Site Area')
+    site_address = fields.Char(string='Site Address')
+    site_type = fields.Char(string='Site Type')
+    region = fields.Char(string='Site Address')
+    country_id = fields.Many2one(comodel_name='res.country', string="Country")
+    project_status = fields.Char(string='Status')
+    commissioning_date = fields.Date(string='Commissioning date')
+    coordinates = fields.Date(string='Coordinates')
+    
+    type_of_offer = fields.Selection([('saas', 'SaaS'), ('pass', 'PaaS'),('battery', 'Battery'),
+                                      ('pass_diesel', 'PaaS Diesel'),('lease', 'Lease to'), ('own', 'Own'),
+                                      ('sale', 'Sale')], string='Type of Offer', required=False,default='saas')
+    atm_power_at_night = fields.Selection([('yes', 'Yes'), ('no', 'No'),], string='Does the system power ATM night/we?', required=False,default='yes')
+    
+    pv_installed_capacity = fields.Float(string='PV installed capacity (kWp)')
+    
+    currency_id = fields.Many2one(comodel_name='res.currency', string='Currency')
+    monthly_service_fees = fields.Float(string='Monthly Service fees')
+    lease_duration = fields.Char(string='If lease, contract duration')
+    sales_price = fields.Float(string="Sale Price")
     
     #@api.model
     #def create(self, vals):
