@@ -743,7 +743,7 @@ class Project(models.Model):
     
     monthly_maintenance_schedule = fields.Datetime(string="Monthly Maintenance Schedule", track_visibility="onchange")
     client_site_visit = fields.Datetime(string="Client Site Visit", track_visibility="onchange")
-    internal_external_monthly = fields.Datetime(string="Internal External Monthly", track_visibility="onchange")
+    internal_external_monthly = fields.Date(string="Internal External Monthly", track_visibility="onchange")
     
     lead_technician_id = fields.Many2one(comodel_name='res.users', string='Lead Technician')
     quality_assurance_id = fields.Many2one(comodel_name='res.users', string='Quality Assurance Engineer')
@@ -1462,6 +1462,15 @@ class Picking(models.Model):
     project_id = fields.Many2one('project.project', string='Project', index=True, ondelete='cascade', required=False)
     
     total_price = fields.Float(string='Total', compute='_total_price', readonly=True, store=True)
+    
+    total_cost = fields.Float(string='Total Cost', compute='_total_cost', track_visibility='onchange', readonly=True)
+    
+    @api.multi
+    @api.depends('move_ids_without_package.product_uom_qty')
+    def _total_cost(self):
+        for a in self:
+            for line in a.move_ids_without_package:
+                a.total_cost += line.price_cost * line.product_uom_qty
     
     @api.depends('total_price')
     def check_approval(self):
