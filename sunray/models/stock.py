@@ -1032,7 +1032,7 @@ class Project(models.Model):
         for self in employees:
             if self.monthly_maintenance_schedule:
                 
-                current_dates = datetime.datetime.strptime(self.monthly_maintenance_schedule, "%Y-%m-%d")
+                current_dates = datetime.datetime.strptime(str(self.monthly_maintenance_schedule), "%Y-%m-%d")
                 current_datesz = current_dates - relativedelta(days=5)
                 
                 date_start_day = current_datesz.day
@@ -1064,7 +1064,7 @@ class Project(models.Model):
         for self in employees:
             if self.client_site_visit:
                 
-                current_dates = datetime.datetime.strptime(self.client_site_visit, "%Y-%m-%d")
+                current_dates = datetime.datetime.strptime(str(self.client_site_visit), "%Y-%m-%d")
                 current_datesz = current_dates - relativedelta(days=5)
                 
                 date_start_day = current_datesz.day
@@ -1096,7 +1096,7 @@ class Project(models.Model):
         for self in employees:
             if self.client_site_visit:
                 
-                current_dates = datetime.datetime.strptime(self.client_site_visit, "%Y-%m-%d")
+                current_dates = datetime.datetime.strptime(str(self.client_site_visit), "%Y-%m-%d")
                 current_datesz = current_dates - relativedelta(days=5)
                 
                 date_start_day = current_datesz.day
@@ -1128,7 +1128,7 @@ class Project(models.Model):
         for self in employees:
             if self.internal_external_monthly:
                 
-                current_dates = datetime.datetime.strptime(self.internal_external_monthly, "%Y-%m-%d")
+                current_dates = datetime.datetime.strptime(str(self.internal_external_monthly), "%Y-%m-%d")
                 current_datesz = current_dates - relativedelta(days=5)
                 
                 date_start_day = current_datesz.day
