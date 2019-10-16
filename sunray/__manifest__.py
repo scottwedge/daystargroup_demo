@@ -29,7 +29,6 @@
         'views/stock_views.xml',
         'views/vendor_request_info_template.xml',
         #'views/templates.xml',
-        #'views/website_netcom_hr_recruitment_template.xml',
     ],
     # only loaded in demonstration mode
     'demo': [
