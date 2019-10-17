@@ -1,6 +1,14 @@
 <odoo>
   <data>
 	
+	<record model="ir.actions.act_window" id="sunray_legal_approval_action_window">
+      <field name="name">Legal Approval (Opportunities)</field>
+      <field name="res_model">crm.lead</field>
+      <field name="context">{}</field>
+      <field name="domain">[('legal_review', '=', True)]</field>
+      <field name="view_mode">tree,form</field>
+    </record>
+	
 	<record id="pipeline_sunray_form" model="ir.ui.view">
 	    <field name="name">pipeline.sunray.form</field>
 	    <field name="model">crm.lead</field>
@@ -12,11 +20,15 @@
             <xpath expr="//button[@name='action_set_won_rainbowman']" position="after">
                 <button name="send_site_audit_request_mail" string="Send Site Audit Request" type="object" class="btn-primary" confirm="You are about to send site audit request"/>
                 <button name="create_manufacturing_order" string="Create System Design" type="object" class="btn-primary"/>
+                <button name="button_submit_legal" string="request legal review" type="object" attrs="{'invisible': [('legal_review', '=', True)]}"/>
             </xpath>
 			<field name="tag_ids" position="after">
 				<field name="size"/>
 	    		<field name="type_of_offer"/>
 	    		<field name="budget"/>
+			</field>
+			<field name="name" position="before">
+				<field name="legal_review" invisible="1"/>
 			</field>
 	    </field>
 	</record>
@@ -870,6 +882,8 @@
               action="parking_list_action"/>
     <menuitem name="Payment Request Form" id="payment_sunray_main_menu" parent="purchase.menu_purchase_config"
               action="payment_request_action"/> -->
+    <menuitem id="sunray_crm_legal_approval_id" name="Legal Approval" parent="crm.crm_menu_root" sequence="20" groups="sunray.group_legal_team"
+    		  action="sunray_legal_approval_action_window"/>
     <menuitem name="Availability Demand Form" id="availability_demand_menu" parent="stock.menu_stock_root"
               action="availability_demand_action_window"/>
               

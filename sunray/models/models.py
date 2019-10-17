@@ -25,6 +25,7 @@ class Lead(models.Model):
         ], string='Status', readonly=True, index=True, copy=False, default='draft', track_visibility='onchange')
     
     budget = fields.Float(string='Budget')
+    legal_review = fields.Boolean(string='Legal Review')
     
     @api.multi
     def button_reset(self):
@@ -75,6 +76,20 @@ class Lead(models.Model):
             self.active = False
         else:
             self.send_introductory_mail()
+    
+    @api.multi
+    def button_submit_legal(self):
+        self.legal_review = True
+        group_id = self.env['ir.model.data'].xmlid_to_object('sunray.group_legal_team')
+        user_ids = []
+        partner_ids = []
+        for user in group_id.users:
+            user_ids.append(user.id)
+            partner_ids.append(user.partner_id.id)
+        self.message_subscribe(partner_ids=partner_ids)
+        subject = "Opportunity '{}' needs a review from the legal team".format(self.name)
+        self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
+        return False
     
     @api.multi
     def send_introductory_mail(self):
