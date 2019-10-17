@@ -424,7 +424,7 @@
             </field>
         </record>
 	
-	<record id="customer_request_form" model="ir.ui.view">
+	<record id="vendor_request_form" model="ir.ui.view">
 	    <field name="name">vendor.request.form</field>
 	    <field name="model">vendor.request</field>
 	    <field name="priority" eval="2"/>
@@ -864,12 +864,12 @@
               
     <menuitem name="Sub Account" id="sub_account" parent="sale.sale_order_menu"
               action="SubAccount_action_window"/>
-    <menuitem name="Expense Form" id="expense_report_sunray_main_menu" parent="purchase.menu_purchase_config"
+    <!-- <menuitem name="Expense Form" id="expense_report_sunray_main_menu" parent="purchase.menu_purchase_config"
               action="expense_report_action"/>
     <menuitem name="Parking List" id="parking_sunray_main_menu" parent="purchase.menu_purchase_config"
               action="parking_list_action"/>
     <menuitem name="Payment Request Form" id="payment_sunray_main_menu" parent="purchase.menu_purchase_config"
-              action="payment_request_action"/>
+              action="payment_request_action"/> -->
     <menuitem name="Availability Demand Form" id="availability_demand_menu" parent="stock.menu_stock_root"
               action="availability_demand_action_window"/>
               
