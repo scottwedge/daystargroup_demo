@@ -1573,7 +1573,7 @@ class Picking(models.Model):
     #net_lot_id = fields.Many2one(string="Serial Number", related="move_line_ids.lot_id", readonly=True)
     internal_transfer = fields.Boolean('Internal Transfer?', track_visibility='onchange')
     client_id = fields.Many2one('res.partner', string='Client', index=True, ondelete='cascade', required=False)
-    need_approval = fields.Boolean ('Need Approval', compute= "check_approval", track_visibility="onchange")
+    need_approval = fields.Boolean ('Need Approval', track_visibility="onchange")
     #rejection_reason = fields.Many2one('stock.rejection.reason', string='Rejection Reason', index=True, track_visibility='onchange')
     
     project_id = fields.Many2one('project.project', string='Project', index=True, ondelete='cascade', required=False)
@@ -1581,6 +1581,7 @@ class Picking(models.Model):
     total_price = fields.Float(string='Total', compute='_total_price', readonly=True, store=True)
     
     total_cost = fields.Float(string='Total Cost', compute='_total_cost', track_visibility='onchange', readonly=True)
+    send_receipt_mail = fields.Boolean(string='receipt mail')
     
     @api.multi
     @api.depends('move_ids_without_package.product_uom_qty')
@@ -1589,6 +1590,7 @@ class Picking(models.Model):
             for line in a.move_ids_without_package:
                 a.total_cost += line.price_cost * line.product_uom_qty
     
+    '''
     @api.depends('total_price')
     def check_approval(self):
         if self.total_price > 1800000:
@@ -1605,7 +1607,8 @@ class Picking(models.Model):
             return False
         else:
             self.need_approval = False
-    
+    '''
+                
     @api.multi
     def button_approve_srt(self):
         self.need_approval = False
@@ -1652,6 +1655,7 @@ class Picking(models.Model):
     @api.multi
     def send_receipt_mail(self):
         if self.picking_type_id.name == "Receipts":
+            self.send_receipt_mail = True
             config = self.env['mail.template'].sudo().search([('name','=','recieved')], limit=1)
             mail_obj = self.env['mail.mail']
             if config:
@@ -1659,6 +1663,11 @@ class Picking(models.Model):
                 mail = mail_obj.create(values)
                 if mail:
                     mail.send()
+            subject = "Receipt mail has been sent to this supplier".format(self.name)
+            partner_ids = []
+            for partner in self.message_partner_ids:
+                partner_ids.append(partner.id)
+            self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
     
     @api.multi
     def create_purchase_order(self):
