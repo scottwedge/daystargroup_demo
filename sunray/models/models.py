@@ -440,7 +440,7 @@ class Job(models.Model):
 
 class VendorRequest(models.Model):
     _name = "vendor.request"
-    _description = "vendor request form"
+    _description = "Vendor Request"
     _order = "name"
     _inherit = ['res.partner']
     
@@ -456,9 +456,10 @@ class VendorRequest(models.Model):
     
     state = fields.Selection([
         ('draft', 'Draft'),
-        ('submit', 'Submitted'),
-        ('validate', 'Second Approval'),
-        ('approve', 'Approved'),
+        ('pending_info', 'Pending Partner info'),
+        ('approve', 'Pending Vendor Approval1'),
+        ('validate', 'pending Vendor Approval 2'),
+        ('registered', 'Registered'),
         ('reject', 'Rejected'),
         ], string='Status', readonly=True, index=True, copy=False, default='draft', track_visibility='onchange')
     
@@ -468,11 +469,41 @@ class VendorRequest(models.Model):
     
     checklist_count = fields.Integer(compute="_checklist_count",string="Checklist", store=False)
     
+    #this is the vendor checklist
+    completed_vendor_information = fields.Boolean(string="COMPLETED VENDOR INFORMATION FORM (AS  ATTACHED)")
+    report_of_proposers_follow_up = fields.Boolean(string="REPORT OF PROPOSER'S FOLLOW UP REVIEW OF SECTIONS 4 & 5")
+    true_copy_incorporation = fields.Boolean(string="COPY OF CERTIFICATE OF INCORPORATION / BUSINESS NAME REGISTRATION CERTIFICATE")
+    true_copy_memorandum = fields.Boolean(string="CERTIFIED TRUE COPY OF MEMORANDUM AND ARTICLE OF  ASSOCIATION FOR LIMITED LIABILITY COMPANIES")
+    true_copy_form_c02 = fields.Boolean(string="CERTIFIED TRUE COPY OF FORM C02 AND C07 FOR LIMITED LIABILITY COMPANIES")
+    Vat_cert = fields.Boolean(string="VAT CERTIFICATE / FIRS REGISTRATION CERTIFICATE")
+    sign_and_stamp = fields.Boolean(string="SIGN AND STAMP THE FOLLOWING SUNRAY VENRURES GENERAL TERMS & CONDITIONS BY AUTHORIZED STAFF")
+
+    current_dpr = fields.Boolean(string="CURRENT DPR CERTIFICATE (If Applicable)")
+    commercial_certificate = fields.Boolean(string="COMMERCIAL PROPOSAL OR WEBSITE REVIEW (COMPANY PROFILE INCLUDING DETAILS OF MANAGEMENT TEAM, REFERENCES & CASE STUDIES)")
+    proposers_report = fields.Boolean(string="PROPOSER'S REPORT CONFIRMING CLEAN REVIEW ON INTERNET & OTHER AVAILABLE SOURCES (IF NOT CLEAN, FURTHER INFORMATION ON MATTERS IDENTIFIED)")
+    copies_of_required_specialist = fields.Boolean(string="COPIES OF REQUIRED SPECIALIST CERTIFICATIONS, REGISTRATIONS & LICENCES (If Applicable)")
+
+    recommendation_letters_from_applicant = fields.Boolean(string="RECOMMENDATION LETTER FROM APPLICANT BANKERS IN RESPECT TO THE OPERATION OF HIS/HER COMPANY'S ACCOUNT")
+    evidence_of_tax = fields.Boolean(string="EVIDENCE OF TAX PAYMENT")
+    code_of_conduct = fields.Boolean(string="CODE OF CONDUCT AND CODE OF ETHICS - SIGNED BY THE COMPANY'S MD OR AUTHORIZED STAFF")
+    specific_references = fields.Boolean(string="SPECIFIC REFERENCES")
+    latest_financials = fields.Boolean(string="LATEST FINANCIAL STATEMENTS / KEY KPIs")
+    
     @api.depends('is_company', 'parent_id.commercial_partner_id')
     def _compute_commercial_partner(self):
         return {}
-            
-          
+    
+    @api.multi
+    def send_request_information(self):
+        self.write({'state': 'pending_info'})
+        config = self.env['mail.template'].sudo().search([('name','=','Request Information')], limit=1)
+        mail_obj = self.env['mail.mail']
+        if config:
+            values = config.generate_email(self.id)
+            mail = mail_obj.create(values)
+            if mail:
+                mail.send()
+    
     @api.multi
     def button_reset(self):
         self.write({'state': 'draft'})
@@ -480,7 +511,7 @@ class VendorRequest(models.Model):
     
     @api.multi
     def button_submit(self):
-        self.write({'state': 'submit'})
+        self.write({'state': 'approve'})
         group_id = self.env['ir.model.data'].xmlid_to_object('sunray.group_one_vendor_approval')
         user_ids = []
         partner_ids = []
@@ -509,7 +540,7 @@ class VendorRequest(models.Model):
     
     @api.multi
     def button_approve(self):
-        self.write({'state': 'approve'})
+        self.write({'state': 'registered'})
         self.vendor_registration = True
         vals = {
             'name' : self.name,
@@ -530,7 +561,22 @@ class VendorRequest(models.Model):
             'customer': self.customer,
             'supplier' : self.supplier,
             'company' : self.company_id.id,
-            'vendor_registration' : self.vendor_registration
+            'vendor_registration' : self.vendor_registration,
+            'completed_vendor_information' : self.completed_vendor_information,
+            'report_of_proposers_follow_up' : self.report_of_proposers_follow_up,
+            'true_copy_incorporation' : self.true_copy_incorporation,
+            'true_copy_memorandum' : self.true_copy_memorandum,
+            'sign_and_stamp' : self.Vat_cert,
+            'Vat_cert' : self.sign_and_stamp,
+            'current_dpr' : self.current_dpr,
+            'commercial_certificate' : self.commercial_certificate,
+            'proposers_report' : self.proposers_report,
+            'copies_of_required_specialist' : self.copies_of_required_specialist,
+            'recommendation_letters_from_applicant' : self.recommendation_letters_from_applicant,
+            'evidence_of_tax' : self.evidence_of_tax,
+            'code_of_conduct' : self.code_of_conduct,
+            'specific_references' : self.specific_references,
+            'latest_financials' : self.latest_financials,
         }
         self.env['res.partner'].create(vals)
         return {}

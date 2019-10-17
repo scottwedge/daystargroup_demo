@@ -431,21 +431,23 @@
 	    <field name="arch" type="xml">
 	        <form string="Partners">
 	   	<header>
-			<button name="button_submit" states="draft" string="Submit" type="object" />
-			<button name="button_validate" states="submit" string="Approve" type="object" groups="sunray.group_one_vendor_approval"/>
+	   		<button name="send_request_information" states="draft" string="Request Information" type="object" class="btn-primary"/>
+			<button name="button_submit" states="pending_info" string="Request Registration" type="object" class="btn-primary"/>
+			
+			<button name="button_validate" states="approve" string="Approve" type="object" groups="sunray.group_one_vendor_approval"/>
 			<button name="button_approve" states="validate" string="Confirm" type="object" groups="sunray.group_two_vendor_approval"/>
-			<button name="button_reject" states="submit,validate" string="Reject" type="object" groups="sunray.group_one_vendor_approval,sunray.group_one_vendor_approval"/>
+			<button name="button_reject" states="approve,validate" string="Reject" type="object" groups="sunray.group_one_vendor_approval,sunray.group_one_vendor_approval"/>
 			<button name="button_reset" states="reject" string="Set to Draft" type="object" />
-			<field name="state" widget="statusbar" statusbar_visible="draft,submit,validate,approve" readonly="1"/>
+			<field name="state" widget="statusbar" statusbar_visible="draft,pending_info,approve,validate,registered" readonly="1"/>
 	    </header>
 	        <sheet>
 	        	<div class="oe_button_box" name="button_box">
-		        	<button class="oe_stat_button" type="object" name="open_checklist_ticket" context="{'default_partner_id': active_id}" icon="fa-list">
+		        	<!-- <button class="oe_stat_button" type="object" name="open_checklist_ticket" context="{'default_partner_id': active_id}" icon="fa-list">
 	                    <div class="o_stat_info">
 	                        <field name="checklist_count" class="o_stat_value"/>
 	                        <span class="o_stat_text">Checklist</span>
 	                    </div>
-	                </button>
+	                </button> -->
 	                <button name="toggle_active" type="object" groups="hr.group_hr_user" class="oe_stat_button" icon="fa-archive">
                         <field name="active" widget="boolean_button" options="{&quot;terminology&quot;: &quot;archive&quot;}"/>
                     </button>
@@ -505,13 +507,68 @@
 	                    <field name="customer" invisible="1"/>
 	                    <field name="supplier" invisible="1"/>
 	                </group>
-	            </group>
+	             </group>
+	                <notebook>
+	                	<page string="Vendor Checklist" name="extra">
+	                    	<group string="REQUIRED DOCUMENTS"/>
+		                    <field name="completed_vendor_information"/><span>
+										COMPLETED VENDOR INFORMATION FORM (AS  ATTACHED)
+										</span><br/><br/>
+		                    <field name="report_of_proposers_follow_up"/><span>
+										REPORT OF PROPOSER'S FOLLOW UP REVIEW OF SECTIONS 4 and 5
+										</span><br/><br/>
+						    <field name="true_copy_incorporation"/><span>
+										COPY OF CERTIFICATE OF INCORPORATION / BUSINESS NAME REGISTRATION CERTIFICATE
+										</span><br/><br/>
+						    <field name="true_copy_memorandum"/><span>
+										CERTIFIED TRUE COPY OF MEMORANDUM AND ARTICLE OF  ASSOCIATION FOR LIMITED LIABILITY COMPANIES
+										</span><br/><br/>
+						    <field name="true_copy_form_c02"/><span>
+										CERTIFIED TRUE COPY OF FORM C02 AND C07 FOR LIMITED LIABILITY COMPANIES
+										</span><br/><br/>
+						    <field name="Vat_cert"/><span>
+										VAT CERTIFICATE / FIRS REGISTRATION CERTIFICATE
+										</span><br/><br/>
+						    <field name="sign_and_stamp"/><span>
+										SIGN AND STAMP THE FOLLOWING SUNRAY VENRURES GENERAL TERMS and CONDITIONS BY AUTHORIZED STAFF 
+										</span><br/><br/>
+							<group string="DOCUMENTS ABOVE USD 10,000 CONTRACT"/>
+							<field name="current_dpr"/><span>
+										CURRENT DPR CERTIFICATE (If Applicable)
+										</span><br/><br/>
+							<field name="commercial_certificate"/><span>
+										COMMERCIAL PROPOSAL OR WEBSITE REVIEW (COMPANY PROFILE INCLUDING DETAILS OF MANAGEMENT TEAM, REFERENCES and CASE STUDIES)
+										</span><br/><br/>
+							<field name="proposers_report"/><span>
+										PROPOSER'S REPORT CONFIRMING CLEAN REVIEW ON INTERNET and OTHER AVAILABLE SOURCES (IF NOT CLEAN, FURTHER INFORMATION ON MATTERS IDENTIFIED)
+										</span><br/><br/>
+						    <field name="copies_of_required_specialist"/><span>
+										COPIES OF REQUIRED SPECIALIST CERTIFICATIONS, REGISTRATIONS and LICENCES (If Applicable)
+										</span><br/><br/>
+							<group string="DOCUMENTS ABOVE USD 100,000 CONTRACT"/>
+						    <field name="recommendation_letters_from_applicant"/><span>
+										RECOMMENDATION LETTER FROM APPLICANT BANKERS IN RESPECT TO THE OPERATION OF HIS/HER COMPANY'S ACCOUNT
+										</span><br/><br/>
+							<field name="evidence_of_tax"/><span>
+										EVIDENCE OF TAX PAYMENT
+										</span><br/><br/>
+							<field name="code_of_conduct"/><span>
+										CODE OF CONDUCT AND CODE OF ETHICS - SIGNED BY THE COMPANY'S MD OR AUTHORIZED STAFF
+										</span><br/><br/>
+							<field name="specific_references"/><span>
+										SPECIFIC REFERENCES
+										</span><br/><br/>
+							<field name="latest_financials"/><span>
+										LATEST FINANCIAL STATEMENTS / KEY KPIs
+										</span><br/><br/>
+	                    </page>
+	                </notebook>
 	        </sheet>
-	        <div class="oe_chatter">
-	             <field name="message_follower_ids" widget="mail_followers"/>
-	             <field name="activity_ids" widget="mail_activity"/>
-	             <field name="message_ids" widget="mail_thread"/>
-	        </div>
+	        	<div class="oe_chatter">
+                    <field name="message_follower_ids" widget="mail_followers"/>
+                    <field name="activity_ids" widget="mail_activity"/>
+                    <field name="message_ids" widget="mail_thread"/>
+                </div>
 	        </form>
 	    </field>
     </record>
@@ -799,7 +856,7 @@
     <menuitem name="Item Types" id="equipment_list" parent="stock.menu_product_in_config_stock"
               action="item_action_window"/>
 	
-	<menuitem name="Vendor Request" id="Vendor_request_menu" parent="purchase.menu_purchase_config"
+	<menuitem name="Vendor Request" id="Vendor_request_menu" parent="purchase.menu_procurement_management"
               action="VendorRequest_action_window" sequence="100"/>
               
     <menuitem name="Request Report" id="Vendor_requesters_report_menu" parent="purchase.menu_purchase_config"
