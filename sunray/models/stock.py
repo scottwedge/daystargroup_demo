@@ -1665,9 +1665,9 @@ class Picking(models.Model):
                     mail.send()
             subject = "Receipt mail has been sent to this supplier".format(self.name)
             partner_ids = []
-            for partner in self.sheet_id.message_partner_ids:
+            for partner in self.message_partner_ids:
                 partner_ids.append(partner.id)
-            self.sheet_id.message_post(subject=subject,body=subject,partner_ids=partner_ids)
+            self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
     
     @api.multi
     def create_purchase_order(self):
