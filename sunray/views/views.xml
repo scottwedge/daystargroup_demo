@@ -899,7 +899,7 @@
     <menuitem name="Payment Request Form" id="payment_sunray_main_menu" parent="purchase.menu_purchase_config"
               action="payment_request_action"/> -->
     <menuitem id="sunray_crm_legal_approval_id" name="Legal Approval" parent="crm.crm_menu_root" sequence="20" groups="sunray.group_legal_team"
-    		  action="sunray_legal_approval_action_window"/>
+    		  action="sunray_crm_legal_approval_action_window"/>
     <menuitem name="Availability Demand Form" id="availability_demand_menu" parent="stock.menu_stock_root"
               action="availability_demand_action_window"/>
               
