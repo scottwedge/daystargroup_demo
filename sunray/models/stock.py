@@ -1581,6 +1581,7 @@ class Picking(models.Model):
     total_price = fields.Float(string='Total', compute='_total_price', readonly=True, store=True)
     
     total_cost = fields.Float(string='Total Cost', compute='_total_cost', track_visibility='onchange', readonly=True)
+    send_receipt_mail = fields.Boolean(string='receipt mail')
     
     @api.multi
     @api.depends('move_ids_without_package.product_uom_qty')
@@ -1654,6 +1655,7 @@ class Picking(models.Model):
     @api.multi
     def send_receipt_mail(self):
         if self.picking_type_id.name == "Receipts":
+            self.send_receipt_mail = True
             config = self.env['mail.template'].sudo().search([('name','=','recieved')], limit=1)
             mail_obj = self.env['mail.mail']
             if config:
@@ -1661,6 +1663,11 @@ class Picking(models.Model):
                 mail = mail_obj.create(values)
                 if mail:
                     mail.send()
+            subject = "Receipt mail has been sent to this supplier".format(self.name)
+            partner_ids = []
+            for partner in self.sheet_id.message_partner_ids:
+                partner_ids.append(partner.id)
+            self.sheet_id.message_post(subject=subject,body=subject,partner_ids=partner_ids)
     
     @api.multi
     def create_purchase_order(self):
