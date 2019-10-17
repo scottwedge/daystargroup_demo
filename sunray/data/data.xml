@@ -81,6 +81,7 @@
             <field name="website_form_access">True</field>
             <field name="website_form_label">Vendor Information</field>
         </record>
+        
         <function model="ir.model.fields" name="formbuilder_whitelist">
             <value>vendor.request</value>
             <value eval="[

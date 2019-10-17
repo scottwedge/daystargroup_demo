@@ -8,6 +8,16 @@ from ast import literal_eval
 from odoo.exceptions import UserError, ValidationError
 from odoo import api, fields, models, _
 
+PURCHASE_REQUISITION_STATES = [
+    ('draft', 'Draft'),
+    ('approve', 'Approved'),
+    ('ongoing', 'Ongoing'),
+    ('in_progress', 'Confirmed'),
+    ('open', 'Bid Selection'),
+    ('done', 'Closed'),
+    ('cancel', 'Cancelled')
+]
+
 class ResCompany(models.Model):
     _inherit = "res.company"
     
@@ -366,13 +376,17 @@ class PurchaseOrder(models.Model):
     manager_approval = fields.Many2one('res.users','Manager Approval Name', readonly=True, track_visibility='onchange')
     manager_position = fields.Char('Manager Position', readonly=True, track_visibility='onchange')
     
-    po_approval_date = fields.Date(string='Confirmation Date', readonly=True, track_visibility='onchange')
-    po_manager_approval = fields.Many2one('res.users','Manager Confirmation Name', readonly=True, track_visibility='onchange')
-    po_manager_position = fields.Char('Manager Confirmation Position', readonly=True, track_visibility='onchange')
+    po_approval_date = fields.Date(string='Authorization Date', readonly=True, track_visibility='onchange')
+    po_manager_approval = fields.Many2one('res.users','Manager Authorization Name', readonly=True, track_visibility='onchange')
+    po_manager_position = fields.Char('Manager Authorization Position', readonly=True, track_visibility='onchange')
     
     client_id = fields.Many2one('res.partner','Client', track_visibility='onchange')
     
     project_id = fields.Many2one(comodel_name='project.project', string='Project')
+    
+    inform_budget_owner = fields.Boolean ('Inform Budget Owner', track_visibility="onchange", copy=False)
+    need_finance_review = fields.Boolean ('Finance Review', track_visibility="onchange", copy=False)
+    finance_review_done = fields.Boolean ('Finance Review Done', track_visibility="onchange", copy=False)
     
     state = fields.Selection([
         ('draft', 'RFQ'),
@@ -475,6 +489,7 @@ class PurchaseOrder(models.Model):
                 continue
             #self._check_line_manager()
             self._check_line_manager()
+            #self.button_submit_legal()
             #if self._check_budget() == False and self.need_override:
              #   return {}
             self.approval_date = date.today()
@@ -494,8 +509,48 @@ class PurchaseOrder(models.Model):
     def button_approve(self):
         res = super(PurchaseOrder, self).button_approve()
         self._check_vendor_registration()
-        self.button_submit_legal()
+        self.po_approval_date = date.today()
+        self.po_manager_approval = self._uid
         return res
+    
+    @api.multi
+    def button_request_finance_review(self):
+        #self.write({'state': 'approve'})
+        self.need_finance_review = True
+        group_id = self.env['ir.model.data'].xmlid_to_object('account.group_account_user')
+        user_ids = []
+        partner_ids = []
+        for user in group_id.users:
+            user_ids.append(user.id)
+            partner_ids.append(user.partner_id.id)
+        self.message_subscribe(partner_ids=partner_ids)
+        subject = "This RFQ {} needs your review".format(self.name)
+        self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
+        return {}
+    
+    @api.multi
+    def button_inform_budget_owner(self):
+        #self.write({'state': 'approve'})
+        self.inform_budget_owner = True
+        group_id = self.env['ir.model.data'].xmlid_to_object('sunray.group_sale_account_budget')
+        user_ids = []
+        partner_ids = []
+        for user in group_id.users:
+            user_ids.append(user.id)
+            partner_ids.append(user.partner_id.id)
+        self.message_subscribe(partner_ids=partner_ids)
+        subject = "This RFQ {} needs your attention".format(self.name)
+        self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
+        return {}
+    
+    @api.multi
+    def button_finance_review_done(self):
+        self.finance_review_done = True
+        subject = "Finance review has been Done, Purchase Order {} can be confirmed now".format(self.name)
+        partner_ids = []
+        for partner in self.message_partner_ids:
+            partner_ids.append(partner.id)
+        self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
     
     #NOT TO BE USED YET AND DO NOT DELETE THIS 
     """@api.multi
@@ -547,6 +602,16 @@ class PurchaseOrderLine(models.Model):
     need_override = fields.Boolean ('Need Budget Override', track_visibility="onchange", copy=False)
     override_budget = fields.Boolean ('Override Budget', track_visibility="onchange", copy=False)
     
+    specification = fields.Char(string='Specification')
+    part_no = fields.Char(string='Part No')
+    item_type = fields.Selection([
+        ('fixed_asset', 'Fixed Asset'),
+        ('inventory', 'Inventory'),
+        ('maintanance', 'Maintanance'),
+        ('supplies', 'Supplies'),
+        ('others', 'Others'),
+        ], string='Item type')
+    
     @api.multi
     def action_override_budget(self):
         self.write({'override_budget': True})
@@ -561,8 +626,51 @@ class PurchaseRequisition(models.Model):
     _name = "purchase.requisition"
     _inherit = ['purchase.requisition']
     
+    def _default_employee(self):
+        self.env['hr.employee'].search([('user_id','=',self.env.uid)])
+        return self.env['hr.employee'].search([('user_id','=',self.env.uid)])
+    
+    state = fields.Selection(PURCHASE_REQUISITION_STATES,
+                              'Status', track_visibility='onchange', required=True,
+                              copy=False, default='draft')
+    
     #stock_source = fields.Char(string='Source document')
     store_request_id = fields.Many2one('stock.picking','Store Request', readonly=True, track_visibility='onchange')
+    
+    employee_id = fields.Many2one('hr.employee', 'Employee',
+        states={'done': [('readonly', True)], 'cancel': [('readonly', True)]}, default=_default_employee)
+    
+    request_date = fields.Date(string='Request Date', readonly=True, track_visibility='onchange', default=date.today())
+    department_name = fields.Char(string="Employee Department", related="employee_id.department_id.name", readonly=True)
+    
+    approval_date = fields.Date(string='Manager Approval Date', readonly=True, track_visibility='onchange')
+    manager_approval = fields.Many2one('res.users','Manager Approval Name', readonly=True, track_visibility='onchange')
+    manager_position = fields.Char('Manager Position', readonly=True, track_visibility='onchange')
+    
+    po_approval_date = fields.Date(string='Authorization Date', readonly=True, track_visibility='onchange')
+    po_manager_approval = fields.Many2one('res.users','Manager Authorization Name', readonly=True, track_visibility='onchange')
+    po_manager_position = fields.Char('Manager Authorization Position', readonly=True, track_visibility='onchange')
+    
+    @api.multi
+    def action_in_progress(self):
+        res = super(PurchaseRequisition, self).action_in_progress()
+        #self._check_vendor_registration()
+        self.approval_date = date.today()
+        self.manager_approval = self._uid
+        return res
+    
+    @api.multi
+    def action_open(self):
+        self.write({'state': 'open'})
+        self.po_approval_date = date.today()
+        self.po_manager_approval = self._uid
+    
+    
+class PurchaseRequisitionLine(models.Model):
+    _name = "purchase.requisition.line"
+    _inherit = ['purchase.requisition.line']
+    
+    project_id = fields.Many2one(comodel_name='project.project', string='Site Location')
     
 class ProductTemplate(models.Model):
     _inherit = 'product.template'
@@ -771,11 +879,11 @@ class Project(models.Model):
     site_area = fields.Char(string='Site Area')
     site_address = fields.Char(string='Site Address')
     site_type = fields.Char(string='Site Type')
-    region = fields.Char(string='Site Address')
+    region = fields.Char(string='Region')
     country_id = fields.Many2one(comodel_name='res.country', string="Country")
     project_status = fields.Char(string='Status')
     commissioning_date = fields.Date(string='Commissioning date')
-    coordinates = fields.Float(string='Coordinates')
+    coordinates = fields.Char(string='Coordinates')
     
     type_of_offer = fields.Selection([('lease_to_own', 'Lease to Own'), ('pass_battery', 'PaaS Battery'), ('paas_diesel', 'PaaS Diesel'),
                                       ('pass_diesel', 'PaaS Diesel'), ('saas', 'SaaS'), ('sale', 'Sale')], string='Type of Offer', required=False,default='saas')

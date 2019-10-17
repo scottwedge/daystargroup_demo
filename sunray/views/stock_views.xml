@@ -23,6 +23,32 @@
 	            </xpath>	         
            </field>
    	</record>
+   	
+   	<record id="sunray_purchase_requisition_view_form" model="ir.ui.view">
+	    <field name="name">sunray.purchase.requisition.form</field>
+	    <field name="model">purchase.requisition</field>
+	    <field name="inherit_id" ref="purchase_requisition.view_purchase_requisition_form"/>
+	    <field name="arch" type="xml">
+	    	<!--  <field name="vendor_id" position="after">
+	    		<field name="employee_id"/>
+	    	</field>-->
+			<field name="line_ids" position="after">
+    			<group string = "Requester" col="4" colspan="6">
+	            	<field name="employee_id" groups="sunray.group_hr_line_manager"/>
+	            	<field name="department_name" invisible="0"/>
+	            	<field name="request_date"/>
+	        	</group>
+           		<group string = "First Authorization" col="4" colspan="4">
+	            	<field name="manager_approval"/>
+	            	<field name="approval_date"/>
+	        	</group>
+            	<group string = "Second Authorization" col="4" colspan="4">
+	            	<field name="po_manager_approval"/>
+	            	<field name="po_approval_date"/>
+            	</group>
+			</field>
+	    </field>
+	</record>
   	
   	<record id="purchase_rfq" model="ir.actions.act_window">
         <field name="name">Requests for Quotation</field>
@@ -55,6 +81,9 @@
         	<button name="action_rfq_send" position="attributes"> <attribute name="groups">purchase.group_purchase_user</attribute> </button>
         	<field name="name" position="before">
             	<field name= "need_override" invisible = "1"/>
+            	<field name= "inform_budget_owner" invisible = "1"/>
+            	<field name= "need_finance_review" invisible = "1"/>
+            	<field name= "finance_review_done" invisible = "1"/>
             	<h3 attrs="{'invisible': [('need_override', '=', False)]}"><b>Needs Budget Override, The Budget Dept. has been notified </b></h3>
             </field>
         	<xpath expr="//button[@name='action_view_picking']" position="replace">
@@ -80,7 +109,10 @@
             	<button name="action_override_budget" type="object" string="Override Budget" groups="sunray.group_sale_account_budget" attrs="{'invisible': ['|',('need_override', '=', False),('override_budget', '=', True)]}"/>
             </xpath>
         	<xpath expr="//button[@name='action_rfq_send']" position="before">
-        		<button name="button_submit" string="Submit to Manager" type="object" states="draft" groups="base.group_user"/>
+        		<button name="button_submit" string="Submit to Manager" type="object" states="draft"  groups="base.group_user"/>
+        		<button name="button_inform_budget_owner" string="Inform Budget Owner" type="object" attrs="{'invisible': ['|', ('state', '=', 'purchase'), ('inform_budget_owner', '=', True)]}" groups="base.group_user"/>
+        		<button name="button_request_finance_review" string="Request Finance Review" type="object" attrs="{'invisible': ['|', ('state', '=', 'purchase'), ('need_finance_review', '=', True)]}" groups="base.group_user"/>
+        		<button name="button_submit" string="Review Done" type="object" attrs="{'invisible': ['|', ('need_finance_review', '=', False), ('finance_review_done', '=', True)]}" groups="account.group_account_userr"/>
         	</xpath>
         	<xpath expr="//button[@name='button_confirm']" position="replace">
         		<button name="button_confirm" type="object" states="submit" string="Approve Order" id="draft_confirm" groups="sunray.group_hr_line_manager,purchase.group_purchase_manager"/>
@@ -90,7 +122,7 @@
         	</xpath>
         	
         	<xpath expr="//button[@name='button_approve']" position="after">
-        		<button name="button_legal_reviewd" type="object" states='to approve' string="Reviewed" class="oe_highlight" groups="sunray.group_legal_team"/>
+        		<button name="button_legal_reviewd" type="object" states='legal' string="Reviewed" class="oe_highlight" groups="sunray.group_legal_team"/>
         	</xpath>
         	
         	<xpath expr="//button[@name='button_approve']" position="after">
@@ -98,7 +130,7 @@
         	</xpath>
         	
         	<xpath expr="//button[@name='button_approve']" position="replace">
-        		<button name="button_approve" type="object" states='legal_reviewed' string="Confirm Order" class="oe_highlight" groups="purchase.group_purchase_manager"/>
+        		<button name="button_approve" type="object" states='to approve,legal_reviewed' string="Confirm Order" class="oe_highlight" groups="purchase.group_purchase_manager"/>
         	</xpath>
         	
         	<xpath expr="//button[@name='button_approve']" position="after">
@@ -110,22 +142,33 @@
         	</xpath>
         	
         	<xpath expr="//field[@name='order_line']/tree/field[@name='date_planned']" position="after">
+        		<field name="part_no"/>
+        		<field name="item_type"/>
             	<field name="account_id" required = "1"/>
             </xpath>
             <xpath expr="//field[@name='order_line']/tree/field[@name='account_analytic_id']" position="replace">
-            	<field name="account_analytic_id" invisible = "1"/>
+            	<field name="account_analytic_id" invisible = "0"/>
             </xpath>
             <xpath expr="//field[@name='order_line']/tree/field[@name='analytic_tag_ids']" position="replace">
             	<field name="analytic_tag_ids" invisible = "1" widget="many2many_tags" options="{'color_field': 'color'}"/>
             </xpath>
-            <field name="partner_id" position="after">
+            <field name="partner_id" position="after">	
             	<field name="project_id"/>
-            	<field name="employee_id" groups="sunray.group_hr_line_manager"/>
-            	<field name="department_name" invisible="0"/>
-            	<field name="request_date"/>
-            	
-            	<field name="manager_approval"/>
-            	<field name="approval_date"/>
+            </field>
+            <field name="order_line" position="after">
+           			<group string = "Requested By" col="4" colspan="6">
+		            	<field name="employee_id" groups="sunray.group_hr_line_manager"/>
+		            	<field name="department_name" invisible="0"/>
+		            	<field name="request_date"/>
+		        	</group>
+            		<group string = "Approved By" col="4" colspan="4">
+		            	<field name="manager_approval"/>
+		            	<field name="approval_date"/>
+		        	</group>
+	            	<group string = "Authorized By" col="4" colspan="4">
+		            	<field name="po_manager_approval"/>
+		            	<field name="po_approval_date"/>
+	            	</group>
             </field>
             <field name="company_id" position="after">
             	<field name="client_id" domain="[('customer','=',True)]" required="0"/>
@@ -1034,9 +1077,9 @@
                     <field name="has_packages" invisible="1"/>
                     <!-- <button name="manager_confirm" groups="sunray.group_hr_line_manager" class="btn-primary" string="Manager Confirmation" type="object"  attrs="{'invisible': ['|',('man_confirm','=',True),('state', 'not in', ['confirmed'])]}"/> -->
                     
-                    <button name="create_purchase_order" states="assigned,done" class="btn-primary" string="Create Quotation" type="object" groups="stock.group_stock_manager"/>
+                    <!-- <button name="create_purchase_order" states="assigned,done" class="btn-primary" string="Create Quotation" type="object" groups="stock.group_stock_manager"/>
                     <button name="create_purchase_agreement" states="assigned,done" class="btn-primary" string="Create Purchase Agreement" type="object" groups="stock.group_stock_manager"/>
-                    
+                     -->
                     <button name="button_reset" attrs="{'invisible': ['|', ('state', 'in', ('draft','cancel')), ('is_locked', '=', False)]}" string="reset" groups="stock.group_stock_manager" type="object"/>
                     <button name="button_scrap" type="object" string="Scrap" attrs="{'invisible': ['|', '|', '&amp;', ('picking_type_code', '!=', 'incoming'), ('state', 'in', ('draft', 'cancel', 'waiting')), '&amp;', ('picking_type_code', '=', 'incoming'), ('state', '!=', 'done'), ('is_locked', '=', False)]}"/>
                     <button name="action_toggle_is_locked" attrs="{'invisible': ['|', ('state', 'in', ('draft','cancel')), ('is_locked', '=', False)]}" string="Unlock" groups="stock.group_stock_manager" type="object" help="If the picking is unlocked you can edit initial demand (for a draft picking) or done quantities (for a done picking)."/>
