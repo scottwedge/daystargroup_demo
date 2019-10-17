@@ -26,6 +26,7 @@ class Lead(models.Model):
     
     budget = fields.Float(string='Budget')
     legal_review = fields.Boolean(string='Legal Review')
+    legal_review_done = fields.Boolean(string='Legal Review Done')
     
     @api.multi
     def button_reset(self):
@@ -90,6 +91,15 @@ class Lead(models.Model):
         subject = "Opportunity '{}' needs a review from the legal team".format(self.name)
         self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
         return False
+    
+    @api.multi
+    def button_submit_legal_done(self):
+        self.legal_review_done = True
+        subject = "Opportunity {} has been reviewed by the legal team".format(self.name)
+        partner_ids = []
+        for partner in self.message_partner_ids:
+            partner_ids.append(partner.id)
+        self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
     
     @api.multi
     def send_introductory_mail(self):
@@ -503,6 +513,32 @@ class VendorRequest(models.Model):
     code_of_conduct = fields.Boolean(string="CODE OF CONDUCT AND CODE OF ETHICS - SIGNED BY THE COMPANY'S MD OR AUTHORIZED STAFF")
     specific_references = fields.Boolean(string="SPECIFIC REFERENCES")
     latest_financials = fields.Boolean(string="LATEST FINANCIAL STATEMENTS / KEY KPIs")
+    
+    legal_review = fields.Boolean(string='Legal Review')
+    legal_review_done = fields.Boolean(string='Legal Review Done')
+    
+    @api.multi
+    def button_submit_legal(self):
+        self.legal_review = True
+        group_id = self.env['ir.model.data'].xmlid_to_object('sunray.group_legal_team')
+        user_ids = []
+        partner_ids = []
+        for user in group_id.users:
+            user_ids.append(user.id)
+            partner_ids.append(user.partner_id.id)
+        self.message_subscribe(partner_ids=partner_ids)
+        subject = "Opportunity '{}' needs a review from the legal team".format(self.name)
+        self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
+        return False
+    
+    @api.multi
+    def button_submit_legal_done(self):
+        self.legal_review_done = True
+        subject = "Opportunity {} has been reviewed by the legal team".format(self.name)
+        partner_ids = []
+        for partner in self.message_partner_ids:
+            partner_ids.append(partner.id)
+        self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
     
     @api.depends('is_company', 'parent_id.commercial_partner_id')
     def _compute_commercial_partner(self):

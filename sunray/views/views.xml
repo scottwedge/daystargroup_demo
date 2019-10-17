@@ -1,9 +1,17 @@
 <odoo>
   <data>
 	
-	<record model="ir.actions.act_window" id="sunray_legal_approval_action_window">
+	<record model="ir.actions.act_window" id="sunray_crm_legal_approval_action_window">
       <field name="name">Legal Approval (Opportunities)</field>
       <field name="res_model">crm.lead</field>
+      <field name="context">{}</field>
+      <field name="domain">[('legal_review', '=', True)]</field>
+      <field name="view_mode">tree,form</field>
+    </record>
+	
+	<record model="ir.actions.act_window" id="sunray_vendor_legal_approval_action_window">
+      <field name="name">Legal Approval (Vendor Request)</field>
+      <field name="res_model">vendor.request</field>
       <field name="context">{}</field>
       <field name="domain">[('legal_review', '=', True)]</field>
       <field name="view_mode">tree,form</field>
@@ -21,6 +29,7 @@
                 <button name="send_site_audit_request_mail" string="Send Site Audit Request" type="object" class="btn-primary" confirm="You are about to send site audit request"/>
                 <button name="create_manufacturing_order" string="Create System Design" type="object" class="btn-primary"/>
                 <button name="button_submit_legal" string="request legal review" type="object" attrs="{'invisible': [('legal_review', '=', True)]}"/>
+            	<button name="button_submit_legal_done" string="legal review done" type="object" attrs="{'invisible': ['|', ('legal_review', '!=', True), ('legal_review_done', '=', True)]}"/>
             </xpath>
 			<field name="tag_ids" position="after">
 				<field name="size"/>
@@ -29,6 +38,7 @@
 			</field>
 			<field name="name" position="before">
 				<field name="legal_review" invisible="1"/>
+				<field name="legal_review_done" invisible="1"/>
 			</field>
 	    </field>
 	</record>
@@ -450,7 +460,9 @@
 			<button name="button_approve" states="validate" string="Confirm" type="object" groups="sunray.group_two_vendor_approval"/>
 			<button name="button_reject" states="approve,validate" string="Reject" type="object" groups="sunray.group_one_vendor_approval,sunray.group_one_vendor_approval"/>
 			<button name="button_reset" states="reject" string="Set to Draft" type="object" />
-			<field name="state" widget="statusbar" statusbar_visible="draft,pending_info,approve,validate,registered" readonly="1"/>
+			<button name="button_submit_legal" string="request legal review" type="object" attrs="{'invisible': [('legal_review', '=', True)]}"/>
+            <button name="button_submit_legal_done" string="legal review done" type="object" attrs="{'invisible': ['|', ('legal_review', '!=', True), ('legal_review_done', '=', True)]}"/>
+            <field name="state" widget="statusbar" statusbar_visible="draft,pending_info,approve,validate,registered" readonly="1"/>
 	    </header>
 	        <sheet>
 	        	<div class="oe_button_box" name="button_box">
@@ -470,6 +482,8 @@
 	                <field name="company_type" widget="radio"
 	                    class="oe_edit_only"
 	                    options="{'horizontal': true}"/>
+	                <field name="legal_review" invisible="1"/>
+					<field name="legal_review_done" invisible="1"/>
 	                <h1>
 	                    <field name="name" default_focus="1" placeholder="Name" attrs="{'required' : [('type', '=', 'contact')]}"/>
 	                </h1>
@@ -870,6 +884,8 @@
 	
 	<menuitem name="Vendor Request" id="Vendor_request_menu" parent="purchase.menu_procurement_management"
               action="VendorRequest_action_window" sequence="100"/>
+   	<menuitem name="Legal Approval(Vendor Request)" id="vendor_legal_approval_request_menu" parent="purchase.menu_procurement_management"
+              action="sunray_vendor_legal_approval_action_window" sequence="100" groups="sunray.group_legal_team"/>
               
     <menuitem name="Request Report" id="Vendor_requesters_report_menu" parent="purchase.menu_purchase_config"
               action="vendor_requesters_report_action" sequence="100"/>
