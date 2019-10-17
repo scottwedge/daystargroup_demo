@@ -384,6 +384,10 @@ class PurchaseOrder(models.Model):
     
     project_id = fields.Many2one(comodel_name='project.project', string='Project')
     
+    inform_budget_owner = fields.Boolean ('Inform Budget Owner', track_visibility="onchange", copy=False)
+    need_finance_review = fields.Boolean ('Finance Review', track_visibility="onchange", copy=False)
+    finance_review_done = fields.Boolean ('Finance Review Done', track_visibility="onchange", copy=False)
+    
     state = fields.Selection([
         ('draft', 'RFQ'),
         ('sent', 'RFQ Sent'),
@@ -509,6 +513,45 @@ class PurchaseOrder(models.Model):
         self.po_manager_approval = self._uid
         return res
     
+    @api.multi
+    def button_request_finance_review(self):
+        #self.write({'state': 'approve'})
+        self.need_finance_review = True
+        group_id = self.env['ir.model.data'].xmlid_to_object('account.group_account_user')
+        user_ids = []
+        partner_ids = []
+        for user in group_id.users:
+            user_ids.append(user.id)
+            partner_ids.append(user.partner_id.id)
+        self.message_subscribe(partner_ids=partner_ids)
+        subject = "This RFQ {} needs your review".format(self.name)
+        self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
+        return {}
+    
+    @api.multi
+    def button_inform_budget_owner(self):
+        #self.write({'state': 'approve'})
+        self.inform_budget_owner = True
+        group_id = self.env['ir.model.data'].xmlid_to_object('sunray.group_sale_account_budget')
+        user_ids = []
+        partner_ids = []
+        for user in group_id.users:
+            user_ids.append(user.id)
+            partner_ids.append(user.partner_id.id)
+        self.message_subscribe(partner_ids=partner_ids)
+        subject = "This RFQ {} needs your attention".format(self.name)
+        self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
+        return {}
+    
+    @api.multi
+    def button_finance_review_done(self):
+        self.finance_review_done = True
+        subject = "Finance review has been Done, Purchase Order {} can be confirmed now".format(self.name)
+        partner_ids = []
+        for partner in self.message_partner_ids:
+            partner_ids.append(partner.id)
+        self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
+    
     #NOT TO BE USED YET AND DO NOT DELETE THIS 
     """@api.multi
     def button_approve(self):
@@ -627,7 +670,7 @@ class PurchaseRequisitionLine(models.Model):
     _name = "purchase.requisition.line"
     _inherit = ['purchase.requisition.line']
     
-    project_id = fields.Many2one(comodel_name='prohect.project', string='Site Location')
+    project_id = fields.Many2one(comodel_name='project.project', string='Site Location')
     
 class ProductTemplate(models.Model):
     _inherit = 'product.template'
@@ -836,7 +879,7 @@ class Project(models.Model):
     site_area = fields.Char(string='Site Area')
     site_address = fields.Char(string='Site Address')
     site_type = fields.Char(string='Site Type')
-    region = fields.Char(string='Site Address')
+    region = fields.Char(string='Region')
     country_id = fields.Many2one(comodel_name='res.country', string="Country")
     project_status = fields.Char(string='Status')
     commissioning_date = fields.Date(string='Commissioning date')
