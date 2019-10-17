@@ -527,14 +527,14 @@ class VendorRequest(models.Model):
             user_ids.append(user.id)
             partner_ids.append(user.partner_id.id)
         self.message_subscribe(partner_ids=partner_ids)
-        subject = "Opportunity '{}' needs a review from the legal team".format(self.name)
+        subject = "Vendor request '{}' needs a review from the legal team".format(self.name)
         self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
         return False
     
     @api.multi
     def button_submit_legal_done(self):
         self.legal_review_done = True
-        subject = "Opportunity {} has been reviewed by the legal team".format(self.name)
+        subject = "Vendor request {} has been reviewed by the legal team".format(self.name)
         partner_ids = []
         for partner in self.message_partner_ids:
             partner_ids.append(partner.id)
