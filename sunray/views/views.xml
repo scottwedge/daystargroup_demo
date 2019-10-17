@@ -509,7 +509,7 @@
 	                </group>
 	             </group>
 	                <notebook>
-	                	<page string="Vendor Checklist" name="extra" attrs="{'invisible': [('supplier', '!=', True)]}">
+	                	<page string="Vendor Checklist" name="extra">
 	                    	<group string="REQUIRED DOCUMENTS"/>
 		                    <field name="completed_vendor_information"/><span>
 										COMPLETED VENDOR INFORMATION FORM (AS  ATTACHED)
