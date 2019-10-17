@@ -112,7 +112,7 @@
         		<button name="button_submit" string="Submit to Manager" type="object" states="draft"  groups="base.group_user"/>
         		<button name="button_inform_budget_owner" string="Inform Budget Owner" type="object" attrs="{'invisible': ['|', ('state', '=', 'purchase'), ('inform_budget_owner', '=', True)]}" groups="base.group_user"/>
         		<button name="button_request_finance_review" string="Request Finance Review" type="object" attrs="{'invisible': ['|', ('state', '=', 'purchase'), ('need_finance_review', '=', True)]}" groups="base.group_user"/>
-        		<button name="button_submit" string="Review Done" type="object" attrs="{'invisible': ['|', ('need_finance_review', '=', False), ('finance_review_done', '=', True)]}" groups="account.group_account_userr"/>
+        		<button name="button_submit" string="Review Done" type="object" attrs="{'invisible': ['|', ('need_finance_review', '=', False), ('finance_review_done', '=', True)]}" groups="account.group_account_user"/>
         	</xpath>
         	<xpath expr="//button[@name='button_confirm']" position="replace">
         		<button name="button_confirm" type="object" states="submit" string="Approve Order" id="draft_confirm" groups="sunray.group_hr_line_manager,purchase.group_purchase_manager"/>
