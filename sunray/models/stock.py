@@ -763,7 +763,9 @@ class Project(models.Model):
     
     project_code_id = fields.Many2one(comodel_name='res.partner', string='Project Code', help="Client sub account code")
     
-    site_location_id = fields.Many2one(comodel_name='res.country.state', string='Site Location', domain=[('country_id.name','=','Nigeria')])
+    #site_location_id = fields.Many2one(comodel_name='res.country.state', string='Site Location', domain=[('country_id.name','=','Nigeria')])
+    site_location_id = fields.Char(string='Site Location')
+
     
     default_site_code = fields.Char(string='Site Code') 
     
