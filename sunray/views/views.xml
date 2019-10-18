@@ -98,9 +98,12 @@
         <field name="priority" eval="7" />
         <field name="inherit_id" ref="hr.view_employee_form"/>
         <field name="arch" type="xml">
+        	<field name="name" position="before">
+	    		<field name="deactivated" invisible="1"/>
+			</field>
             <xpath expr="//sheet" position="before">
             	<header>
-	    			<button name="button_deactivate_employee" string="Deactivate Employee" type="object" class="oe_highlight" groups="hr.group_hr_manager" confirm="Confirm Deactivation of Employee"/>
+	    			<button name="button_deactivate_employee" string="Deactivate Employee" type="object" class="oe_highlight" groups="hr.group_hr_manager" attrs="{'invisible': [('deactivated', '=', True)]}" confirm="Confirm Deactivation of Employee"/>
             	</header>
             </xpath>
         </field>

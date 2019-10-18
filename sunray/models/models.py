@@ -466,6 +466,8 @@ class Employee(models.Model):
     _description = "Employee"
     _inherit = "hr.employee"
     
+    deactivated = fields.Boolean(string='Deactivated')
+    
     @api.multi
     def reminder_deactivate_employee_contract(self):
         group_id = self.env['ir.model.data'].xmlid_to_object('hr.group_hr_manager')
@@ -492,6 +494,7 @@ class Employee(models.Model):
                 if mail:
                     mail.send()
             self.active = False
+            self.deactivated = True
             self.reminder_deactivate_employee_contract()
     
 class Job(models.Model):
