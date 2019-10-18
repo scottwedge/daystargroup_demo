@@ -544,6 +544,8 @@ class VendorRequest(models.Model):
     legal_review = fields.Boolean(string='Legal Review')
     legal_review_done = fields.Boolean(string='Legal Review Done')
     
+    contact_email = fields.Char(string="email")
+    
     @api.multi
     def button_submit_legal(self):
         self.legal_review = True
@@ -635,7 +637,7 @@ class VendorRequest(models.Model):
             'function' : self.function,
             'phone' : self.phone,
             'mobile' : self.mobile,
-            'email' : self.email,
+            'email' : self.contact_email,
             'customer': self.customer,
             'supplier' : self.supplier,
             'company' : self.company_id.id,
