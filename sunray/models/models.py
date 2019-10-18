@@ -24,7 +24,7 @@ class Lead(models.Model):
         ('reject', 'Rejected'),
         ], string='Status', readonly=True, index=True, copy=False, default='draft', track_visibility='onchange')
     
-    budget = fields.Float(string='Budget')
+    budget = fields.Float(string='Estimate project costs')
     legal_review = fields.Boolean(string='Legal Review')
     legal_review_done = fields.Boolean(string='Legal Review Done')
     
@@ -41,19 +41,19 @@ class Lead(models.Model):
     region = fields.Char(string='Region')
     country_id = fields.Many2one(comodel_name='res.country', string="Country")
     project_status = fields.Char(string='Status.')
-    commissioning_date = fields.Date(string='Commissioning date')
+    contract_duration = fields.Date(string='Contract Duration (year)')
     coordinates = fields.Char(string='Coordinates')
     
     type_of_offer = fields.Selection([('lease_to_own', 'Lease to Own'), ('pass_battery', 'PaaS Battery'), ('paas_diesel', 'PaaS Diesel'),
                                       ('pass_diesel', 'PaaS Diesel'), ('saas', 'SaaS'), ('sale', 'Sale')], string='Service Type', required=False,default='saas')
     #atm_power_at_night = fields.Selection([('yes', 'Yes'), ('no', 'No'),], string='Does the system power ATM night/we?', required=False,default='yes')
     
-    pv_installed_capacity = fields.Float(string='PV installed capacity (kWp)')
+    tariff_per_kwp = fields.Float(string='Tariff per kWh (kWp)')
     
     currency_id = fields.Many2one(comodel_name='res.currency', string='Currency.')
     monthly_service_fees = fields.Float(string='Monthly Service fees')
-    lease_duration = fields.Char(string='If lease, contract duration')
-    sales_price = fields.Float(string="Sale Price")
+    #lease_duration = fields.Char(string='If lease, contract duration')
+    sales_price = fields.Float(string="Sale Revenue")
     
     @api.multi
     def button_reset(self):

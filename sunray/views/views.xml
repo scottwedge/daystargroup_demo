@@ -59,13 +59,12 @@
 						  	<field name="region"/>
 						  	<field name="country_id"/>
 						  	<field name="project_status"/>
-						  	<field name="commissioning_date"/>
+						  	<field name="contract_duration"/>
 						  	<field name="coordinates"/>
 						  	<field name="type_of_offer"/>
-						  	<field name="pv_installed_capacity"/>
+						  	<field name="tariff_per_kwp"/>
 						  	<field name="currency_id"/>
 						  	<field name="monthly_service_fees"/>
-						  	<field name="lease_duration"/>
 						  	<field name="sales_price"/>
 						</group>
 					</page>
