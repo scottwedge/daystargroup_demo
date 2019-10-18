@@ -930,10 +930,10 @@ class Project(models.Model):
         site = self.env['res.country.state'].search([('id','=',vals['site_location_id'])])
         client = self.env['res.partner'].search([('id','=',vals['partner_id'])])
         if site and client:
-            code = client.parent_account_number + site.code
+            code = client.parent_account_number + "_" +  site.code
             
             no = self.env['ir.sequence'].next_by_code('project.site.code')
-            site_code = code + str(no)
+            site_code = code + "_" +  str(no)
             vals['default_site_code'] = site_code
         
         a = super(Project, self).create(vals)

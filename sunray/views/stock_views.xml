@@ -984,7 +984,7 @@
 				</field>
 				<field name="user_id" position="after">
 				  	<field name="partner_id" required="0" domain="[('customer','=', True)]"/>
-				  	<field name="site_location_id" required="0"/>
+				<field name="site_location_id" required="0"/>
 				</field>
 				<!-- <field name="user_id" position="after">
 				  	<field name="account_id"/>
