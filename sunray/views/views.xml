@@ -17,6 +17,14 @@
       <field name="view_mode">tree,form</field>
     </record>
 	
+	<record model="ir.actions.act_window" id="CustomerRequest_action_window">
+      <field name="name">Customer Request</field>
+      <field name="res_model">vendor.request</field>
+      <field name="context">{"default_supplier": 0, "default_customer": 1}</field>
+      <field name="domain">[('customer', '=', True)]</field>
+      <field name="view_mode">tree,form</field>
+    </record>
+	
 	<record id="pipeline_sunray_form" model="ir.ui.view">
 	    <field name="name">pipeline.sunray.form</field>
 	    <field name="model">crm.lead</field>
@@ -26,6 +34,7 @@
                 <button name="create_project" string="Create Project" type="object" class="btn-primary"/>
             </xpath>
             <xpath expr="//button[@name='action_set_won_rainbowman']" position="after">
+                <button name="%(CustomerRequest_action_window)d" type='action' string='Customer Request'/>
                 <button name="send_site_audit_request_mail" string="Send Site Audit Request" type="object" class="btn-primary" confirm="You are about to send site audit request"/>
                 <button name="create_manufacturing_order" string="Create System Design" type="object" class="btn-primary"/>
                 <button name="button_submit_legal" string="request legal review" type="object" attrs="{'invisible': [('legal_review', '=', True)]}"/>
@@ -40,6 +49,27 @@
 				<field name="legal_review" invisible="1"/>
 				<field name="legal_review_done" invisible="1"/>
 			</field>
+			<xpath expr="//notebook" position="inside">
+					<page string="Additional Information">
+						<group col="4" colspan="2">
+						  	<field name="client_type"/>
+						  	<field name="site_area"/>
+						  	<field name="site_address"/>
+						  	<field name="site_type"/>
+						  	<field name="region"/>
+						  	<field name="country_id"/>
+						  	<field name="project_status"/>
+						  	<field name="commissioning_date"/>
+						  	<field name="coordinates"/>
+						  	<field name="type_of_offer"/>
+						  	<field name="pv_installed_capacity"/>
+						  	<field name="currency_id"/>
+						  	<field name="monthly_service_fees"/>
+						  	<field name="lease_duration"/>
+						  	<field name="sales_price"/>
+						</group>
+					</page>
+				</xpath>
 	    </field>
 	</record>
 	
@@ -535,7 +565,7 @@
 	                </group>
 	             </group>
 	                <notebook>
-	                	<page string="Vendor Checklist">
+	                	<page string="Vendor Checklist" attrs="{'invisible': [('customer', '=', True)]}">
 	                    	<group string="REQUIRED DOCUMENTS"/>
 		                    <field name="completed_vendor_information"/><span>
 										COMPLETED VENDOR INFORMATION FORM (AS  ATTACHED)
@@ -884,20 +914,24 @@
 	
 	<menuitem name="Vendor Request" id="Vendor_request_menu" parent="purchase.menu_procurement_management"
               action="VendorRequest_action_window" sequence="100"/>
+    <menuitem name="Customer Request" id="customer_request_menu" parent="sale.sale_order_menu"
+              action="CustomerRequest_action_window" sequence="100"/>
+              
    	<menuitem name="Legal Approval(Vendor Request)" id="vendor_legal_approval_request_menu" parent="purchase.menu_procurement_management"
               action="sunray_vendor_legal_approval_action_window" sequence="100" groups="sunray.group_legal_team"/>
               
     <menuitem name="Request Report" id="Vendor_requesters_report_menu" parent="purchase.menu_purchase_config"
               action="vendor_requesters_report_action" sequence="100"/>
               
-    <menuitem name="Sub Account" id="sub_account" parent="sale.sale_order_menu"
+    <!-- <menuitem name="Sub Account" id="sub_account" parent="sale.sale_order_menu"
               action="SubAccount_action_window"/>
-    <!-- <menuitem name="Expense Form" id="expense_report_sunray_main_menu" parent="purchase.menu_purchase_config"
+    <menuitem name="Expense Form" id="expense_report_sunray_main_menu" parent="purchase.menu_purchase_config"
               action="expense_report_action"/>
     <menuitem name="Parking List" id="parking_sunray_main_menu" parent="purchase.menu_purchase_config"
               action="parking_list_action"/>
     <menuitem name="Payment Request Form" id="payment_sunray_main_menu" parent="purchase.menu_purchase_config"
               action="payment_request_action"/> -->
+              
     <menuitem id="sunray_crm_legal_approval_id" name="Legal Approval" parent="crm.crm_menu_root" sequence="20" groups="sunray.group_legal_team"
     		  action="sunray_crm_legal_approval_action_window"/>
     <menuitem name="Availability Demand Form" id="availability_demand_menu" parent="stock.menu_stock_root"

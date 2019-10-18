@@ -924,22 +924,23 @@ class Project(models.Model):
         result.send_store_request_mail()
         return result
     '''
-    '''
+    
     @api.model
     def create(self, vals):
         site = self.env['res.country.state'].search([('id','=',vals['site_location_id'])])
         client = self.env['res.partner'].search([('id','=',vals['partner_id'])])
-        code = client.parent_account_number + site.code
-        
-        no = self.env['ir.sequence'].next_by_code('project.site.code')
-        site_code = code + str(no)
-        vals['default_site_code'] = site_code
+        if site and client:
+            code = client.parent_account_number + site.code
+            
+            no = self.env['ir.sequence'].next_by_code('project.site.code')
+            site_code = code + str(no)
+            vals['default_site_code'] = site_code
         
         a = super(Project, self).create(vals)
         a.send_project_commencement_mail()
         return a
         return super(Project, self).create(vals)
-    '''
+    
     @api.multi
     def send_project_commencement_mail(self):
         config = self.env['mail.template'].sudo().search([('name','=','Project')], limit=1)

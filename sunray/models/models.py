@@ -28,6 +28,33 @@ class Lead(models.Model):
     legal_review = fields.Boolean(string='Legal Review')
     legal_review_done = fields.Boolean(string='Legal Review Done')
     
+    site_location_id = fields.Many2one(comodel_name='res.country.state', string='Site Location', domain=[('country_id.name','=','Nigeria')])
+    #site_location_id = fields.Char(string='Site Location')
+
+    
+    default_site_code = fields.Char(string='Site Code') 
+    
+    client_type = fields.Char(string='Client Type')
+    site_area = fields.Char(string='Site Area')
+    site_address = fields.Char(string='Site Address')
+    site_type = fields.Char(string='Site Type')
+    region = fields.Char(string='Region')
+    country_id = fields.Many2one(comodel_name='res.country', string="Country")
+    project_status = fields.Char(string='Status.')
+    commissioning_date = fields.Date(string='Commissioning date')
+    coordinates = fields.Char(string='Coordinates')
+    
+    type_of_offer = fields.Selection([('lease_to_own', 'Lease to Own'), ('pass_battery', 'PaaS Battery'), ('paas_diesel', 'PaaS Diesel'),
+                                      ('pass_diesel', 'PaaS Diesel'), ('saas', 'SaaS'), ('sale', 'Sale')], string='Service Type', required=False,default='saas')
+    #atm_power_at_night = fields.Selection([('yes', 'Yes'), ('no', 'No'),], string='Does the system power ATM night/we?', required=False,default='yes')
+    
+    pv_installed_capacity = fields.Float(string='PV installed capacity (kWp)')
+    
+    currency_id = fields.Many2one(comodel_name='res.currency', string='Currency.')
+    monthly_service_fees = fields.Float(string='Monthly Service fees')
+    lease_duration = fields.Char(string='If lease, contract duration')
+    sales_price = fields.Float(string="Sale Price")
+    
     @api.multi
     def button_reset(self):
         self.write({'state': 'draft'})
@@ -465,7 +492,7 @@ class Job(models.Model):
 
 class VendorRequest(models.Model):
     _name = "vendor.request"
-    _description = "Vendor Request"
+    _description = "Contact Request"
     _order = "name"
     _inherit = ['res.partner']
     
