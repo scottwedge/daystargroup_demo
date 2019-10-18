@@ -228,7 +228,7 @@ class Stage(models.Model):
     _name = "crm.stage"
     _inherit = "crm.stage"
     
-    company_id = fields.Many2one('res.company', string='Company', store=True, readonly=True,
+    company_id = fields.Many2one('res.company', string='Company', store=True,
         default=lambda self: self.env.user.company_id, track_visibility='onchange')
     
 class SubAccount(models.Model):
