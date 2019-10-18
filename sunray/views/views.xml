@@ -8,6 +8,14 @@
       <field name="domain">[('legal_review', '=', True)]</field>
       <field name="view_mode">tree,form</field>
     </record>
+    
+    <record model="ir.actions.act_window" id="sunray_crm_leads_approval_action_window">
+      <field name="name">Leads Approval</field>
+      <field name="res_model">crm.lead</field>
+      <field name="context">{}</field>
+      <field name="domain">[('active', '=', False)]</field>
+      <field name="view_mode">tree,form</field>
+    </record>
 	
 	<record model="ir.actions.act_window" id="sunray_vendor_legal_approval_action_window">
       <field name="name">Legal Approval (Vendor Request)</field>
@@ -35,12 +43,13 @@
             </xpath>
             <xpath expr="//button[@name='action_set_won_rainbowman']" position="after">
                 <button name="%(CustomerRequest_action_window)d" type='action' string='Customer Request'/>
-                <button name="send_site_audit_request_mail" string="Send Site Audit Request" type="object" class="btn-primary" confirm="You are about to send site audit request"/>
+                <!--<button name="send_site_audit_request_mail" string="Send Site Audit Request" type="object" class="btn-primary" confirm="You are about to send site audit request"/>
                 <button name="create_manufacturing_order" string="Create System Design" type="object" class="btn-primary"/>
-                <button name="button_submit_legal" string="request legal review" type="object" attrs="{'invisible': [('legal_review', '=', True)]}"/>
+                --><button name="button_submit_legal" string="request legal review" type="object" attrs="{'invisible': [('legal_review', '=', True)]}"/>
             	<button name="button_submit_legal_done" string="legal review done" type="object" attrs="{'invisible': ['|', ('legal_review', '!=', True), ('legal_review_done', '=', True)]}"/>
             </xpath>
 			<field name="tag_ids" position="after">
+				<field name="site_location_id"/>
 				<field name="size"/>
 	    		<field name="type_of_offer"/>
 	    		<field name="budget"/>
@@ -103,7 +112,8 @@
 	    <field name="inherit_id" ref="crm.crm_case_form_view_leads"/>
 	    <field name="arch" type="xml">
 	    	<xpath expr="//button[@name='action_set_lost']" position="before">
-                <button name="button_submit" states="draft" string="Submit" type="object" />
+	    		<field name="lead_approval" invisible="1"/>
+                <button name="button_submit" string="Submit" type="object" attrs="{'invisible': ['|', ('state', '!=', 'draft'), ('active', '=', True)]}"/>
 				<button name="button_approve" states="submit" string="Approve" type="object" groups="account.group_account_invoice"/>
 				<button name="button_reject" states="submit" string="Reject" type="object" groups="account.group_account_invoice"/>
 				<button name="button_reset" states="reject" string="Set to Draft" type="object" />
@@ -553,6 +563,7 @@
 	                <group>
 	                    <field name="function" placeholder="e.g. Sales Director"
 	                        attrs="{'invisible': [('is_company','=', True)]}"/>
+	                    <field name="parent_account_number"/>
 	                    <field name="phone" widget="phone"/>
 	                    <field name="mobile" widget="phone"/>
 	                    <field name="contact_email" widget="email" context="{'gravatar_image': True}"/>
@@ -913,7 +924,7 @@
 	
 	<menuitem name="Vendor Request" id="Vendor_request_menu" parent="purchase.menu_procurement_management"
               action="VendorRequest_action_window" sequence="100"/>
-    <menuitem name="Customer Request" id="customer_request_menu" parent="sale.sale_order_menu"
+    <menuitem name="Customer Request" id="customer_request_menu" parent="crm.crm_menu_root
               action="CustomerRequest_action_window" sequence="100"/>
               
    	<menuitem name="Legal Approval(Vendor Request)" id="vendor_legal_approval_request_menu" parent="purchase.menu_procurement_management"
@@ -933,6 +944,8 @@
               
     <menuitem id="sunray_crm_legal_approval_id" name="Legal Approval" parent="crm.crm_menu_root" sequence="20" groups="sunray.group_legal_team"
     		  action="sunray_crm_legal_approval_action_window"/>
+    <menuitem id="sunray_crm_leads_approval_id" name="Leads Approval" parent="crm.crm_menu_root" sequence="20" groups="sunray.group_legal_team"
+    		  action="sunray_crm_leads_approval_action_window"/>		  
     <menuitem name="Availability Demand Form" id="availability_demand_menu" parent="stock.menu_stock_root"
               action="availability_demand_action_window"/>
               

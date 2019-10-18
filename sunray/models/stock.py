@@ -70,6 +70,7 @@ class Partner(models.Model):
     iban = fields.Char(string='IBAN', required=False, index=True, copy=False, store=True)
     transaction_description = fields.Char(string='Transaction Description', required=False, index=True, copy=False, store=True)
     
+    '''
     @api.model
     def create(self, vals):
         if 'customer' in vals and vals['customer'] == True and vals['parent_id'] == False:
@@ -79,6 +80,7 @@ class Partner(models.Model):
         elif 'supplier' in vals and vals['supplier'] == True and vals['parent_id'] == False:
                 vals['ref'] = self.env['ir.sequence'].next_by_code('res.partner.vendor') or '/'        
         return super(Partner, self).create(vals)
+    '''
     
     @api.multi
     def name_get(self):
