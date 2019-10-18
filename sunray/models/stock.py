@@ -871,8 +871,8 @@ class Project(models.Model):
     
     project_code_id = fields.Many2one(comodel_name='res.partner', string='Project Code', help="Client sub account code")
     
-    #site_location_id = fields.Many2one(comodel_name='res.country.state', string='Site Location', domain=[('country_id.name','=','Nigeria')])
-    site_location_id = fields.Char(string='Site Location')
+    site_location_id = fields.Many2one(comodel_name='res.country.state', string='Site Location', domain=[('country_id.name','=','Nigeria')])
+    #site_location_id = fields.Char(string='Site Location')
 
     
     default_site_code = fields.Char(string='Site Code') 
@@ -924,7 +924,7 @@ class Project(models.Model):
         result.send_store_request_mail()
         return result
     '''
-    
+    '''
     @api.model
     def create(self, vals):
         site = self.env['res.country.state'].search([('id','=',vals['site_location_id'])])
@@ -939,7 +939,7 @@ class Project(models.Model):
         a.send_project_commencement_mail()
         return a
         return super(Project, self).create(vals)
-    
+    '''
     @api.multi
     def send_project_commencement_mail(self):
         config = self.env['mail.template'].sudo().search([('name','=','Project')], limit=1)
