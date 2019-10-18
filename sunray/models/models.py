@@ -770,7 +770,8 @@ class HolidaysRequest(models.Model):
         self._check_line_manager()
         
         current_employee = self.env['hr.employee'].search([('user_id', '=', self.env.uid)], limit=1)
-        self.filtered(lambda hol: hol.validation_type == 'both').write({'state': 'validate1', 'first_approver_id': current_employee.id}).send_manager_approved_mail()
+        self.filtered(lambda hol: hol.validation_type == 'both').write({'state': 'validate1', 'first_approver_id': current_employee.id})
+        self.send_manager_approved_mail()
         self.filtered(lambda hol: not hol.validation_type == 'both').action_validate()
         if not self.env.context.get('leave_fast_create'):
             self.activity_update()
