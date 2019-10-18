@@ -146,6 +146,7 @@
 	    <field name="arch" type="xml">
 			<field name="priority" position="before">
 				<field name="project_id"/>
+				<field name="project_site_code"/>
 			</field>
 	    </field>
 	</record>
