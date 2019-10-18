@@ -467,6 +467,7 @@ class Employee(models.Model):
     _inherit = "hr.employee"
     
     deactivated = fields.Boolean(string='Deactivated')
+    deactivation_date = fields.Date(string='Deactivation Date', readonly=True)
     
     @api.multi
     def reminder_deactivate_employee_contract(self):
@@ -495,6 +496,7 @@ class Employee(models.Model):
                     mail.send()
             self.active = False
             self.deactivated = True
+            self.deactivation_date = date.today()
             self.reminder_deactivate_employee_contract()
     
 class Job(models.Model):
