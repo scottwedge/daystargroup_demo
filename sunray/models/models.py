@@ -509,8 +509,8 @@ class VendorRequest(models.Model):
     state = fields.Selection([
         ('draft', 'Draft'),
         ('pending_info', 'Pending Partner info'),
-        ('approve', 'Pending Vendor Approval1'),
-        ('validate', 'pending Vendor Approval 2'),
+        ('approve', 'Pending Approval 1'),
+        ('validate', 'pending Approval 2'),
         ('registered', 'Registered'),
         ('reject', 'Rejected'),
         ], string='Status', readonly=True, index=True, copy=False, default='draft', track_visibility='onchange')
