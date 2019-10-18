@@ -55,6 +55,22 @@ class Lead(models.Model):
     #lease_duration = fields.Char(string='If lease, contract duration')
     sales_price = fields.Float(string="Sale Revenue")
     
+    lead_approval = fields.Boolean(string="lead approval", related='company_id.company_lead_approval')
+    site_location_id = fields.Many2one(comodel_name='res.country.state', string='Site Location', domain=[('country_id.name','=','Nigeria')])
+    
+    default_site_code = fields.Char(string='Site Code')
+    
+    @api.multi
+    def generate_site_code(self, vals):
+        site = self.env['res.country.state'].search([('id','=',vals['site_location_id'])])
+        client = self.env['res.partner'].search([('id','=',vals['partner_id'])])
+        if site and client:
+            code = client.parent_account_number + "_" +  site.code
+            
+            no = self.env['ir.sequence'].next_by_code('project.site.code')
+            site_code = code + "_" +  str(no)
+            vals['default_site_code'] = site_code
+    
     @api.multi
     def button_reset(self):
         self.write({'state': 'draft'})
@@ -82,9 +98,9 @@ class Lead(models.Model):
         self.send_introductory_mail()
         subject = "Created Lead {} has been approved".format(self.name)
         partner_ids = []
-        for partner in self.sheet_id.message_partner_ids:
+        for partner in self.message_partner_ids:
             partner_ids.append(partner.id)
-        self.sheet_id.message_post(subject=subject,body=subject,partner_ids=partner_ids)
+        self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
         return {}
     
     @api.multi
@@ -164,8 +180,10 @@ class Lead(models.Model):
         """
         Method to open create project form
         """
-
+        #self.generate_site_code(vals)
         partner_id = self.partner_id
+        site_location_id = self.site_location_id
+        default_site_code = self.default_site_code
              
         view_ref = self.env['ir.model.data'].get_object_reference('project', 'edit_project')
         view_id = view_ref[1] if view_ref else False
@@ -178,7 +196,7 @@ class Lead(models.Model):
             'view_mode': 'form',
             'view_id': view_id,
             'target': 'current',
-            'context': {'default_partner_id': partner_id.id, 'default_name': self.name, 'default_crm_lead_id': self.id}
+            'context': {'default_partner_id': partner_id.id, 'default_name': self.name, 'default_site_location_id': self.site_location_id.id, 'default_default_site_code': self.default_site_code,  'default_crm_lead_id': self.id}
         }
         
         return res
