@@ -33,3 +33,4 @@ access_vendor_requesters_report,vendor.requesters.report,model_vendor_requesters
 access_vendor_requesters_report_line,vendor.requesters.report.line,model_vendor_requesters_report_line,base.group_user,1,1,1,0
 access_vendor_requesters_report_line_two,vendor.requesters.report.line.two,model_vendor_requesters_report_line_two,base.group_user,1,1,1,0
 access_vendor_internal_approval_checklist,vendor.internal.approval.checklist,model_vendor_internal_approval_checklist,base.group_user,1,1,1,0
+access_site_code,site.code,model_site_code,base.group_user,1,1,1,1

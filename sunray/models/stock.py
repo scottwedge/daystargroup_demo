@@ -70,6 +70,21 @@ class Partner(models.Model):
     iban = fields.Char(string='IBAN', required=False, index=True, copy=False, store=True)
     transaction_description = fields.Char(string='Transaction Description', required=False, index=True, copy=False, store=True)
     
+    site_code_count = fields.Integer(compute="_site_code_count",string="Site Code(s)", store=False)
+    
+    @api.multi
+    def _site_code_count(self):
+        oe_checklist = self.env['site.code']
+        for pa in self:
+            domain = [('partner_id', '=', pa.id)]
+            pres_ids = oe_checklist.search(domain)
+            pres = oe_checklist.browse(pres_ids)
+            issues_count = 0
+            for pr in pres:
+                issues_count+=1
+            pa.site_code_count = issues_count
+        return True
+    
     '''
     @api.model
     def create(self, vals):
@@ -177,6 +192,14 @@ class Partner(models.Model):
         self.write({'specific_references': True})
         self.write({'latest_financials': True})
         return {}
+    
+    @api.multi
+    def open_customers_site_code(self):
+        self.ensure_one()
+        action = self.env.ref('sunray.site_location_action_window').read()[0]
+        action['domain'] = literal_eval(action['domain'])
+        action['domain'].append(('partner_id', 'child_of', self.partner_id.id))
+        return action
     
 class HrExpenseSheet(models.Model):
     _name = "hr.expense.sheet"
@@ -794,16 +817,25 @@ class SaleOrderLine(models.Model):
     type = fields.Selection([('sale', 'Sale'), ('lease', 'Lease')], string='Type', required=True, default='sale')
     project_id = fields.Many2one(comodel_name="project.project", string="Site Location")
 
-class SiteLocation(models.Model):
-    _name = "site.location"
-    _description = "Site Location"
+class SiteCode(models.Model):
+    _name = "site.code"
+    _description = "Site Code"
     _order = "name"
     _inherit = ['mail.thread']
 
-    name = fields.Many2one(comodel_name='res.country.state', string='Site location (State)', required=True, track_visibility='onchange')
-    code = fields.Char('Code', required=True, track_visibility='onchange')
+    location_id = fields.Many2one(comodel_name='res.country.state', string='Site location (State)', required=True, track_visibility='onchange')
+    partner_id = fields.Many2one(comodel_name='res.partner', string='Customer', required=True)
+    name = fields.Char('Code', readonly=True, track_visibility='onchange')
     active = fields.Boolean('Active', default='True')
-
+    
+    @api.multi
+    def action_generate(self):
+        if self.partner_id and self.location_id:
+            code = self.partner_id.parent_account_number + "_" +  self.location_id.code
+            no = self.env['ir.sequence'].next_by_code('project.site.code')
+            site_code = code + "_" +  str(no)
+            self.name = site_code
+    
 class Project(models.Model):
     _name = "project.project"
     _inherit = ['project.project', 'mail.thread', 'mail.activity.mixin', 'rating.mixin']

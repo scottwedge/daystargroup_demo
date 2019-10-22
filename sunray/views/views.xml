@@ -567,7 +567,7 @@
 	                <group>
 	                    <field name="function" placeholder="e.g. Sales Director"
 	                        attrs="{'invisible': [('is_company','=', True)]}"/>
-	                    <field name="parent_account_number"/>
+	                    <field name="parent_account_number" attrs="{'invisible': [('supplier', '=', True)], 'required': [('customer', '=', True), ('state', '=', 'validate')]}"/>
 	                    <field name="phone" widget="phone"/>
 	                    <field name="mobile" widget="phone"/>
 	                    <field name="contact_email" widget="email" context="{'gravatar_image': True}"/>
@@ -946,10 +946,12 @@
     <menuitem name="Payment Request Form" id="payment_sunray_main_menu" parent="purchase.menu_purchase_config"
               action="payment_request_action"/> -->
               
-    <menuitem id="sunray_crm_legal_approval_id" name="Legal Approval" parent="crm.crm_menu_root" sequence="20" groups="sunray.group_legal_team"
+    <menuitem id="sunray_crm_legal_id" name="Legal" parent="crm.crm_menu_root" sequence="20" groups="sunray.group_legal_team"/>          
+    <menuitem id="sunray_crm_legal_approval_id" name="Legal Approval" parent="sunray_crm_legal_id" sequence="20" groups="sunray.group_legal_team"
     		  action="sunray_crm_legal_approval_action_window"/>
-    <menuitem id="sunray_crm_leads_approval_id" name="Leads Approval" parent="crm.crm_menu_root" sequence="20" groups="sunray.group_legal_team"
-    		  action="sunray_crm_leads_approval_action_window"/>		  
+    <menuitem id="sunray_crm_leads_approval_id" name="Leads Approval" parent="sunray_crm_legal_id" sequence="20" groups="sunray.group_legal_team"
+    		  action="sunray_crm_leads_approval_action_window"/>
+    		  		  
     <menuitem name="Availability Demand Form" id="availability_demand_menu" parent="stock.menu_stock_root"
               action="availability_demand_action_window"/>
               

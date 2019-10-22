@@ -373,8 +373,8 @@
     </record>
 	
 	<record model="ir.actions.act_window" id="site_location_action_window">
-      <field name="name">Site Location</field>
-      <field name="res_model">site.location</field>
+      <field name="name">Site Code</field>
+      <field name="res_model">site.code</field>
       <field name="view_mode">tree,form</field>
     </record>
 	
@@ -564,27 +564,37 @@
 		</field>
 	</record>
 	
-	<record model="ir.ui.view" id="site_location_tree_view">
-        <field name="name">site.location.tree</field>
-        <field name="model">site.location</field>
+	<record model="ir.ui.view" id="site_code_tree_view">
+        <field name="name">site.code.tree</field>
+        <field name="model">site.code</field>
         <field name="type">tree</field>
         <field name="arch" type="xml">
-            <field name="name"/>
-            <field name="code"/>
+        	<field name="name"/>
+            <field name="partner_id"/>
+            <field name="location_id"/>
             <field name="active"/>
         </field>
     </record>
 	
-	<record model="ir.ui.view" id="site_location_form_view">
-        <field name="name">site location</field>
-        <field name="model">site.location</field>
+	<record model="ir.ui.view" id="site_code_form_view">
+        <field name="name">site Code</field>
+        <field name="model">site.code</field>
         <field name="type">form</field>
         <field name="arch" type="xml">
             <form string = "Site Location">
+            	<header>
+            		<button string="Generate Code" name="action_generate" type="object" class="oe_highlight"/>
+            	</header>
                 <sheet>
+               	<div class="oe_button_box" name="button_box">
+	                <button name="toggle_active" type="object" groups="base.group_user" class="oe_stat_button" icon="fa-archive">
+                        <field name="active" widget="boolean_button" options="{&quot;terminology&quot;: &quot;archive&quot;}"/>
+                    </button>
+                </div>
                     <group col="4" colspan="2">
+                    	<field name="partner_id"/>
+                    	<field name="location_id"/>
                         <field name="name"/>
-                        <field name="code"/>
                         <field name="active"/>
                     </group>
                 </sheet>
@@ -685,6 +695,14 @@
 						<field name="state" widget="statusbar" statusbar_visible="draft,submit,validate,approve" readonly="1"/>
 				    </header>
 	            </xpath>-->
+	            <xpath expr="//button[@name='toggle_active']" position="before">
+		        	<button class="oe_stat_button" type="object" name="open_customers_site_code" icon="fa-list">
+	                    <div class="o_stat_info">
+	                        <field name="site_code_count" class="o_stat_value"/>
+	                        <span class="o_stat_text">Site Code(s)</span>
+	                    </div>
+	                </button>
+	            </xpath>
 	           	<field name="vat" position="after">
 	           		<field name="tin" attrs="{'invisible': [('supplier', '!=', True)]}" />
 	           		<field name="vendor_registration" attrs="{'invisible': [('supplier', '!=', True)]}" />
@@ -700,7 +718,7 @@
 				  	<field name="iban" attrs="{'invisible': [('supplier', '!=', True)]}" />
 				</field>
 				<field name="function" position="before">
-		    		<field name="parent_account_number" readonly="1"/>
+		    		<field name="parent_account_number" readonly="0"/>
 		    		<field name="client_code" readonly="0"/>
 				</field>
 				<xpath expr="//notebook" position="inside">
@@ -1227,7 +1245,8 @@
 	
 	<menuitem name="Store Request" id="store_request" parent="stock.menu_stock_root"
               action="store_req_action1_window"/>
-	<menuitem name="Site_Location" id="site_location_id" parent="stock.menu_product_in_config_stock"
+              
+	<menuitem name="Site Code" id="site_location_id" parent="crm.crm_menu_root"
               action="site_location_action_window"/>
               
   </data>

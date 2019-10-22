@@ -530,6 +530,12 @@ class VendorRequest(models.Model):
         if current_employee == self.employee_id:
             raise UserError(_('You are not allowed to approve your own request.'))
     
+    @api.multi
+    def _check_customer_code(self):
+        customer_code = self.env['res.partner'].search([('parent_account_number', '=', self.parent_account_number)], limit=1)
+        if customer_code.parent_account_number == self.parent_account_number:
+            raise UserError(_('Customer Code Already Exists'))
+    
     state = fields.Selection([
         ('draft', 'Draft'),
         ('pending_info', 'Pending Partner info'),
@@ -538,6 +544,8 @@ class VendorRequest(models.Model):
         ('registered', 'Registered'),
         ('reject', 'Rejected'),
         ], string='Status', readonly=True, index=True, copy=False, default='draft', track_visibility='onchange')
+    
+    parent_account_number = fields.Char(string='Customer Code', index=True, copy=False, store=True)
     
     employee_id = fields.Many2one(comodel_name='hr.employee', string='Requesting Employee', default=_default_employee)
     
@@ -573,25 +581,43 @@ class VendorRequest(models.Model):
     @api.multi
     def button_submit_legal(self):
         self.legal_review = True
-        group_id = self.env['ir.model.data'].xmlid_to_object('sunray.group_legal_team')
-        user_ids = []
-        partner_ids = []
-        for user in group_id.users:
-            user_ids.append(user.id)
-            partner_ids.append(user.partner_id.id)
-        self.message_subscribe(partner_ids=partner_ids)
-        subject = "Vendor request '{}' needs a review from the legal team".format(self.name)
-        self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
+        if self.supplier == True:
+            group_id = self.env['ir.model.data'].xmlid_to_object('sunray.group_legal_team')
+            user_ids = []
+            partner_ids = []
+            for user in group_id.users:
+                user_ids.append(user.id)
+                partner_ids.append(user.partner_id.id)
+            self.message_subscribe(partner_ids=partner_ids)
+            subject = "Vendor request '{}' needs a review from the legal team".format(self.name)
+            self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
+        else:
+            group_id = self.env['ir.model.data'].xmlid_to_object('sunray.group_legal_team')
+            user_ids = []
+            partner_ids = []
+            for user in group_id.users:
+                user_ids.append(user.id)
+                partner_ids.append(user.partner_id.id)
+            self.message_subscribe(partner_ids=partner_ids)
+            subject = "Customer request '{}' needs a review from the legal team".format(self.name)
+            self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
         return False
     
     @api.multi
     def button_submit_legal_done(self):
         self.legal_review_done = True
-        subject = "Vendor request {} has been reviewed by the legal team".format(self.name)
-        partner_ids = []
-        for partner in self.message_partner_ids:
-            partner_ids.append(partner.id)
-        self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
+        if self.supplier == True:
+            subject = "Vendor request {} has been reviewed by the legal team".format(self.name)
+            partner_ids = []
+            for partner in self.message_partner_ids:
+                partner_ids.append(partner.id)
+            self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
+        else:
+            subject = "Customer request {} has been reviewed by the legal team".format(self.name)
+            partner_ids = []
+            for partner in self.message_partner_ids:
+                partner_ids.append(partner.id)
+            self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
     
     @api.depends('is_company', 'parent_id.commercial_partner_id')
     def _compute_commercial_partner(self):
@@ -616,39 +642,66 @@ class VendorRequest(models.Model):
     @api.multi
     def button_submit(self):
         self.write({'state': 'approve'})
-        group_id = self.env['ir.model.data'].xmlid_to_object('sunray.group_one_vendor_approval')
-        user_ids = []
-        partner_ids = []
-        for user in group_id.users:
-            user_ids.append(user.id)
-            partner_ids.append(user.partner_id.id)
-        self.message_subscribe(partner_ids=partner_ids)
-        subject = "This Vendor {} needs first approval".format(self.name)
-        self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
+        if self.supplier == True:
+            group_id = self.env['ir.model.data'].xmlid_to_object('sunray.group_one_vendor_approval')
+            user_ids = []
+            partner_ids = []
+            for user in group_id.users:
+                user_ids.append(user.id)
+                partner_ids.append(user.partner_id.id)
+            self.message_subscribe(partner_ids=partner_ids)
+            subject = "This Vendor {} needs first approval".format(self.name)
+            self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
+        else:
+            group_id = self.env['ir.model.data'].xmlid_to_object('sunray.group_one_vendor_approval')
+            user_ids = []
+            partner_ids = []
+            for user in group_id.users:
+                user_ids.append(user.id)
+                partner_ids.append(user.partner_id.id)
+            self.message_subscribe(partner_ids=partner_ids)
+            subject = "This Customer {} needs first approval".format(self.name)
+            self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
         return {}
     
     @api.multi
     def button_validate(self):
         self._check_line_manager()
         self.write({'state': 'validate'})
-        group_id = self.env['ir.model.data'].xmlid_to_object('sunray.group_two_vendor_approval')
-        user_ids = []
-        partner_ids = []
-        for user in group_id.users:
-            user_ids.append(user.id)
-            partner_ids.append(user.partner_id.id)
-        self.message_subscribe(partner_ids=partner_ids)
-        subject = "This Vendor {} needs second approval".format(self.name)
-        self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
+        if self.supplier == True:
+            group_id = self.env['ir.model.data'].xmlid_to_object('sunray.group_two_vendor_approval')
+            user_ids = []
+            partner_ids = []
+            for user in group_id.users:
+                user_ids.append(user.id)
+                partner_ids.append(user.partner_id.id)
+            self.message_subscribe(partner_ids=partner_ids)
+            subject = "This Vendor {} needs second approval".format(self.name)
+            self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
+        else:
+            group_id = self.env['ir.model.data'].xmlid_to_object('sunray.group_two_vendor_approval')
+            user_ids = []
+            partner_ids = []
+            for user in group_id.users:
+                user_ids.append(user.id)
+                partner_ids.append(user.partner_id.id)
+            self.message_subscribe(partner_ids=partner_ids)
+            subject = "This Customer {} needs second approval".format(self.name)
+            self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
         return {}
     
     @api.multi
     def button_approve(self):
         self.write({'state': 'registered'})
-        self.vendor_registration = True
+        if self.supplier == True:
+            self.vendor_registration = True
+        else:
+            #if self.customer == True:
+            self._check_customer_code()
         vals = {
             'name' : self.name,
             'company_type' : self.company_type,
+            'parent_account_number' : self.parent_account_number,
             'image' : self.image,
             'parent_id' : self.parent_id.id,
             'street' : self.street,
