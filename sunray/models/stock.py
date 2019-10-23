@@ -860,6 +860,18 @@ class SiteCode(models.Model):
     name = fields.Char('Code', readonly=True, track_visibility='onchange')
     active = fields.Boolean('Active', default='True')
     
+    @api.model
+    def create(self, vals):
+        site = self.env['res.country.state'].search([('id','=',vals['location_id'])])
+        client = self.env['res.partner'].search([('id','=',vals['partner_id'])])
+        code = client.parent_account_number + "_" + site.code
+        
+        no = self.env['ir.sequence'].next_by_code('project.site.code')
+        site_code = code + "_" +  str(no)
+        vals['name'] = site_code
+        return super(SiteCode, self).create(vals)
+    
+    '''
     @api.multi
     def action_generate(self):
         if self.partner_id and self.location_id:
@@ -867,6 +879,7 @@ class SiteCode(models.Model):
             no = self.env['ir.sequence'].next_by_code('project.site.code')
             site_code = code + "_" +  str(no)
             self.name = site_code
+    '''
     
 class Project(models.Model):
     _name = "project.project"
