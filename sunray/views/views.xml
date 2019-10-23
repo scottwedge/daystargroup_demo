@@ -39,7 +39,8 @@
 	    <field name="inherit_id" ref="crm.crm_case_form_view_oppor"/>
 	    <field name="arch" type="xml">
 	    	<xpath expr="//button[@name='action_set_won_rainbowman']" position="before">
-                <button name="create_project" string="Create Project" type="object" class="btn-primary"/>
+                <!-- <button name="create_project" string="Create Project" type="object" class="btn-primary"/> -->
+                <button name="button_request_site_code" string="Request Site Code" type="object" attrs="{'invisible': [('request_site_code', '=', True)]}"/>
             </xpath>
             <xpath expr="//button[@name='action_set_won_rainbowman']" position="after">
                 <button name="%(CustomerRequest_action_window)d" type='action' string='Customer Request'/>
@@ -49,14 +50,16 @@
             	<button name="button_submit_legal_done" string="legal review done" type="object" attrs="{'invisible': ['|', ('legal_review', '!=', True), ('legal_review_done', '=', True)]}"/>
             </xpath>
 			<field name="tag_ids" position="after">
-				<field name="site_location_id"/>
 				<field name="size"/>
 	    		<field name="type_of_offer"/>
-	    		<field name="budget"/>
+	    		<field name="site_code_id" domain="[('partner_id','=', partner_id)]" widget="selection"/>
+	    		<field name="site_code_ids" widget="many2many_tags" domain="[('partner_id','=', partner_id)]"/>
+	    		<!-- <field name="budget"/> -->
 			</field>
 			<field name="name" position="before">
 				<field name="legal_review" invisible="1"/>
 				<field name="legal_review_done" invisible="1"/>
+				<field name="request_site_code" invisible="1"/>
 			</field>
 			<xpath expr="//notebook" position="inside">
 					<page string="Additional Information">
@@ -98,9 +101,12 @@
         <field name="priority" eval="7" />
         <field name="inherit_id" ref="hr.view_employee_form"/>
         <field name="arch" type="xml">
+        	<field name="name" position="before">
+	    		<field name="deactivated" invisible="1"/>
+			</field>
             <xpath expr="//sheet" position="before">
             	<header>
-	    			<button name="button_deactivate_employee" string="Deactivate Employee" type="object" class="oe_highlight" groups="hr.group_hr_manager" confirm="Confirm Deactivation of Employee"/>
+	    			<button name="button_deactivate_employee" string="Deactivate Employee" type="object" class="oe_highlight" groups="hr.group_hr_manager" attrs="{'invisible': [('deactivated', '=', True)]}" confirm="Confirm Deactivation of Employee"/>
             	</header>
             </xpath>
         </field>
@@ -146,6 +152,7 @@
 	    <field name="arch" type="xml">
 			<field name="priority" position="before">
 				<field name="project_id"/>
+				<field name="project_site_code"/>
 			</field>
 	    </field>
 	</record>
@@ -485,8 +492,8 @@
             </field>
         </record>
 	
-	<record id="vendor_request_form" model="ir.ui.view">
-	    <field name="name">vendor.request.form</field>
+	<record id="sunray_vendor_request_form" model="ir.ui.view">
+	    <field name="name">sunray.vendor.request.form</field>
 	    <field name="model">vendor.request</field>
 	    <field name="priority" eval="2"/>
 	    <field name="arch" type="xml">
@@ -563,13 +570,13 @@
 	                <group>
 	                    <field name="function" placeholder="e.g. Sales Director"
 	                        attrs="{'invisible': [('is_company','=', True)]}"/>
-	                    <field name="parent_account_number"/>
+	                    <field name="parent_account_number" attrs="{'invisible': [('supplier', '=', True)], 'required': [('customer', '=', True), ('state', '=', 'validate')]}"/>
 	                    <field name="phone" widget="phone"/>
 	                    <field name="mobile" widget="phone"/>
 	                    <field name="contact_email" widget="email" context="{'gravatar_image': True}"/>
 	                    <field name="company_id" groups="base.group_system"/>
-	                    <field name="employee_id" groups="base.group_system"/>
-	                    <field name="vendor_registration" groups="base.group_system"/>
+	                    <field name="employee_id"/>
+	                    <field name="vendor_registration" groups="base.group_system" attrs="{'invisible': [('customer', '=', True)]}"/>
 	                    <field name="customer" invisible="1"/>
 	                    <field name="supplier" invisible="1"/>
 	                </group>
@@ -623,6 +630,52 @@
 										</span><br/><br/>
 							<field name="specific_references"/><span>
 										SPECIFIC REFERENCES
+										</span><br/><br/>
+							<field name="latest_financials"/><span>
+										LATEST FINANCIAL STATEMENTS / KEY KPIs
+										</span><br/><br/>
+	                    </page>
+	                    <page string="Customer Checklist" attrs="{'invisible': [('supplier', '=', True)]}">
+	                    	<group string="REQUIRED DOCUMENTS"/>
+		                    <field name="completed_vendor_information"/><span>
+										COMPLETED CUSTOMER INFORMATION FORM (AS  ATTACHED)
+										</span><br/><br/>
+		                    <field name="report_of_proposers_follow_up"/><span>
+										REPORT OF PROPOSER'S FOLLOW UP REVIEW OF SECTIONS 4 and 5
+										</span><br/><br/>
+						    <field name="true_copy_incorporation"/><span>
+										COPY OF CERTIFICATE OF INCORPORATION / BUSINESS NAME REGISTRATION CERTIFICATE
+										</span><br/><br/>
+						    <field name="true_copy_memorandum"/><span>
+										CERTIFIED TRUE COPY OF MEMORANDUM AND ARTICLE OF  ASSOCIATION FOR LIMITED LIABILITY COMPANIES
+										</span><br/><br/>
+						    <field name="true_copy_form_c02"/><span>
+										CERTIFIED TRUE COPY OF FORM C02 AND C07 FOR LIMITED LIABILITY COMPANIES
+										</span><br/><br/>
+						    <field name="Vat_cert"/><span>
+										VAT CERTIFICATE / FIRS REGISTRATION CERTIFICATE
+										</span><br/><br/>
+						    
+							<group string="DOCUMENTS ABOVE USD 10,000 CONTRACT"/>
+							<field name="current_dpr"/><span>
+										CURRENT DPR CERTIFICATE (If Applicable)
+										</span><br/><br/>
+							<field name="commercial_certificate"/><span>
+										COMMERCIAL PROPOSAL OR WEBSITE REVIEW (COMPANY PROFILE INCLUDING DETAILS OF MANAGEMENT TEAM, REFERENCES and CASE STUDIES)
+										</span><br/><br/>
+							<field name="proposers_report"/><span>
+										PROPOSER'S REPORT CONFIRMING CLEAN REVIEW ON INTERNET and OTHER AVAILABLE SOURCES (IF NOT CLEAN, FURTHER INFORMATION ON MATTERS IDENTIFIED)
+										</span><br/><br/>
+						    
+							<group string="DOCUMENTS ABOVE USD 100,000 CONTRACT"/>
+						    <field name="recommendation_letters_from_applicant"/><span>
+										RECOMMENDATION LETTER FROM APPLICANT BANKERS IN RESPECT TO THE OPERATION OF HIS/HER COMPANY'S ACCOUNT
+										</span><br/><br/>
+							<field name="evidence_of_tax"/><span>
+										EVIDENCE OF TAX PAYMENT
+										</span><br/><br/>
+							<field name="code_of_conduct"/><span>
+										CODE OF CONDUCT AND CODE OF ETHICS - SIGNED BY THE COMPANY'S MD OR AUTHORIZED STAFF
 										</span><br/><br/>
 							<field name="latest_financials"/><span>
 										LATEST FINANCIAL STATEMENTS / KEY KPIs
@@ -942,10 +995,12 @@
     <menuitem name="Payment Request Form" id="payment_sunray_main_menu" parent="purchase.menu_purchase_config"
               action="payment_request_action"/> -->
               
-    <menuitem id="sunray_crm_legal_approval_id" name="Legal Approval" parent="crm.crm_menu_root" sequence="20" groups="sunray.group_legal_team"
+    <menuitem id="sunray_crm_legal_id" name="Legal" parent="crm.crm_menu_root" sequence="20" groups="sunray.group_legal_team"/>          
+    <menuitem id="sunray_crm_legal_approval_id" name="Legal Approval" parent="sunray_crm_legal_id" sequence="20" groups="sunray.group_legal_team"
     		  action="sunray_crm_legal_approval_action_window"/>
-    <menuitem id="sunray_crm_leads_approval_id" name="Leads Approval" parent="crm.crm_menu_root" sequence="20" groups="sunray.group_legal_team"
-    		  action="sunray_crm_leads_approval_action_window"/>		  
+    <menuitem id="sunray_crm_leads_approval_id" name="Leads Approval" parent="sunray_crm_legal_id" sequence="20" groups="sunray.group_legal_team"
+    		  action="sunray_crm_leads_approval_action_window"/>
+    		  		  
     <menuitem name="Availability Demand Form" id="availability_demand_menu" parent="stock.menu_stock_root"
               action="availability_demand_action_window"/>
               

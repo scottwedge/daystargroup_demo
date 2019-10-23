@@ -29,10 +29,10 @@ class Lead(models.Model):
     legal_review_done = fields.Boolean(string='Legal Review Done')
     
     site_location_id = fields.Many2one(comodel_name='res.country.state', string='Site Location', domain=[('country_id.name','=','Nigeria')])
-    #site_location_id = fields.Char(string='Site Location')
-
     
-    default_site_code = fields.Char(string='Site Code') 
+    #site_location_id = fields.Char(string='Site Location')
+    #default_site_code = fields.Char(string='Site Code') 
+    #default_site_code = fields.Char(string='Site Code')
     
     client_type = fields.Char(string='Client Type')
     site_area = fields.Char(string='Site Area')
@@ -58,8 +58,12 @@ class Lead(models.Model):
     lead_approval = fields.Boolean(string="lead approval", related='company_id.company_lead_approval')
     site_location_id = fields.Many2one(comodel_name='res.country.state', string='Site Location', domain=[('country_id.name','=','Nigeria')])
     
-    default_site_code = fields.Char(string='Site Code')
+    request_site_code = fields.Boolean(string="Request Site Code")
     
+    site_code_id = fields.Many2one(comodel_name="site.code", string="Site Code")
+    site_code_ids = fields.Many2many(comodel_name="site.code", string="Site Code(s)")
+    
+    '''
     @api.multi
     def generate_site_code(self, vals):
         site = self.env['res.country.state'].search([('id','=',vals['site_location_id'])])
@@ -70,10 +74,26 @@ class Lead(models.Model):
             no = self.env['ir.sequence'].next_by_code('project.site.code')
             site_code = code + "_" +  str(no)
             vals['default_site_code'] = site_code
+    '''
     
     @api.multi
     def button_reset(self):
         self.write({'state': 'draft'})
+        return {}
+    
+    @api.multi
+    def button_request_site_code(self):
+        self.request_site_code = True
+        group_id = self.env['ir.model.data'].xmlid_to_object('sunray.group_hr_line_manager')
+        user_ids = []
+        partner_ids = []
+        for user in group_id.users:
+            user_ids.append(user.id)
+            partner_ids.append(user.partner_id.id)
+        self.message_subscribe(partner_ids=partner_ids)
+        subject = "A site code is needed for this '{}' oppurtunity".format(self.name)
+        self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
+        return False
         return {}
     
     @api.multi
@@ -415,6 +435,7 @@ class HelpdeskTicket(models.Model):
     _description = 'Ticket'
     
     project_id = fields.Many2one(comodel_name='project.project', string='Project')
+    project_site_code = fields.Char(string='Site Code', related='project_id.default_site_code', store = True)
     
     
 class ItemType(models.Model):
@@ -465,6 +486,9 @@ class Employee(models.Model):
     _description = "Employee"
     _inherit = "hr.employee"
     
+    deactivated = fields.Boolean(string='Deactivated')
+    deactivation_date = fields.Date(string='Deactivation Date', readonly=True)
+    
     @api.multi
     def reminder_deactivate_employee_contract(self):
         group_id = self.env['ir.model.data'].xmlid_to_object('hr.group_hr_manager')
@@ -491,6 +515,8 @@ class Employee(models.Model):
                 if mail:
                     mail.send()
             self.active = False
+            self.deactivated = True
+            self.deactivation_date = date.today()
             self.reminder_deactivate_employee_contract()
     
 class Job(models.Model):
@@ -524,6 +550,12 @@ class VendorRequest(models.Model):
         if current_employee == self.employee_id:
             raise UserError(_('You are not allowed to approve your own request.'))
     
+    @api.multi
+    def _check_customer_code(self):
+        customer_code = self.env['res.partner'].search([('parent_account_number', '=', self.parent_account_number)], limit=1)
+        if customer_code.parent_account_number == self.parent_account_number:
+            raise UserError(_('Customer Code Already Exists'))
+    
     state = fields.Selection([
         ('draft', 'Draft'),
         ('pending_info', 'Pending Partner info'),
@@ -532,6 +564,8 @@ class VendorRequest(models.Model):
         ('registered', 'Registered'),
         ('reject', 'Rejected'),
         ], string='Status', readonly=True, index=True, copy=False, default='draft', track_visibility='onchange')
+    
+    parent_account_number = fields.Char(string='Customer Code', index=True, copy=False, store=True, states={'validate': [('readonly', False)]})
     
     employee_id = fields.Many2one(comodel_name='hr.employee', string='Requesting Employee', default=_default_employee)
     
@@ -567,25 +601,43 @@ class VendorRequest(models.Model):
     @api.multi
     def button_submit_legal(self):
         self.legal_review = True
-        group_id = self.env['ir.model.data'].xmlid_to_object('sunray.group_legal_team')
-        user_ids = []
-        partner_ids = []
-        for user in group_id.users:
-            user_ids.append(user.id)
-            partner_ids.append(user.partner_id.id)
-        self.message_subscribe(partner_ids=partner_ids)
-        subject = "Vendor request '{}' needs a review from the legal team".format(self.name)
-        self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
+        if self.supplier == True:
+            group_id = self.env['ir.model.data'].xmlid_to_object('sunray.group_legal_team')
+            user_ids = []
+            partner_ids = []
+            for user in group_id.users:
+                user_ids.append(user.id)
+                partner_ids.append(user.partner_id.id)
+            self.message_subscribe(partner_ids=partner_ids)
+            subject = "Vendor request '{}' needs a review from the legal team".format(self.name)
+            self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
+        else:
+            group_id = self.env['ir.model.data'].xmlid_to_object('sunray.group_legal_team')
+            user_ids = []
+            partner_ids = []
+            for user in group_id.users:
+                user_ids.append(user.id)
+                partner_ids.append(user.partner_id.id)
+            self.message_subscribe(partner_ids=partner_ids)
+            subject = "Customer request '{}' needs a review from the legal team".format(self.name)
+            self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
         return False
     
     @api.multi
     def button_submit_legal_done(self):
         self.legal_review_done = True
-        subject = "Vendor request {} has been reviewed by the legal team".format(self.name)
-        partner_ids = []
-        for partner in self.message_partner_ids:
-            partner_ids.append(partner.id)
-        self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
+        if self.supplier == True:
+            subject = "Vendor request {} has been reviewed by the legal team".format(self.name)
+            partner_ids = []
+            for partner in self.message_partner_ids:
+                partner_ids.append(partner.id)
+            self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
+        else:
+            subject = "Customer request {} has been reviewed by the legal team".format(self.name)
+            partner_ids = []
+            for partner in self.message_partner_ids:
+                partner_ids.append(partner.id)
+            self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
     
     @api.depends('is_company', 'parent_id.commercial_partner_id')
     def _compute_commercial_partner(self):
@@ -610,73 +662,133 @@ class VendorRequest(models.Model):
     @api.multi
     def button_submit(self):
         self.write({'state': 'approve'})
-        group_id = self.env['ir.model.data'].xmlid_to_object('sunray.group_one_vendor_approval')
-        user_ids = []
-        partner_ids = []
-        for user in group_id.users:
-            user_ids.append(user.id)
-            partner_ids.append(user.partner_id.id)
-        self.message_subscribe(partner_ids=partner_ids)
-        subject = "This Vendor {} needs first approval".format(self.name)
-        self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
+        if self.supplier == True:
+            group_id = self.env['ir.model.data'].xmlid_to_object('sunray.group_one_vendor_approval')
+            user_ids = []
+            partner_ids = []
+            for user in group_id.users:
+                user_ids.append(user.id)
+                partner_ids.append(user.partner_id.id)
+            self.message_subscribe(partner_ids=partner_ids)
+            subject = "This Vendor {} needs first approval".format(self.name)
+            self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
+        else:
+            group_id = self.env['ir.model.data'].xmlid_to_object('sunray.group_one_vendor_approval')
+            user_ids = []
+            partner_ids = []
+            for user in group_id.users:
+                user_ids.append(user.id)
+                partner_ids.append(user.partner_id.id)
+            self.message_subscribe(partner_ids=partner_ids)
+            subject = "This Customer {} needs first approval".format(self.name)
+            self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
         return {}
     
     @api.multi
     def button_validate(self):
         self._check_line_manager()
         self.write({'state': 'validate'})
-        group_id = self.env['ir.model.data'].xmlid_to_object('sunray.group_two_vendor_approval')
-        user_ids = []
-        partner_ids = []
-        for user in group_id.users:
-            user_ids.append(user.id)
-            partner_ids.append(user.partner_id.id)
-        self.message_subscribe(partner_ids=partner_ids)
-        subject = "This Vendor {} needs second approval".format(self.name)
-        self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
+        if self.supplier == True:
+            group_id = self.env['ir.model.data'].xmlid_to_object('sunray.group_two_vendor_approval')
+            user_ids = []
+            partner_ids = []
+            for user in group_id.users:
+                user_ids.append(user.id)
+                partner_ids.append(user.partner_id.id)
+            self.message_subscribe(partner_ids=partner_ids)
+            subject = "This Vendor {} needs second approval".format(self.name)
+            self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
+        else:
+            group_id = self.env['ir.model.data'].xmlid_to_object('sunray.group_two_vendor_approval')
+            user_ids = []
+            partner_ids = []
+            for user in group_id.users:
+                user_ids.append(user.id)
+                partner_ids.append(user.partner_id.id)
+            self.message_subscribe(partner_ids=partner_ids)
+            subject = "This Customer {} needs second approval".format(self.name)
+            self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
         return {}
     
     @api.multi
     def button_approve(self):
         self.write({'state': 'registered'})
-        self.vendor_registration = True
-        vals = {
-            'name' : self.name,
-            'company_type' : self.company_type,
-            'image' : self.image,
-            'parent_id' : self.parent_id.id,
-            'street' : self.street,
-            'street2' : self.street2,
-            'city' : self.city,
-            'state_id' : self.state_id.id,
-            'zip' : self.zip,
-            'country_id' : self.country_id.id,            
-            'vat' : self.vat,
-            'function' : self.function,
-            'phone' : self.phone,
-            'mobile' : self.mobile,
-            'email' : self.contact_email,
-            'customer': self.customer,
-            'supplier' : self.supplier,
-            'company' : self.company_id.id,
-            'vendor_registration' : self.vendor_registration,
-            'completed_vendor_information' : self.completed_vendor_information,
-            'report_of_proposers_follow_up' : self.report_of_proposers_follow_up,
-            'true_copy_incorporation' : self.true_copy_incorporation,
-            'true_copy_memorandum' : self.true_copy_memorandum,
-            'sign_and_stamp' : self.Vat_cert,
-            'Vat_cert' : self.sign_and_stamp,
-            'current_dpr' : self.current_dpr,
-            'commercial_certificate' : self.commercial_certificate,
-            'proposers_report' : self.proposers_report,
-            'copies_of_required_specialist' : self.copies_of_required_specialist,
-            'recommendation_letters_from_applicant' : self.recommendation_letters_from_applicant,
-            'evidence_of_tax' : self.evidence_of_tax,
-            'code_of_conduct' : self.code_of_conduct,
-            'specific_references' : self.specific_references,
-            'latest_financials' : self.latest_financials,
-        }
-        self.env['res.partner'].create(vals)
+        if self.supplier == True:
+            self.vendor_registration = True
+            vals = {
+                'name' : self.name,
+                'company_type' : self.company_type,
+                'parent_account_number' : self.parent_account_number,
+                'image' : self.image,
+                'parent_id' : self.parent_id.id,
+                'street' : self.street,
+                'street2' : self.street2,
+                'city' : self.city,
+                'state_id' : self.state_id.id,
+                'zip' : self.zip,
+                'country_id' : self.country_id.id,            
+                'vat' : self.vat,
+                'function' : self.function,
+                'phone' : self.phone,
+                'mobile' : self.mobile,
+                'email' : self.contact_email,
+                'customer': self.customer,
+                'supplier' : self.supplier,
+                'company' : self.company_id.id,
+                'vendor_registration' : self.vendor_registration,
+                'completed_vendor_information' : self.completed_vendor_information,
+                'report_of_proposers_follow_up' : self.report_of_proposers_follow_up,
+                'true_copy_incorporation' : self.true_copy_incorporation,
+                'true_copy_memorandum' : self.true_copy_memorandum,
+                'sign_and_stamp' : self.Vat_cert,
+                'Vat_cert' : self.sign_and_stamp,
+                'current_dpr' : self.current_dpr,
+                'commercial_certificate' : self.commercial_certificate,
+                'proposers_report' : self.proposers_report,
+                'copies_of_required_specialist' : self.copies_of_required_specialist,
+                'recommendation_letters_from_applicant' : self.recommendation_letters_from_applicant,
+                'evidence_of_tax' : self.evidence_of_tax,
+                'code_of_conduct' : self.code_of_conduct,
+                'specific_references' : self.specific_references,
+                'latest_financials' : self.latest_financials,
+            }
+            self.env['res.partner'].create(vals)
+        else:
+            self._check_customer_code()
+            vals = {
+                'name' : self.name,
+                'company_type' : self.company_type,
+                'parent_account_number' : self.parent_account_number,
+                'image' : self.image,
+                'parent_id' : self.parent_id.id,
+                'street' : self.street,
+                'street2' : self.street2,
+                'city' : self.city,
+                'state_id' : self.state_id.id,
+                'zip' : self.zip,
+                'country_id' : self.country_id.id,            
+                'vat' : self.vat,
+                'function' : self.function,
+                'phone' : self.phone,
+                'mobile' : self.mobile,
+                'email' : self.contact_email,
+                'customer': self.customer,
+                'supplier' : self.supplier,
+                'company' : self.company_id.id,
+                'completed_customer_information' : self.completed_customer_information,
+                'report_of_proposers_follow_up' : self.report_of_proposers_follow_up,
+                'true_copy_incorporation' : self.true_copy_incorporation,
+                'true_copy_memorandum' : self.true_copy_memorandum,
+                'sign_and_stamp' : self.Vat_cert,
+                'current_dpr' : self.current_dpr,
+                'commercial_certificate' : self.commercial_certificate,
+                'proposers_report' : self.proposers_report,
+                'recommendation_letters_from_applicant' : self.recommendation_letters_from_applicant,
+                'evidence_of_tax' : self.evidence_of_tax,
+                'code_of_conduct' : self.code_of_conduct,
+                'latest_financials' : self.latest_financials,
+            }
+            self.env['res.partner'].create(vals)
         return {}
     
     @api.multi
@@ -769,7 +881,8 @@ class HolidaysRequest(models.Model):
         self._check_line_manager()
         
         current_employee = self.env['hr.employee'].search([('user_id', '=', self.env.uid)], limit=1)
-        self.filtered(lambda hol: hol.validation_type == 'both').write({'state': 'validate1', 'first_approver_id': current_employee.id}).send_manager_approved_mail()
+        self.filtered(lambda hol: hol.validation_type == 'both').write({'state': 'validate1', 'first_approver_id': current_employee.id})
+        self.send_manager_approved_mail()
         self.filtered(lambda hol: not hol.validation_type == 'both').action_validate()
         if not self.env.context.get('leave_fast_create'):
             self.activity_update()
