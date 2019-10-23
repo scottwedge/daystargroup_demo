@@ -1898,6 +1898,7 @@ class Picking(models.Model):
             for line in subscription.move_ids_without_package:
                 order_lines.append((0, 0, {
                     'name': line.product_id.name,
+                    'state': "confirmed",
                     'product_uom': line.product_id.uom_id.id,
                     'product_id': line.product_id.id,
                     'reserved_availability': line.reserved_availability,
