@@ -1028,14 +1028,14 @@
 				</field>
 				<field name="partner_id" position="after">
 					<field name="site_code_id" required = "0" domain="[('partner_id','=', partner_id)]"/>
-					<field name="default_site_code" readonly="1"/>
+					<!-- <field name="default_site_code" readonly="1"/>
 					<field name="site_code_ids" readonly="0">
 						<tree editable="top">
 							<field name="name"/>
 							<field name="partner_id"/>
 							<field name="project_id"/>
 						</tree>
-					</field>
+					</field> -->
 				  	<!-- ><field name="project_code_id" domain="[('type','=','other')]"/> -->
 				</field>
 				<xpath expr="//notebook" position="inside">
@@ -1080,7 +1080,7 @@
 				</field>
 				<field name="user_id" position="after">
 				  	<field name="partner_id" required="0" domain="[('customer','=', True)]"/>
-				<field name="site_location_id" required="0"/>
+					<!-- <field name="site_location_id" required="0"/> -->
 				</field>
 				<!-- <field name="user_id" position="after">
 				  	<field name="account_id"/>
