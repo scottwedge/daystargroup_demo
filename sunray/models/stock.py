@@ -857,7 +857,7 @@ class SiteCode(models.Model):
     location_id = fields.Many2one(comodel_name='res.country.state', string='Site location (State)', required=True, track_visibility='onchange')
     partner_id = fields.Many2one(comodel_name='res.partner', string='Customer', required=True)
     project_id = fields.Many2one(comodel_name='project.project', string='Project', required=False)
-    name = fields.Char('Code', readonly=True, track_visibility='onchange')
+    name = fields.Char('Code', readonly=False, track_visibility='onchange')
     active = fields.Boolean('Active', default='True')
     
     @api.model
