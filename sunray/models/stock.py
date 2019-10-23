@@ -198,7 +198,7 @@ class Partner(models.Model):
         self.ensure_one()
         action = self.env.ref('sunray.site_location_action_window').read()[0]
         action['domain'] = literal_eval(action['domain'])
-        action['domain'].append(('partner_id', 'child_of', self.partner_id.id))
+        action['domain'].append(('partner_id', 'child_of', self.id))
         return action
     
 class HrExpenseSheet(models.Model):
@@ -816,7 +816,13 @@ class SaleOrderLine(models.Model):
     
     type = fields.Selection([('sale', 'Sale'), ('lease', 'Lease')], string='Type', required=True, default='sale')
     project_id = fields.Many2one(comodel_name="project.project", string="Site Location")
-
+    site_code_id = fields.Many2one(comodel_name="site.code", string="Site Code")
+    
+class SaleSubscriptionLine(models.Model):
+    _inherit = "sale.subscription.line"
+    
+    site_code_id = fields.Many2one(comodel_name="site.code", string="Site Code")
+    
 class SiteCode(models.Model):
     _name = "site.code"
     _description = "Site Code"

@@ -29,10 +29,10 @@ class Lead(models.Model):
     legal_review_done = fields.Boolean(string='Legal Review Done')
     
     site_location_id = fields.Many2one(comodel_name='res.country.state', string='Site Location', domain=[('country_id.name','=','Nigeria')])
-    #site_location_id = fields.Char(string='Site Location')
-
     
-    default_site_code = fields.Char(string='Site Code') 
+    #site_location_id = fields.Char(string='Site Location')
+    #default_site_code = fields.Char(string='Site Code') 
+    #default_site_code = fields.Char(string='Site Code')
     
     client_type = fields.Char(string='Client Type')
     site_area = fields.Char(string='Site Area')
@@ -58,8 +58,12 @@ class Lead(models.Model):
     lead_approval = fields.Boolean(string="lead approval", related='company_id.company_lead_approval')
     site_location_id = fields.Many2one(comodel_name='res.country.state', string='Site Location', domain=[('country_id.name','=','Nigeria')])
     
-    default_site_code = fields.Char(string='Site Code')
+    request_site_code = fields.Boolean(string="Request Site Code")
     
+    site_code_id = fields.Many2one(comodel_name="site.code", string="Site Code")
+    site_code_ids = fields.Many2many(comodel_name="site.code", string="Site Code")
+    
+    '''
     @api.multi
     def generate_site_code(self, vals):
         site = self.env['res.country.state'].search([('id','=',vals['site_location_id'])])
@@ -70,10 +74,26 @@ class Lead(models.Model):
             no = self.env['ir.sequence'].next_by_code('project.site.code')
             site_code = code + "_" +  str(no)
             vals['default_site_code'] = site_code
+    '''
     
     @api.multi
     def button_reset(self):
         self.write({'state': 'draft'})
+        return {}
+    
+    @api.multi
+    def button_request_site_code(self):
+        self.request_site_code = True
+        group_id = self.env['ir.model.data'].xmlid_to_object('sunray.group_hr_line_manager')
+        user_ids = []
+        partner_ids = []
+        for user in group_id.users:
+            user_ids.append(user.id)
+            partner_ids.append(user.partner_id.id)
+        self.message_subscribe(partner_ids=partner_ids)
+        subject = "A site code is needed for this '{}' oppurtunity".format(self.name)
+        self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
+        return False
         return {}
     
     @api.multi
@@ -573,6 +593,26 @@ class VendorRequest(models.Model):
     specific_references = fields.Boolean(string="SPECIFIC REFERENCES")
     latest_financials = fields.Boolean(string="LATEST FINANCIAL STATEMENTS / KEY KPIs")
     
+    
+     #this is the Customer checklist
+    completed_customer_information = fields.Boolean(string="COMPLETED CUSTOMER INFORMATION FORM (AS  ATTACHED)")
+    report_of_proposers_follow_up = fields.Boolean(string="REPORT OF PROPOSER'S FOLLOW UP REVIEW OF SECTIONS 4 & 5")
+    true_copy_incorporation = fields.Boolean(string="COPY OF CERTIFICATE OF INCORPORATION / BUSINESS NAME REGISTRATION CERTIFICATE")
+    true_copy_memorandum = fields.Boolean(string="CERTIFIED TRUE COPY OF MEMORANDUM AND ARTICLE OF  ASSOCIATION FOR LIMITED LIABILITY COMPANIES")
+    true_copy_form_c02 = fields.Boolean(string="CERTIFIED TRUE COPY OF FORM C02 AND C07 FOR LIMITED LIABILITY COMPANIES")
+    Vat_cert = fields.Boolean(string="VAT CERTIFICATE / FIRS REGISTRATION CERTIFICATE")
+
+    current_dpr = fields.Boolean(string="CURRENT DPR CERTIFICATE (If Applicable)")
+    commercial_certificate = fields.Boolean(string="COMMERCIAL PROPOSAL OR WEBSITE REVIEW (COMPANY PROFILE INCLUDING DETAILS OF MANAGEMENT TEAM, REFERENCES & CASE STUDIES)")
+    proposers_report = fields.Boolean(string="PROPOSER'S REPORT CONFIRMING CLEAN REVIEW ON INTERNET & OTHER AVAILABLE SOURCES (IF NOT CLEAN, FURTHER INFORMATION ON MATTERS IDENTIFIED)")
+    
+    recommendation_letters_from_applicant = fields.Boolean(string="RECOMMENDATION LETTER FROM APPLICANT BANKERS IN RESPECT TO THE OPERATION OF HIS/HER COMPANY'S ACCOUNT")
+    evidence_of_tax = fields.Boolean(string="EVIDENCE OF TAX PAYMENT")
+    code_of_conduct = fields.Boolean(string="CODE OF CONDUCT AND CODE OF ETHICS - SIGNED BY THE COMPANY'S MD OR AUTHORIZED STAFF")
+    latest_financials = fields.Boolean(string="LATEST FINANCIAL STATEMENTS / KEY KPIs")
+    
+    
+    
     legal_review = fields.Boolean(string='Legal Review')
     legal_review_done = fields.Boolean(string='Legal Review Done')
     
@@ -695,47 +735,80 @@ class VendorRequest(models.Model):
         self.write({'state': 'registered'})
         if self.supplier == True:
             self.vendor_registration = True
+            vals = {
+                'name' : self.name,
+                'company_type' : self.company_type,
+                'parent_account_number' : self.parent_account_number,
+                'image' : self.image,
+                'parent_id' : self.parent_id.id,
+                'street' : self.street,
+                'street2' : self.street2,
+                'city' : self.city,
+                'state_id' : self.state_id.id,
+                'zip' : self.zip,
+                'country_id' : self.country_id.id,            
+                'vat' : self.vat,
+                'function' : self.function,
+                'phone' : self.phone,
+                'mobile' : self.mobile,
+                'email' : self.contact_email,
+                'customer': self.customer,
+                'supplier' : self.supplier,
+                'company' : self.company_id.id,
+                'vendor_registration' : self.vendor_registration,
+                'completed_vendor_information' : self.completed_vendor_information,
+                'report_of_proposers_follow_up' : self.report_of_proposers_follow_up,
+                'true_copy_incorporation' : self.true_copy_incorporation,
+                'true_copy_memorandum' : self.true_copy_memorandum,
+                'sign_and_stamp' : self.Vat_cert,
+                'Vat_cert' : self.sign_and_stamp,
+                'current_dpr' : self.current_dpr,
+                'commercial_certificate' : self.commercial_certificate,
+                'proposers_report' : self.proposers_report,
+                'copies_of_required_specialist' : self.copies_of_required_specialist,
+                'recommendation_letters_from_applicant' : self.recommendation_letters_from_applicant,
+                'evidence_of_tax' : self.evidence_of_tax,
+                'code_of_conduct' : self.code_of_conduct,
+                'specific_references' : self.specific_references,
+                'latest_financials' : self.latest_financials,
+            }
+            self.env['res.partner'].create(vals)
         else:
-            #if self.customer == True:
             self._check_customer_code()
-        vals = {
-            'name' : self.name,
-            'company_type' : self.company_type,
-            'parent_account_number' : self.parent_account_number,
-            'image' : self.image,
-            'parent_id' : self.parent_id.id,
-            'street' : self.street,
-            'street2' : self.street2,
-            'city' : self.city,
-            'state_id' : self.state_id.id,
-            'zip' : self.zip,
-            'country_id' : self.country_id.id,            
-            'vat' : self.vat,
-            'function' : self.function,
-            'phone' : self.phone,
-            'mobile' : self.mobile,
-            'email' : self.contact_email,
-            'customer': self.customer,
-            'supplier' : self.supplier,
-            'company' : self.company_id.id,
-            'vendor_registration' : self.vendor_registration,
-            'completed_vendor_information' : self.completed_vendor_information,
-            'report_of_proposers_follow_up' : self.report_of_proposers_follow_up,
-            'true_copy_incorporation' : self.true_copy_incorporation,
-            'true_copy_memorandum' : self.true_copy_memorandum,
-            'sign_and_stamp' : self.Vat_cert,
-            'Vat_cert' : self.sign_and_stamp,
-            'current_dpr' : self.current_dpr,
-            'commercial_certificate' : self.commercial_certificate,
-            'proposers_report' : self.proposers_report,
-            'copies_of_required_specialist' : self.copies_of_required_specialist,
-            'recommendation_letters_from_applicant' : self.recommendation_letters_from_applicant,
-            'evidence_of_tax' : self.evidence_of_tax,
-            'code_of_conduct' : self.code_of_conduct,
-            'specific_references' : self.specific_references,
-            'latest_financials' : self.latest_financials,
-        }
-        self.env['res.partner'].create(vals)
+            vals = {
+                'name' : self.name,
+                'company_type' : self.company_type,
+                'parent_account_number' : self.parent_account_number,
+                'image' : self.image,
+                'parent_id' : self.parent_id.id,
+                'street' : self.street,
+                'street2' : self.street2,
+                'city' : self.city,
+                'state_id' : self.state_id.id,
+                'zip' : self.zip,
+                'country_id' : self.country_id.id,            
+                'vat' : self.vat,
+                'function' : self.function,
+                'phone' : self.phone,
+                'mobile' : self.mobile,
+                'email' : self.contact_email,
+                'customer': self.customer,
+                'supplier' : self.supplier,
+                'company' : self.company_id.id,
+                'completed_customer_information' : self.completed_customer_information,
+                'report_of_proposers_follow_up' : self.report_of_proposers_follow_up,
+                'true_copy_incorporation' : self.true_copy_incorporation,
+                'true_copy_memorandum' : self.true_copy_memorandum,
+                'sign_and_stamp' : self.Vat_cert,
+                'current_dpr' : self.current_dpr,
+                'commercial_certificate' : self.commercial_certificate,
+                'proposers_report' : self.proposers_report,
+                'recommendation_letters_from_applicant' : self.recommendation_letters_from_applicant,
+                'evidence_of_tax' : self.evidence_of_tax,
+                'code_of_conduct' : self.code_of_conduct,
+                'latest_financials' : self.latest_financials,
+            }
+            self.env['res.partner'].create(vals)
         return {}
     
     @api.multi
