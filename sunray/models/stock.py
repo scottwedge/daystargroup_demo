@@ -860,15 +860,13 @@ class SiteCode(models.Model):
     name = fields.Char('Code', readonly=True, track_visibility='onchange')
     active = fields.Boolean('Active', default='True')
     
-    @api.model
-    def create(self, vals):
-        site = self.env['site.location'].search([('id','=',vals['location_id'])])
-        client = self.env['res.partner'].search([('id','=',vals['partner_id'])])
-        if site and client:
-            code = client.parent_account_number + "_" +  site.code
+    @api.multi
+    def action_generate(self):
+        if self.partner_id and self.location_id:
+            code = self.partner_id.parent_account_number + "_" +  self.location_id.code
             no = self.env['ir.sequence'].next_by_code('project.site.code')
             site_code = code + "_" +  str(no)
-            vals['name'] = site_code
+            self.name = site_code
     
 class Project(models.Model):
     _name = "project.project"
@@ -1875,7 +1873,7 @@ class Picking(models.Model):
             'view_mode': 'form',
             'view_id': view_id,
             'target': 'current',
-            'context': {'default_origin': self.name, 'default_partner_id': partner_id.id, 'default_sale_id': sale_id, "default_is_locked":True, "default_state":"assigned",  "default_picking_type_id":2, 'default_move_ids_without_package': order_lines}
+            'context': {'default_origin': self.name, 'default_partner_id': partner_id.id, 'default_sale_id': sale_id, "default_is_locked":True, "default_state":"assigned",  "default_picking_type_id":22, 'default_move_ids_without_package': order_lines}
         }
         
         return res
