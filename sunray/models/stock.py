@@ -1833,12 +1833,13 @@ class Picking(models.Model):
             self.total_price += line.price_subtotal
     
     @api.multi
-    def create_parking_list(self):
+    def create_delivery_list(self):
         """
         Method to open create packing list form
         """
 
         partner_id = self.partner_id
+        sale_id = self.sale_id
         
         #sub_account_id = self.sub_account_id
         #product_id = self.move_lines.product_id
@@ -1872,13 +1873,13 @@ class Picking(models.Model):
             'view_mode': 'form',
             'view_id': view_id,
             'target': 'current',
-            'context': {'default_origin': self.name, 'default_partner_id': partner_id.id, "default_is_locked":False, "default_state":"assigned",  "default_picking_type_id":24, 'default_move_ids_without_package': order_lines}
+            'context': {'default_origin': self.name, 'default_partner_id': partner_id.id, 'default_sale_id': sale_id.id, "default_is_locked":False, "default_state":"assigned",  "default_picking_type_id":22, 'default_move_ids_without_package': order_lines}
         }
         
         return res
     
     @api.multi
-    def create_delivery_list(self):
+    def create_parking_list(self):
         """
         Method to open create delivery list form
         """
@@ -1917,7 +1918,7 @@ class Picking(models.Model):
             'view_mode': 'form',
             'view_id': view_id,
             'target': 'current',
-            'context': {'default_origin': self.name, 'default_partner_id': partner_id.id, "default_is_locked":False, "default_state":"assigned", "default_picking_type_id":22, 'default_move_ids_without_package': order_lines}
+            'context': {'default_origin': self.name, 'default_partner_id': partner_id.id, "default_is_locked":False, "default_state":"assigned", "default_picking_type_id":24, 'default_move_ids_without_package': order_lines}
         }
         
         return res
