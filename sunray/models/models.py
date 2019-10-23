@@ -540,6 +540,38 @@ class VendorRequest(models.Model):
     _order = "name"
     _inherit = ['res.partner']
     
+    @api.multi
+    def message_get_suggested_recipients(self):
+#         recipients = super(VendorRequest, self).message_get_suggested_recipients()
+#         for partner in self:
+#             partner._message_add_suggested_recipient(recipients, partner=partner, reason=_('Partner Profile'))
+        return True
+    
+    @api.multi
+    def _message_add_suggested_recipient(self, result, partner=None, email=None, reason=''):
+        """ Called by message_get_suggested_recipients, to add a suggested
+            recipient in the result dictionary. The form is :
+                partner_id, partner_name<partner_email> or partner_name, reason """
+        self.ensure_one()
+        if email and not partner:
+            # get partner info from email
+            partner_info = self.message_partner_info_from_emails([email])[0]
+            if partner_info.get('partner_id'):
+                partner = self.env['res.partner'].sudo().browse([partner_info['partner_id']])[0]
+        if email and email in [val[1] for val in result[self.ids[0]]]:  # already existing email -> skip
+            return result
+        if partner and partner in self.message_partner_ids:  # recipient already in the followers -> skip
+            return result
+        if partner and partner.id in [val[0] for val in result[self.ids[0]]]:  # already existing partner ID -> skip
+            return result
+        if partner and partner.email:  # complete profile: id, name <email>
+            result[self.ids[0]].append((partner.id, '%s<%s>' % (partner.name, partner.email), reason))
+        elif partner:  # incomplete profile: id, name
+            result[self.ids[0]].append((partner.id, '%s' % (partner.name), reason))
+        else:  # unknown partner, we are probably managing an email address
+            result[self.ids[0]].append((False, email, reason))
+        return result
+    
     
     def _default_employee(self): # this method is to search the hr.employee and return the user id of the person clicking the form atm
         self.env['hr.employee'].search([('user_id','=',self.env.uid)])
