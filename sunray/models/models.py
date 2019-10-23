@@ -540,9 +540,11 @@ class VendorRequest(models.Model):
     _order = "name"
     _inherit = ['res.partner']
     
+    
     def _default_employee(self): # this method is to search the hr.employee and return the user id of the person clicking the form atm
         self.env['hr.employee'].search([('user_id','=',self.env.uid)])
         return self.env['hr.employee'].search([('user_id','=',self.env.uid)])
+    
     
     @api.multi
     def _check_line_manager(self):
@@ -560,12 +562,12 @@ class VendorRequest(models.Model):
         ('draft', 'Draft'),
         ('pending_info', 'Pending Partner info'),
         ('approve', 'Pending Approval 1'),
-        ('validate', 'pending Approval 2'),
+        ('validate', 'pending Final Approval'),
         ('registered', 'Registered'),
         ('reject', 'Rejected'),
         ], string='Status', readonly=True, index=True, copy=False, default='draft', track_visibility='onchange')
     
-    parent_account_number = fields.Char(string='Customer Code', index=True, copy=False, store=True, states={'validate': [('readonly', False)]})
+    parent_account_number = fields.Char(string='Customer Code', index=True, copy=False, store=True, readonly=True, states={'validate': [('readonly', False)]})
     
     employee_id = fields.Many2one(comodel_name='hr.employee', string='Requesting Employee', default=_default_employee)
     
@@ -661,8 +663,8 @@ class VendorRequest(models.Model):
     
     @api.multi
     def button_submit(self):
-        self.write({'state': 'approve'})
         if self.supplier == True:
+            self.write({'state': 'approve'})
             group_id = self.env['ir.model.data'].xmlid_to_object('sunray.group_one_vendor_approval')
             user_ids = []
             partner_ids = []
@@ -673,6 +675,7 @@ class VendorRequest(models.Model):
             subject = "This Vendor {} needs first approval".format(self.name)
             self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
         else:
+            self.write({'state': 'validate'})
             group_id = self.env['ir.model.data'].xmlid_to_object('sunray.group_one_vendor_approval')
             user_ids = []
             partner_ids = []
@@ -680,7 +683,7 @@ class VendorRequest(models.Model):
                 user_ids.append(user.id)
                 partner_ids.append(user.partner_id.id)
             self.message_subscribe(partner_ids=partner_ids)
-            subject = "This Customer {} needs first approval".format(self.name)
+            subject = "This Customer {} needs approval".format(self.name)
             self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
         return {}
     

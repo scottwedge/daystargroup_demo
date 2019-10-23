@@ -83,11 +83,9 @@
         </record>
         
         <function model="ir.model.fields" name="formbuilder_whitelist">
-            <value>vendor.request</value>
+            <value>res.partner</value>
             <value eval="[
-                'email',
                 'name',
-                'phone',
             ]"/>
         </function>
         
