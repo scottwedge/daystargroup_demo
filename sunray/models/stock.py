@@ -857,9 +857,21 @@ class SiteCode(models.Model):
     location_id = fields.Many2one(comodel_name='res.country.state', string='Site location (State)', required=True, track_visibility='onchange')
     partner_id = fields.Many2one(comodel_name='res.partner', string='Customer', required=True)
     project_id = fields.Many2one(comodel_name='project.project', string='Project', required=False)
-    name = fields.Char('Code', readonly=True, track_visibility='onchange')
+    name = fields.Char('Code', readonly=False, track_visibility='onchange')
     active = fields.Boolean('Active', default='True')
     
+    @api.model
+    def create(self, vals):
+        site = self.env['res.country.state'].search([('id','=',vals['location_id'])])
+        client = self.env['res.partner'].search([('id','=',vals['partner_id'])])
+        code = client.parent_account_number + "_" + site.code
+        
+        no = self.env['ir.sequence'].next_by_code('project.site.code')
+        site_code = code + "_" +  str(no)
+        vals['name'] = site_code
+        return super(SiteCode, self).create(vals)
+    
+    '''
     @api.multi
     def action_generate(self):
         if self.partner_id and self.location_id:
@@ -867,6 +879,7 @@ class SiteCode(models.Model):
             no = self.env['ir.sequence'].next_by_code('project.site.code')
             site_code = code + "_" +  str(no)
             self.name = site_code
+    '''
     
 class Project(models.Model):
     _name = "project.project"
