@@ -1853,7 +1853,7 @@ class Picking(models.Model):
             for line in subscription.move_ids_without_package:
                 order_lines.append((0, 0, {
                     'name': line.product_id.name,
-                    'state': "confirmed",
+                    'state': "assigned",
                     'product_uom': line.product_id.uom_id.id,
                     'product_id': line.product_id.id,
                     'reserved_availability': line.reserved_availability,
@@ -1872,7 +1872,7 @@ class Picking(models.Model):
             'view_mode': 'form',
             'view_id': view_id,
             'target': 'current',
-            'context': {'default_origin': self.name, 'default_partner_id': partner_id.id, "default_is_locked":False, "default_state":"confirmed",  "default_picking_type_id":24, 'default_move_ids_without_package': order_lines}
+            'context': {'default_origin': self.name, 'default_partner_id': partner_id.id, "default_is_locked":False, "default_state":"assigned",  "default_picking_type_id":24, 'default_move_ids_without_package': order_lines}
         }
         
         return res
@@ -1898,7 +1898,7 @@ class Picking(models.Model):
             for line in subscription.move_ids_without_package:
                 order_lines.append((0, 0, {
                     'name': line.product_id.name,
-                    'state': "confirmed",
+                    'state': "assigned",
                     'product_uom': line.product_id.uom_id.id,
                     'product_id': line.product_id.id,
                     'reserved_availability': line.reserved_availability,
@@ -1917,7 +1917,7 @@ class Picking(models.Model):
             'view_mode': 'form',
             'view_id': view_id,
             'target': 'current',
-            'context': {'default_origin': self.name, 'default_partner_id': partner_id.id, "default_is_locked":False, "default_picking_type_id":22, 'default_move_ids_without_package': order_lines}
+            'context': {'default_origin': self.name, 'default_partner_id': partner_id.id, "default_is_locked":False, "default_state":"assigned", "default_picking_type_id":22, 'default_move_ids_without_package': order_lines}
         }
         
         return res
