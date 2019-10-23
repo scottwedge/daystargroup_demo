@@ -632,6 +632,8 @@ class VendorRequest(models.Model):
     
     contact_email = fields.Char(string="email")
     
+    completed_customer_information = fields.Boolean(string="COMPLETED CUSTOMER INFORMATION FORM (AS  ATTACHED)")
+    
     @api.multi
     def button_submit_legal(self):
         self.legal_review = True

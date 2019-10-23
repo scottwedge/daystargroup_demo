@@ -173,6 +173,8 @@ class Partner(models.Model):
     specific_references = fields.Boolean(string="SPECIFIC REFERENCES")
     latest_financials = fields.Boolean(string="LATEST FINANCIAL STATEMENTS / KEY KPIs")
     
+    completed_customer_information = fields.Boolean(string="COMPLETED CUSTOMER INFORMATION FORM (AS  ATTACHED)")
+    
     @api.multi
     def button_select_all(self):
         self.write({'completed_vendor_information': True})

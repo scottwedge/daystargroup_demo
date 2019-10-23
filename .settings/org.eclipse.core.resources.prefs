@@ -1,4 +1,10 @@
 eclipse.preferences.version=1
+encoding//documents_crm/__manifest__.py=utf-8
+encoding//documents_crm/models/__init__.py=utf-8
+encoding//documents_crm/models/documents.py=utf-8
+encoding//documents_crm/models/res_company.py=utf-8
+encoding//documents_crm/models/res_config_settings.py=utf-8
+encoding//documents_crm/models/workflow.py=utf-8
 encoding//sunray/__init__.py=utf-8
 encoding//sunray/__manifest__.py=utf-8
 encoding//sunray/controllers/main.py=utf-8
