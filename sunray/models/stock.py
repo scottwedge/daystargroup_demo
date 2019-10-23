@@ -861,7 +861,7 @@ class SiteCode(models.Model):
     active = fields.Boolean('Active', default='True')
     
     
-    '''
+    
     @api.model
     def create(self, vals):
         site = self.env['res.country.state'].search([('id','=',vals['location_id'])])
@@ -873,7 +873,7 @@ class SiteCode(models.Model):
         vals['name'] = site_code
         return super(SiteCode, self).create(vals)
     
-    
+    '''
     @api.multi
     def action_generate(self):
         if self.partner_id and self.location_id:
