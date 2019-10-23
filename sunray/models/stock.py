@@ -1606,17 +1606,18 @@ class Picking(models.Model):
     @api.multi
     def action_confirm(self):
         res = super(Picking, self).action_confirm()
-        self.manager_confirm()
-        group_id = self.env['ir.model.data'].xmlid_to_object('stock.group_stock_manager')
-        user_ids = []
-        partner_ids = []
-        for user in group_id.users:
-            user_ids.append(user.id)
-            partner_ids.append(user.partner_id.id)
-        self.message_subscribe(partner_ids=partner_ids)
-        subject = "Store request {} has been approved by line manager".format(self.name)
-        self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
-        return False
+        if self.picking_type_id.name == 'Staff Store Requests':
+            self.manager_confirm()
+            group_id = self.env['ir.model.data'].xmlid_to_object('stock.group_stock_manager')
+            user_ids = []
+            partner_ids = []
+            for user in group_id.users:
+                user_ids.append(user.id)
+                partner_ids.append(user.partner_id.id)
+            self.message_subscribe(partner_ids=partner_ids)
+            subject = "Store request {} has been approved by line manager".format(self.name)
+            self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
+            return False
         return res
     
     @api.multi
