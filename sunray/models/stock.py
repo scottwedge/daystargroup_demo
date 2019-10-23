@@ -1839,7 +1839,7 @@ class Picking(models.Model):
         """
 
         partner_id = self.partner_id
-        #client_id = self.request_client_id
+        #state = 'confirmed'
         #sub_account_id = self.sub_account_id
         #product_id = self.move_lines.product_id
              
@@ -1871,7 +1871,7 @@ class Picking(models.Model):
             'view_mode': 'form',
             'view_id': view_id,
             'target': 'current',
-            'context': {'default_origin': self.name, 'default_partner_id': partner_id.id, "default_is_locked":False, "default_picking_type_id":24, 'default_move_ids_without_package': order_lines}
+            'context': {'default_origin': self.name, 'default_partner_id': partner_id.id, "default_is_locked":False, "default_state":"confirmed",  "default_picking_type_id":24, 'default_move_ids_without_package': order_lines}
         }
         
         return res
