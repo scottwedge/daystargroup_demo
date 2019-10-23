@@ -591,9 +591,9 @@
         <field name="type">form</field>
         <field name="arch" type="xml">
             <form string = "Site Location">
-            	<header>
+            	<!-- <header>
             		<button string="Generate Code" name="action_generate" type="object" class="oe_highlight"/>
-            	</header>
+            	</header> -->
                 <sheet>
                	<div class="oe_button_box" name="button_box">
 	                <button name="toggle_active" type="object" groups="base.group_user" class="oe_stat_button" icon="fa-archive">
@@ -1328,7 +1328,7 @@
               action="store_req_action1_window"/>
               
 	<menuitem name="Site Code" id="site_location_id" parent="crm.crm_menu_root"
-              action="site_location_action_window"/>
+              action="site_location_action_window" groups="sunray.group_ict"/>
               
   </data>
 </odoo>
