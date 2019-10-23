@@ -61,7 +61,7 @@ class Lead(models.Model):
     request_site_code = fields.Boolean(string="Request Site Code")
     
     site_code_id = fields.Many2one(comodel_name="site.code", string="Site Code")
-    site_code_ids = fields.Many2many(comodel_name="site.code", string="Site Code")
+    site_code_ids = fields.Many2many(comodel_name="site.code", string="Site Code(s)")
     
     '''
     @api.multi
@@ -565,7 +565,7 @@ class VendorRequest(models.Model):
         ('reject', 'Rejected'),
         ], string='Status', readonly=True, index=True, copy=False, default='draft', track_visibility='onchange')
     
-    parent_account_number = fields.Char(string='Customer Code', index=True, copy=False, store=True)
+    parent_account_number = fields.Char(string='Customer Code', index=True, copy=False, store=True, states={'validate': [('readonly', False)]})
     
     employee_id = fields.Many2one(comodel_name='hr.employee', string='Requesting Employee', default=_default_employee)
     
@@ -592,26 +592,6 @@ class VendorRequest(models.Model):
     code_of_conduct = fields.Boolean(string="CODE OF CONDUCT AND CODE OF ETHICS - SIGNED BY THE COMPANY'S MD OR AUTHORIZED STAFF")
     specific_references = fields.Boolean(string="SPECIFIC REFERENCES")
     latest_financials = fields.Boolean(string="LATEST FINANCIAL STATEMENTS / KEY KPIs")
-    
-    
-     #this is the Customer checklist
-    completed_customer_information = fields.Boolean(string="COMPLETED CUSTOMER INFORMATION FORM (AS  ATTACHED)")
-    report_of_proposers_follow_up = fields.Boolean(string="REPORT OF PROPOSER'S FOLLOW UP REVIEW OF SECTIONS 4 & 5")
-    true_copy_incorporation = fields.Boolean(string="COPY OF CERTIFICATE OF INCORPORATION / BUSINESS NAME REGISTRATION CERTIFICATE")
-    true_copy_memorandum = fields.Boolean(string="CERTIFIED TRUE COPY OF MEMORANDUM AND ARTICLE OF  ASSOCIATION FOR LIMITED LIABILITY COMPANIES")
-    true_copy_form_c02 = fields.Boolean(string="CERTIFIED TRUE COPY OF FORM C02 AND C07 FOR LIMITED LIABILITY COMPANIES")
-    Vat_cert = fields.Boolean(string="VAT CERTIFICATE / FIRS REGISTRATION CERTIFICATE")
-
-    current_dpr = fields.Boolean(string="CURRENT DPR CERTIFICATE (If Applicable)")
-    commercial_certificate = fields.Boolean(string="COMMERCIAL PROPOSAL OR WEBSITE REVIEW (COMPANY PROFILE INCLUDING DETAILS OF MANAGEMENT TEAM, REFERENCES & CASE STUDIES)")
-    proposers_report = fields.Boolean(string="PROPOSER'S REPORT CONFIRMING CLEAN REVIEW ON INTERNET & OTHER AVAILABLE SOURCES (IF NOT CLEAN, FURTHER INFORMATION ON MATTERS IDENTIFIED)")
-    
-    recommendation_letters_from_applicant = fields.Boolean(string="RECOMMENDATION LETTER FROM APPLICANT BANKERS IN RESPECT TO THE OPERATION OF HIS/HER COMPANY'S ACCOUNT")
-    evidence_of_tax = fields.Boolean(string="EVIDENCE OF TAX PAYMENT")
-    code_of_conduct = fields.Boolean(string="CODE OF CONDUCT AND CODE OF ETHICS - SIGNED BY THE COMPANY'S MD OR AUTHORIZED STAFF")
-    latest_financials = fields.Boolean(string="LATEST FINANCIAL STATEMENTS / KEY KPIs")
-    
-    
     
     legal_review = fields.Boolean(string='Legal Review')
     legal_review_done = fields.Boolean(string='Legal Review Done')

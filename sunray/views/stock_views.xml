@@ -573,19 +573,19 @@
 		</field>
 	</record>
 	
-	<record model="ir.ui.view" id="site_code_tree_view">
-        <field name="name">site.code.tree</field>
+	<record model="ir.ui.view" id="sunray_site_code_tree_view">
+        <field name="name">sunray.site.code.tree</field>
         <field name="model">site.code</field>
         <field name="type">tree</field>
         <field name="arch" type="xml">
         	<field name="name"/>
             <field name="partner_id"/>
             <field name="location_id"/>
-            <field name="active"/>
+            <field name="project_id"/>
         </field>
     </record>
 	
-	<record model="ir.ui.view" id="site_code_form_view">
+	<record model="ir.ui.view" id="sunray_site_code_form_view">
         <field name="name">site Code</field>
         <field name="model">site.code</field>
         <field name="type">form</field>
@@ -603,8 +603,9 @@
                     <group col="4" colspan="2">
                     	<field name="partner_id"/>
                     	<field name="location_id"/>
-                        <field name="name"/>
-                        <field name="active"/>
+                    	<field name="name"/>
+                    	<field name="project_id"/>
+                        <!-- <field name="active"/>  -->
                     </group>
                 </sheet>
             </form>
@@ -848,6 +849,9 @@
 	            	<!-- <field name="project_id" required = "0" domain="[('partner_id','=', parent.partner_id)]"/> -->
 	            	<field name="site_code_id" required = "0" domain="[('partner_id','=', parent.partner_id)]"/>
 	            </xpath>
+	            <xpath expr="//field[@name='order_line']/tree/field[@name='name']" position="after">
+	            	<field name="analytic_account_id" required = "1"/>
+	            </xpath>
 	        </field>
 	</record>
 	
@@ -1023,8 +1027,15 @@
 					<field name="partner_id" required="0" domain="[('customer','=', True)]"/>
 				</field>
 				<field name="partner_id" position="after">
-					<field name="site_location_id" required="0"/>
+					<field name="site_code_id" required = "0" domain="[('partner_id','=', partner_id)]"/>
 					<field name="default_site_code" readonly="1"/>
+					<field name="site_code_ids" readonly="0">
+						<tree editable="top">
+							<field name="name"/>
+							<field name="partner_id"/>
+							<field name="project_id"/>
+						</tree>
+					</field>
 				  	<!-- ><field name="project_code_id" domain="[('type','=','other')]"/> -->
 				</field>
 				<xpath expr="//notebook" position="inside">

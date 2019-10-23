@@ -492,8 +492,8 @@
             </field>
         </record>
 	
-	<record id="vendor_request_form" model="ir.ui.view">
-	    <field name="name">vendor.request.form</field>
+	<record id="sunray_vendor_request_form" model="ir.ui.view">
+	    <field name="name">sunray.vendor.request.form</field>
 	    <field name="model">vendor.request</field>
 	    <field name="priority" eval="2"/>
 	    <field name="arch" type="xml">

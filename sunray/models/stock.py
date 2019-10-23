@@ -814,14 +814,39 @@ class SaleOrderLine(models.Model):
     _description = 'Sales Order Line'
     _inherit = ['sale.order.line']
     
+    @api.onchange('site_code_id')
+    def _onchange_partner_id(self):
+        self.analytic_account_id = self.site_code_id.project_id.analytic_account_id
+        return {}
+    
     type = fields.Selection([('sale', 'Sale'), ('lease', 'Lease')], string='Type', required=True, default='sale')
     project_id = fields.Many2one(comodel_name="project.project", string="Site Location")
     site_code_id = fields.Many2one(comodel_name="site.code", string="Site Code")
+    
+    analytic_account_id = fields.Many2one('account.analytic.account', string="Analytic Account", copy=False)
+    
+    def _prepare_subscription_line_data(self):
+        """Prepare a dictionnary of values to add lines to a subscription."""
+        values = list()
+        for line in self:
+            values.append((0, False, {
+                'product_id': line.product_id.id,
+                'name': line.name,
+                'quantity': line.product_uom_qty,
+                'uom_id': line.product_uom.id,
+                'price_unit': line.price_unit,
+                'site_code_id': line.site_code_id.id,
+                #'analytic_account_id': line.analytic_account_id,
+                'discount': line.discount if line.order_id.subscription_management != 'upsell' else False,
+            }))
+        return values
     
 class SaleSubscriptionLine(models.Model):
     _inherit = "sale.subscription.line"
     
     site_code_id = fields.Many2one(comodel_name="site.code", string="Site Code")
+    
+    #analytic_account_id = fields.Many2one('account.analytic.account', string="Analytic Account", copy=False)
     
 class SiteCode(models.Model):
     _name = "site.code"
@@ -831,6 +856,7 @@ class SiteCode(models.Model):
 
     location_id = fields.Many2one(comodel_name='res.country.state', string='Site location (State)', required=True, track_visibility='onchange')
     partner_id = fields.Many2one(comodel_name='res.partner', string='Customer', required=True)
+    project_id = fields.Many2one(comodel_name='project.project', string='Project', required=False)
     name = fields.Char('Code', readonly=True, track_visibility='onchange')
     active = fields.Boolean('Active', default='True')
     
@@ -913,7 +939,9 @@ class Project(models.Model):
     
     site_location_id = fields.Many2one(comodel_name='res.country.state', string='Site Location', domain=[('country_id.name','=','Nigeria')])
     #site_location_id = fields.Char(string='Site Location')
-
+    
+    site_code_id = fields.Many2one(comodel_name='site.code', string='Site Code')
+    site_code_ids = fields.One2many(comodel_name='site.code', inverse_name='project_id', string='Site Code(s)')
     
     default_site_code = fields.Char(string='Site Code') 
     
@@ -965,6 +993,7 @@ class Project(models.Model):
         return result
     '''
     
+    '''
     @api.model
     def create(self, vals):
         site = self.env['res.country.state'].search([('id','=',vals['site_location_id'])])
@@ -980,6 +1009,7 @@ class Project(models.Model):
         a.send_project_commencement_mail()
         return a
         return super(Project, self).create(vals)
+    '''
     
     @api.multi
     def send_project_commencement_mail(self):
