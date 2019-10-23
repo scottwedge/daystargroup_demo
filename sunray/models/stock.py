@@ -862,8 +862,10 @@ class SiteCode(models.Model):
     
     @api.model
     def create(self, vals):
-        if self.partner_id and self.location_id:
-            code = self.partner_id.parent_account_number + "_" +  self.location_id.code
+        site = self.env['site.location'].search([('id','=',vals['location_id'])])
+        client = self.env['res.partner'].search([('id','=',vals['partner_id'])])
+        if site and client:
+            code = client.parent_account_number + "_" +  site.code
             no = self.env['ir.sequence'].next_by_code('project.site.code')
             site_code = code + "_" +  str(no)
             vals['name'] = site_code
