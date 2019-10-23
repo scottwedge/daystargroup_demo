@@ -1831,6 +1831,94 @@ class Picking(models.Model):
         for line in self.move_lines:
             self.total_price += line.price_subtotal
     
+    @api.multi
+    def create_parking_list(self):
+        """
+        Method to open create packing list form
+        """
+
+        partner_id = self.partner_id
+        #client_id = self.request_client_id
+        #sub_account_id = self.sub_account_id
+        #product_id = self.move_lines.product_id
+             
+        view_ref = self.env['ir.model.data'].get_object_reference('stock', 'view_picking_form')
+        view_id = view_ref[1] if view_ref else False
+        
+        
+        #purchase_line_obj = self.env['purchase.order.line']
+        for subscription in self:
+            order_lines = []
+            for line in subscription.move_ids_without_package:
+                order_lines.append((0, 0, {
+                    'name': line.product_id.name,
+                    'product_uom': line.product_id.uom_id.id,
+                    'product_id': line.product_id.id,
+                    'reserved_availability': line.reserved_availability,
+                    'product_uom_qty': line.product_uom_qty,
+                    'additional': True,
+                    'date_expected': date.today(),
+                    'price_cost': line.product_id.standard_price,
+                }))
+        
+         
+        res = {
+            'type': 'ir.actions.act_window',
+            'name': ('Packing List'),
+            'res_model': 'stock.picking',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'view_id': view_id,
+            'target': 'current',
+            'context': {'default_origin': self.name, 'default_partner_id': partner_id.id, "default_is_locked":False, "default_picking_type_id":24, 'default_move_ids_without_package': order_lines}
+        }
+        
+        return res
+    
+    @api.multi
+    def create_delivery_list(self):
+        """
+        Method to open create delivery list form
+        """
+
+        partner_id = self.partner_id
+        #client_id = self.request_client_id
+        #sub_account_id = self.sub_account_id
+        #product_id = self.move_lines.product_id
+             
+        view_ref = self.env['ir.model.data'].get_object_reference('stock', 'view_picking_form')
+        view_id = view_ref[1] if view_ref else False
+        
+        
+        #purchase_line_obj = self.env['purchase.order.line']
+        for subscription in self:
+            order_lines = []
+            for line in subscription.move_ids_without_package:
+                order_lines.append((0, 0, {
+                    'name': line.product_id.name,
+                    'product_uom': line.product_id.uom_id.id,
+                    'product_id': line.product_id.id,
+                    'reserved_availability': line.reserved_availability,
+                    'product_uom_qty': line.product_uom_qty,
+                    'additional': True,
+                    'date_expected': date.today(),
+                    'price_cost': line.product_id.standard_price,
+                }))
+        
+         
+        res = {
+            'type': 'ir.actions.act_window',
+            'name': ('Packing List'),
+            'res_model': 'stock.picking',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'view_id': view_id,
+            'target': 'current',
+            'context': {'default_origin': self.name, 'default_partner_id': partner_id.id, "default_is_locked":False, "default_picking_type_id":22, 'default_move_ids_without_package': order_lines}
+        }
+        
+        return res
+    
 class StockMove(models.Model):
     _inherit = "stock.move"
     
