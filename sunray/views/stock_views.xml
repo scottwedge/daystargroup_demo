@@ -1328,7 +1328,7 @@
               action="store_req_action1_window"/>
               
 	<menuitem name="Site Code" id="site_location_id" parent="crm.crm_menu_root"
-              action="site_location_action_window"/>
+              action="site_location_action_window" groups="sunray.group_ict"/>
               
   </data>
 </odoo>

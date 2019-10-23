@@ -84,7 +84,7 @@ class Lead(models.Model):
     @api.multi
     def button_request_site_code(self):
         self.request_site_code = True
-        group_id = self.env['ir.model.data'].xmlid_to_object('sunray.group_hr_line_manager')
+        group_id = self.env['ir.model.data'].xmlid_to_object('sunray.group_ict')
         user_ids = []
         partner_ids = []
         for user in group_id.users:
@@ -469,6 +469,7 @@ class ProductTemplate(models.Model):
     brand = fields.Many2one('brand.type', string='Brand', track_visibility='onchange', index=True)
     item_type = fields.Many2one('item.type', string='Item Type', track_visibility='onchange', index=True)
     
+    '''
     @api.model
     def create(self, vals):
         brand = self.env['brand.type'].search([('id','=',vals['brand'])])
@@ -480,6 +481,7 @@ class ProductTemplate(models.Model):
             item_code = code + str(no)
             vals['default_code'] = item_code
         return super(ProductTemplate, self).create(vals)
+    '''
     
 class Employee(models.Model):
     _name = "hr.employee"

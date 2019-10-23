@@ -503,8 +503,8 @@
 			<button name="button_submit" states="pending_info" string="Request Registration" type="object" class="btn-primary"/>
 			
 			<button name="button_validate" states="approve" string="Approve" type="object" groups="sunray.group_one_vendor_approval" attrs="{'invisible': [('customer', '=', True)]}"/>
-			<button name="button_approve" string="Confirm" type="object" groups="sunray.group_two_vendor_approval" attrs="{'invisible': [('customer', '=', True), ('state', '!=', 'validate')]}"/>
-			<button name="button_approve" string="Confirm" type="object" groups="sunray.group_customer_approval" attrs="{'invisible': [('supplier', '=', True), ('state', '!=', 'validate')]}"/>
+			<button name="button_approve" string="Confirm" type="object" groups="sunray.group_two_vendor_approval" attrs="{'invisible': ['|', ('customer', '=', True), ('state', '!=', 'validate')]}"/>
+			<button name="button_approve" string="Confirm" type="object" groups="sunray.group_customer_approval" attrs="{'invisible': ['|', ('supplier', '=', True), ('state', '!=', 'validate')]}"/>
 			<button name="button_reject" states="approve,validate" string="Reject" type="object" groups="sunray.group_one_vendor_approval,sunray.group_one_vendor_approval,sunray.group_customer_approval"/>
 			<button name="button_reset" states="reset" string="Set to Draft" type="object" />
 			<button name="button_submit_legal" string="request legal review" type="object" attrs="{'invisible': [('legal_review', '=', True)]}"/>
@@ -979,7 +979,7 @@
 	<menuitem name="Vendor Request" id="Vendor_request_menu" parent="purchase.menu_procurement_management"
               action="VendorRequest_action_window" sequence="100"/>
     <menuitem name="Customer Request" id="customer_request_menu" parent="crm.crm_menu_root"
-              action="CustomerRequest_action_window" sequence="100"/>
+              action="CustomerRequest_action_window" sequence="10"/>
               
    	<menuitem name="Legal Approval(Vendor Request)" id="vendor_legal_approval_request_menu" parent="purchase.menu_procurement_management"
               action="sunray_vendor_legal_approval_action_window" sequence="100" groups="sunray.group_legal_team"/>
