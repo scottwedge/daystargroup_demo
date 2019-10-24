@@ -790,7 +790,7 @@ class SaleOrder(models.Model):
     @api.multi
     def _check_customer_registration(self):
         if self.partner_id.customer_registration == False:
-            raise UserError(_('Cant Confirm sale order for an unregistered customer -- Request Customee Registration.'))
+            raise UserError(_('Cant Confirm sale order for an unregistered customer -- Request Customer Registration.'))
     
     @api.multi
     def action_confirm(self):
@@ -1944,6 +1944,30 @@ class Picking(models.Model):
         }
         
         return res
+
+class AccountInvoice(models.Model):
+    _inherit = "account.invoice"
+    
+    @api.multi
+    def _check_customer_registration(self):
+        if self.partner_id.customer_registration == False:
+            raise UserError(_('Cant validate invoice for an unregistered customer -- Request Customer Registration.'))
+        
+    @api.multi
+    def action_invoice_open(self):
+        res = super(AccountInvoice, self).action_invoice_open()
+        self._check_customer_registration()
+        return res
+    
+class AccountInvoiceLine(models.Model):
+    _inherit = "account.invoice.line"
+    
+    @api.onchange('site_code_id')
+    def _onchange_partner_id(self):
+        self.analytic_account_id = self.site_code_id.project_id.account_analytic_id
+        return {}
+    
+    site_code_id = fields.Many2one(comodel_name="site.code", string="Site Code")
 
 class AccountAssetAsset(models.Model):
     _inherit = 'account.asset.asset'
