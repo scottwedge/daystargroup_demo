@@ -860,8 +860,6 @@ class SiteCode(models.Model):
     name = fields.Char('Code', readonly=False, track_visibility='onchange')
     active = fields.Boolean('Active', default='True')
     
-    
-    
     @api.model
     def create(self, vals):
         site = self.env['res.country.state'].search([('id','=',vals['location_id'])])
@@ -1937,7 +1935,17 @@ class Picking(models.Model):
         }
         
         return res
+
+class AccountAssetAsset(models.Model):
+    _inherit = 'account.asset.asset'
     
+    asset_quantity = fields.Float(string='Quantity')
+    asset_total = fields.Float(string='Total', compute='_compute_asset_total')
+    
+    @api.depends('value', 'asset_quantity')
+    def _compute_asset_total(self):
+        self.asset_total = self.value * self.asset_quantity
+            
 class StockMove(models.Model):
     _inherit = "stock.move"
     
