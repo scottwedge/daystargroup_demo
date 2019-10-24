@@ -1963,8 +1963,8 @@ class AccountInvoiceLine(models.Model):
     _inherit = "account.invoice.line"
     
     @api.onchange('site_code_id')
-    def _onchange_partner_id(self):
-        self.analytic_account_id = self.site_code_id.project_id.account_analytic_id
+    def _onchange_site_id(self):
+        self.account_analytic_id = self.site_code_id.project_id.analytic_account_id
         return {}
     
     site_code_id = fields.Many2one(comodel_name="site.code", string="Site Code")
