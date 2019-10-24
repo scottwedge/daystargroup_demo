@@ -606,6 +606,7 @@ class VendorRequest(models.Model):
     employee_id = fields.Many2one(comodel_name='hr.employee', string='Requesting Employee', default=_default_employee)
     
     vendor_registration = fields.Boolean ('Vendor fully Registered', track_visibility="onchange", readonly=True)
+    customer_registration = fields.Boolean ('Customer fully Registered', track_visibility="onchange", readonly=True)
     
     checklist_count = fields.Integer(compute="_checklist_count",string="Checklist", store=False)
     
@@ -794,8 +795,10 @@ class VendorRequest(models.Model):
             self.env['res.partner'].create(vals)
         else:
             self._check_customer_code()
+            self.customer_registration = True
             vals = {
                 'name' : self.name,
+                'customer_registration' : self.customer_registration,
                 'company_type' : self.company_type,
                 'parent_account_number' : self.parent_account_number,
                 'image' : self.image,
