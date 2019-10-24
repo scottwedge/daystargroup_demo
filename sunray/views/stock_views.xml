@@ -862,6 +862,8 @@
 	        <field name="arch" type="xml">
 	        	<field name="value" position="after">
 		            <field name="asset_quantity"/>
+		            <field name="site_code_id"/>
+		            <field name="asset_partner_id"/>
 		        </field>
 		        <field name="value_residual" position="after">
 		            <field name="asset_total" widget="monetary" options="{'currency_field': 'currency_id'}"/>

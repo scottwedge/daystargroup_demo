@@ -173,6 +173,8 @@ class Partner(models.Model):
     specific_references = fields.Boolean(string="SPECIFIC REFERENCES")
     latest_financials = fields.Boolean(string="LATEST FINANCIAL STATEMENTS / KEY KPIs")
     
+    completed_customer_information = fields.Boolean(string="COMPLETED CUSTOMER INFORMATION FORM (AS  ATTACHED)")
+    
     @api.multi
     def button_select_all(self):
         self.write({'completed_vendor_information': True})
@@ -787,7 +789,7 @@ class SaleOrder(models.Model):
     @api.multi
     def action_confirm(self):
         res = super(SaleOrder, self).action_confirm()
-        self._check_approval()
+        #self._check_approval()
         return res
     
     @api.depends('amount_total')
@@ -1941,6 +1943,13 @@ class AccountAssetAsset(models.Model):
     
     asset_quantity = fields.Float(string='Quantity')
     asset_total = fields.Float(string='Total', compute='_compute_asset_total')
+    site_code_id = fields.Many2one(comodel_name="site.code", string="Site Code")
+    asset_partner_id = fields.Many2one(comodel_name="res.partner", string="Customer")
+    
+    @api.onchange('site_code_id')
+    def _onchange_partner_id(self):
+        self.asset_partner_id = self.site_code_id.partner_id
+        return {}
     
     @api.depends('value', 'asset_quantity')
     def _compute_asset_total(self):
