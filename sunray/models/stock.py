@@ -62,6 +62,7 @@ class Partner(models.Model):
     client_code = fields.Char(string='Client Code', required=False, index=True, copy=False, store=True)
     
     vendor_registration = fields.Boolean ('Vendor fully Registered', track_visibility="onchange", readonly=True)
+    customer_registration = fields.Boolean ('Customer fully Registered', track_visibility="onchange", readonly=True)
     
     tin = fields.Char(string='Tin', required=False, index=True, copy=False, store=True)
     wht_rate = fields.Float(string='WHT Rate', required=False, index=True, copy=False, store=True)
@@ -787,9 +788,15 @@ class SaleOrder(models.Model):
     need_management_approval = fields.Boolean('Needs Management Approval', track_visibility="onchange", copy=False, default=False)
     
     @api.multi
+    def _check_customer_registration(self):
+        if self.partner_id.customer_registration == False:
+            raise UserError(_('Cant Confirm sale order for an unregistered customer -- Request Customee Registration.'))
+    
+    @api.multi
     def action_confirm(self):
         res = super(SaleOrder, self).action_confirm()
         #self._check_approval()
+        self._check_customer_registration()
         return res
     
     @api.depends('amount_total')
