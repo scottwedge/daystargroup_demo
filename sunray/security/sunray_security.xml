@@ -43,5 +43,30 @@
         <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
     </record>
     
+    <record id="group_invoice_approval_projects" model="res.groups">
+        <field name="name">Invoice Approval</field>
+        <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+    
+    <record id="group_vendor_bill_validation" model="res.groups">
+        <field name="name">Vendor Bill Validation</field>
+        <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+    
+    <record id="group_customer_validation" model="res.groups">
+        <field name="name">Customer Validation</field>
+        <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+    
+    <record id="group_petty_cash_request" model="res.groups">
+        <field name="name">Petty Cash Request</field>
+        <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+    
+    <record id="group_payment_registration" model="res.groups">
+        <field name="name">Payment Registration</field>
+        <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+    
 </data>
 </odoo>
