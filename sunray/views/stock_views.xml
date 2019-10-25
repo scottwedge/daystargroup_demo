@@ -420,8 +420,17 @@
         </form>
     </field>
     </record>
-
-
+	
+	<!-- project picking list -->
+    	<record model="ir.actions.act_window" id="sunray_picking_list_form_action">
+        	<field name="name">Picking List</field>
+        	<field name="res_model">stock.picking</field>
+        	<field name="view_type">form</field>
+       	 	<field name="view_mode">tree,form</field>
+        	<field name="domain">[('picking_type_id', '=', 23)]</field>
+        	<field name="context">{}</field>
+    	</record>
+	
     <!-- project change request -->
     	<record model="ir.actions.act_window" id="sunray_project_change_request_form_action">
         	<field name="name">Project Change Request</field>
@@ -856,6 +865,11 @@
 	            	<!-- <field name="project_id" required = "0" domain="[('partner_id','=', parent.partner_id)]"/> -->
 	            	<field name="site_code_id" required = "0" domain="[('partner_id','=', parent.partner_id)]"/>
 	            </xpath>
+	            <xpath expr="//field[@name='order_line']/tree/field[@name='product_id']" position="before">
+	            	<field name="type" required = "1"/>
+	            	<!-- <field name="project_id" required = "0" domain="[('partner_id','=', parent.partner_id)]"/> -->
+	            	<field name="site_code_id" required = "0" domain="[('partner_id','=', parent.partner_id)]"/>
+	            </xpath>
 	            <xpath expr="//field[@name='order_line']/tree/field[@name='name']" position="after">
 	            	<field name="analytic_account_id" required = "1"/>
 	            </xpath>
@@ -1003,6 +1017,12 @@
 	                    <div class="o_stat_info">
 	                        <field name="checklist_count" class="o_stat_value"/>
 	                        <span class="o_stat_text">Checklist</span>
+	                    </div>
+	                </button>
+	                <button class="oe_stat_button" type="object" name="open_customer_picking_list" icon="fa-list">
+	                    <div class="o_stat_info">
+	                        <field name="customer_picking_list_count" class="o_stat_value"/>
+	                        <span class="o_stat_text">Picking List</span>
 	                    </div>
 	                </button>
 	                <button class="oe_stat_button" type="object" name="open_project_action" icon="fa-unsorted">
