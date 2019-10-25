@@ -929,6 +929,8 @@ class Project(models.Model):
     risk_count = fields.Integer(compute="_risk_count",string="Risks", store=False)
 
     ehs_count = fields.Integer(compute="_ehs_count",string="EHS", store=False)
+    
+    customer_picking_list_count = fields.Integer(compute="_picking_count",string="Picking List", store=False)
 
     change_request_count = fields.Integer(compute="_change_request_count",string="Change Request", store=False)
 
@@ -1096,6 +1098,19 @@ class Project(models.Model):
         return True
     
     @api.multi
+    def _picking_count(self):
+        oe_checklist = self.env['stock.picking']
+        for pa in self:
+                domain = [('partner_id', '=', pa.partner_id.id), ('picking_type_id', '=', 23)]
+                pres_ids = oe_checklist.search(domain)
+                pres = oe_checklist.browse(pres_ids)
+                risk_count = 0
+                for pr in pres:
+                    risk_count+=1
+                pa.customer_picking_list_count = risk_count
+        return True
+    
+    @api.multi
     def _risk_count(self):
         oe_checklist = self.env['project.risk']
         for pa in self:
@@ -1223,6 +1238,14 @@ class Project(models.Model):
     def open_project_ehs(self):
         self.ensure_one()
         action = self.env.ref('sunray.sunray_project_ehsform_action').read()[0]
+        action['domain'] = literal_eval(action['domain'])
+        action['domain'].append(('partner_id', 'child_of', self.partner_id.id))
+        return action
+    
+    @api.multi
+    def open_customer_picking_list(self):
+        self.ensure_one()
+        action = self.env.ref('sunray.sunray_picking_list_form_action').read()[0]
         action['domain'] = literal_eval(action['domain'])
         action['domain'].append(('partner_id', 'child_of', self.partner_id.id))
         return action
