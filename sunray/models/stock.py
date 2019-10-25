@@ -952,7 +952,7 @@ class Project(models.Model):
     lead_technician_id = fields.Many2one(comodel_name='res.users', string='Lead Technician')
     quality_assurance_id = fields.Many2one(comodel_name='res.users', string='Quality Assurance Engineer')
     
-    project_engineers_id = fields.Many2many(comodel_name='res.users', string='Project Engineers', help="list of engineeers for this project")
+    project_engineers_id = fields.Many2many(comodel_name='res.users', string='Project Team', help="list of engineeers for this project")
     
     project_plan_file = fields.Binary(string='Project Plan', track_visibility="onchange", store=True)
     project_budget = fields.Float(string='Project Budget', track_visibility="onchange", store=True, related='crm_lead_id.budget')
@@ -2058,8 +2058,29 @@ class StockMove(models.Model):
     account_analytic_id = fields.Many2one('account.analytic.account', string='Analytic Acount', required=False, default=_default_analytic, track_visibility="always")
     account_id = fields.Many2one('account.account', string='Account', index=True, ondelete='cascade')
     
-    price_cost = fields.Float(string="Cost", default=lambda self: self.product_id.standard_price)
+    price_cost = fields.Float(string="Cost", related='product_id.standard_price')
     price_subtotal = fields.Float(string="Price Subtotal", compute="_compute_subtotal", readonly=True)
+
+class MrpBom(models.Model):
+    _inherit = 'mrp.bom'
+    
+    total_bom_cost = fields.Float(string='Total Cost', compute='_compute_bom_total')
+    
+    @api.depends('bom_line_ids.subtotal_estimated_cost')
+    def _compute_bom_total(self):
+        for line in self.bom_line_ids:
+            self.total_bom_cost += line.subtotal_estimated_cost
+    
+class MrpBomLine(models.Model):
+    _inherit = 'mrp.bom.line'    
+    
+    bom_unit_cost = fields.Float(string='Unit Cost', related='product_id.standard_price')
+    subtotal_estimated_cost = fields.Float(string='Total Estimated Cost', compute='_compute_bom_subtotal_total')
+    
+    @api.depends('bom_unit_cost', 'product_qty')
+    def _compute_bom_subtotal_total(self):
+        for line in self:
+            line.subtotal_estimated_cost = line.bom_unit_cost * line.product_qty
     
     
 class MrpProduction(models.Model):

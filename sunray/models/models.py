@@ -1789,6 +1789,14 @@ class ProjectChangeRequest(models.Model):
         if ctx.get('active_model') == 'project.project':
             return self.env['project.project'].browse(ctx.get('active_ids')[0]).id
         
+    state = fields.Selection([
+        ('draft', 'New'),
+        ('submit', 'Submited'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+        ('closed', 'Closed'),
+        ('on_hold', 'On Hold'),
+        ], string='Status', readonly=False, index=True, copy=False, default='draft', track_visibility='onchange')
     
     partner_id = fields.Many2one(comodel_name='res.partner', related='project_id.partner_id', string='Customer', readonly=True)
     
@@ -1802,6 +1810,64 @@ class ProjectChangeRequest(models.Model):
 
     project_change_request_line_ids = fields.One2many('project.change_request.line', 'project_change_request_id', string="Request Move", copy=True)
     
+    @api.multi
+    def button_reset(self):
+        self.write({'state': 'draft'})
+        return {}
+    
+    @api.multi
+    def button_hold(self):
+        self.write({'state': 'on_hold'})
+        subject = "Change request for {} is on hold".format(self.project_id.name)
+        partner_ids = []
+        for partner in self.message_partner_ids:
+            partner_ids.append(partner.id)
+        self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
+        return {}
+    
+    @api.multi
+    def button_close(self):
+        self.write({'state': 'closed'})
+        subject = "Change request for {} has been Closed".format(self.project_id.name)
+        partner_ids = []
+        for partner in self.message_partner_ids:
+            partner_ids.append(partner.id)
+        self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
+        return {}
+    
+    @api.multi
+    def button_submit(self):
+        self.write({'state': 'submit'})
+        group_id = self.env['ir.model.data'].xmlid_to_object('project.group_project_manager')
+        user_ids = []
+        partner_ids = []
+        for user in group_id.users:
+            user_ids.append(user.id)
+            partner_ids.append(user.partner_id.id)
+        self.message_subscribe(partner_ids=partner_ids)
+        subject = "A Change request has been made for this '{}' project".format(self.project_id.name)
+        self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
+        return False
+        return {}
+    
+    @api.multi
+    def button_approve(self):
+        self.write({'state': 'approved'})
+        subject = "Change request {} has been Approved".format(self.project_id.name)
+        partner_ids = []
+        for partner in self.message_partner_ids:
+            partner_ids.append(partner.id)
+        self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
+    
+    @api.multi
+    def button_reject(self):
+        self.write({'state': 'rejected'})
+        subject = "Change request {} has been Rejected".format(self.project_id.name)
+        partner_ids = []
+        for partner in self.message_partner_ids:
+            partner_ids.append(partner.id)
+        self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
+    
 class ProjectChangeRequestLine(models.Model):
     _name = "project.change_request.line"
     _description = 'Project Action Line'
@@ -1812,14 +1878,6 @@ class ProjectChangeRequestLine(models.Model):
     s_n = fields.Float(string='S/N', readonly=False)
 
     project_change_request_description = fields.Char(string='Change Description')
-
-    project_change_request_decision = fields.Selection([
-        ('approved', 'Approved'),
-        ('rejected', 'Rejected'),
-        ('closed', 'Closed'),
-        ('on_hold', 'On Hold'),
-        ('new', 'New'),
-        ], string='Status', readonly=False, index=True, copy=False, default='draft', track_visibility='onchange')
 
     project_change_request_severity = fields.Selection([('1', 'Low'), ('2', 'Medium'), ('3', 'High'), ('4', 'Critical')], string='Severity', required=False)
 
