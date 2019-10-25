@@ -278,7 +278,7 @@
 		 		</group>
 		 		<field name="project_action_line_ids">
                    <tree editable="bottom">
-                       <field name="s_n" readonly="1" style="oe_left"/>
+                       <!-- <field name="s_n" readonly="1" style="oe_left"/> -->
                        <field name="action_items"/>
                        <field name="comments"/>
                    </tree>
@@ -449,29 +449,36 @@
     		<field name="model">project.change_request</field>
     		<field name="priority" eval="2"/>
     		<field name="arch" type="xml">
-        <form string="Action">
-            <sheet>
-                <group colspan="2">
-                    <field name="project_id" required="1" readonly="1"/>
-                    <field name="partner_id"/>
-                    <field name="employee_id"/>
-
-                </group>
-                <group col="4" colspan="4">
-                    <field name="date"/>
-                    <field name="project_change_request_priority" widget="priority"/>
-                </group>
-                <field name="project_change_request_line_ids">
-                   <tree editable="bottom">
-                       <field name="s_n" readonly="1" style="oe_left"/>
-                       <field name="project_change_request_description"/>
-                       <field name="project_change_request_decision"/>
-                       <field name="comments"/>
-                   </tree>
-               </field>
-             </sheet>
-             
-             <div class="oe_chatter">
+        	<form string="Action">
+        		 <header>
+        		 	<button name="button_submit" states="draft" string="Submit" type="object"/>
+					<button name="button_approve" states="submit" string="Approve" type="object" groups="project.group_project_manager"/>
+					<button name="button_reject" states="submit" string="Reject" type="object" groups="project.group_project_manager"/>
+					<button name="button_reset" states="reject,on_hold" string="Set to Draft" type="object" />
+					<button name="button_close" states="approved,rejected" string="Close" type="object"/>
+	                <field name="state" widget="statusbar" statusbar_visible="draft,submit,approved,closed" readonly="1" clickable="0"/>
+	            </header>
+	            <sheet>
+	                <group colspan="2">
+	                    <field name="project_id" required="1" readonly="1"/>
+	                    <field name="partner_id"/>
+	                    <field name="employee_id"/>
+	
+	                </group>
+	                <group col="4" colspan="4">
+	                    <field name="date"/>
+	                    <field name="project_change_request_priority" widget="priority"/>
+	                </group>
+	                <field name="project_change_request_line_ids">
+	                   <tree editable="bottom">
+	                       <!-- <field name="s_n" readonly="1" style="oe_left"/>
+	                       <field name="project_change_request_decision"/>  -->
+	                       <field name="project_change_request_description"/>
+	                       <field name="comments"/>
+	                   </tree>
+	               </field>
+	             </sheet>
+	             <div class="oe_chatter">
                     <field name="message_follower_ids" widget="mail_followers"/>
                     <field name="activity_ids" widget="mail_activity"/>
                     <field name="message_ids" widget="mail_thread"/>
@@ -902,6 +909,24 @@
 	    </field>
 	</record>
 	
+	<record id="sunray_mrp_bom_form_view" model="ir.ui.view">
+        <field name="name">sunray.mrp.bom.form</field>
+	        <field name="model">mrp.bom</field>
+	        <field name="inherit_id" ref="mrp.mrp_bom_form_view"/>
+	        <field name="arch" type="xml">
+	        	<xpath expr="//field[@name='bom_line_ids']/tree/field[@name='product_qty']" position="after">
+	            	<field name="bom_unit_cost" readonly = "1"/>
+	            </xpath>
+	        	<xpath expr="//field[@name='bom_line_ids']/tree/field[@name='operation_id']" position="after">
+	            	<field name="subtotal_estimated_cost" readonly = "1"/>
+	            </xpath>
+	            <field name="bom_line_ids" position="after">
+		            <group class="oe_subtotal_footer oe_right">
+		                  <field name="total_bom_cost" readonly = "1" widget="monetary" options="{'currency_field': 'currency_id'}"/>
+		            </group>
+            	</field>
+	        </field>
+	</record>
 	
 	<record id="sunray_mrp_production_tree_view" model="ir.ui.view">
         <field name="name">sunray.mrp.production.tree</field>
