@@ -594,9 +594,9 @@
         <field name="model">site.code</field>
         <field name="type">tree</field>
         <field name="arch" type="xml">
-        	<field name="name"/>
+        	<field name="name" string="Code"/>
             <field name="partner_id"/>
-            <field name="location_id"/>
+            <field name="state_id"/>
             <field name="project_id"/>
         </field>
     </record>
@@ -618,8 +618,8 @@
                 </div>
                     <group col="4" colspan="2">
                     	<field name="partner_id"/>
-                    	<field name="location_id"/>
-                    	<field name="name"/>
+                    	<field name="state_id"/>
+                    	<field name="name" string="Code" readonly="1" required="0"/>
                     	<field name="project_id"/>
                         <!-- <field name="active"/>  -->
                     </group>
