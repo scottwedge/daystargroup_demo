@@ -535,7 +535,14 @@ class Job(models.Model):
         if self.appliaction_deadline == today:
             self.set_open()
 
+class ContactRequest(models.Model):
+    _name = "new.contact.request"
+    _description = 'Contact Request'
+    _inherit = ['mail.thread', 'mail.activity.mixin', 'portal.mixin']
 
+    name = fields.Char(string='Name')
+    email = fields.Char(string='Email')
+    
 class VendorRequest(models.Model):
     _name = "vendor.request"
     _description = "Contact Request"
@@ -636,6 +643,27 @@ class VendorRequest(models.Model):
     contact_email = fields.Char(string="email")
     
     completed_customer_information = fields.Boolean(string="COMPLETED CUSTOMER INFORMATION FORM (AS  ATTACHED)")
+    
+    #futher Vendor details
+    building_no = fields.Char(string="Building No.")
+    office_no = fields.Char(string="Office No.")
+    postal_code = fields.Char(string="Postal Code")
+    district = fields.Char(string="District/ Region")
+    country_id = fields.Many2one(comodel_name='res.country', string="Country")
+    rc = fields.Char(string="RC or Business registration nb")
+    vat_eligible = fields.Selection([('yes', 'Yes'), ('no', 'No')], string="VAT eligibility")
+    business_legal_structure = fields.Selection([('joint', 'Joint Stock Company'), ('limited', 'Limited Liability Company'), ('non', 'Non-Profit organization'), ('public', 'Public Liability Company'), ('trust', 'Business Trust'), ('other', 'Other')], 
+                                                string="Business Legal Structure")
+    vat_no = fields.Char(string="Vat No")
+    tax_no = fields.Char(string="Tax No.")
+    legal = fields.Char(string="Other, Please specify:")
+    customer = fields.Boolean(string='Is a Customer', default=False, help="Check this box if this contact is a customer.")
+    supplier = fields.Boolean(string='Is a Vendor', default = True, help="Check this box if this contact is a vendor.")
+    street = fields.Char()
+    city = fields.Char()
+    company_type = fields.Selection(string='Company Type',
+        selection=[('company', 'Company'), ('person', 'Individual')], default='company')
+    
     
     @api.multi
     def button_submit_legal(self):

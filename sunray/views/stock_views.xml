@@ -34,9 +34,10 @@
 	    	</field>-->
 			<field name="line_ids" position="after">
     			<group string = "Requester" col="4" colspan="6">
-	            	<field name="employee_id" groups="sunray.group_hr_line_manager"/>
+	            	<field name="employee_id" readonly="1" />
 	            	<field name="department_name" invisible="0"/>
 	            	<field name="request_date"/>
+	            	<field name="submitted" invisible="1"/>
 	        	</group>
            		<group string = "First Authorization" col="4" colspan="4">
 	            	<field name="manager_approval"/>
@@ -47,6 +48,15 @@
 	            	<field name="po_approval_date"/>
             	</group>
 			</field>
+			<xpath expr="//field[@name='line_ids']/tree/field[@name='product_id']" position="after">
+            	<field name="description"/>
+            </xpath>
+            <xpath expr="//button[@name='action_in_progress']" position="before">
+            	<button name="button_submit_purchase_agreement" string="Submit To Manager" type="object" groups="base.group_user" attrs="{'invisible': ['|', ('submitted', '=', True), ('state', '!=', 'draft')]}"/>
+            </xpath>
+            <xpath expr="//button[@name='action_in_progress']" position="replace">
+            	<button name="action_in_progress" states="draft" string="Approve" type="object" class="btn-primary" groups="sunray.group_hr_line_manager"/>
+            </xpath>
 	    </field>
 	</record>
   	
@@ -84,6 +94,7 @@
             	<field name= "inform_budget_owner" invisible = "1"/>
             	<field name= "need_finance_review" invisible = "1"/>
             	<field name= "finance_review_done" invisible = "1"/>
+            	<field name= "need_finance_review_done" invisible = "1"/>
             	<h3 attrs="{'invisible': [('need_override', '=', False)]}"><b>Needs Budget Override, The Budget Dept. has been notified </b></h3>
             </field>
         	<xpath expr="//button[@name='action_view_picking']" position="replace">
@@ -112,7 +123,7 @@
         		<button name="button_submit" string="Submit to Manager" type="object" states="draft"  groups="base.group_user"/>
         		<button name="button_inform_budget_owner" string="Inform Budget Owner" type="object" attrs="{'invisible': ['|', ('state', '=', 'purchase'), ('inform_budget_owner', '=', True)]}" groups="base.group_user"/>
         		<button name="button_request_finance_review" string="Request Finance Review" type="object" attrs="{'invisible': ['|', ('state', '=', 'purchase'), ('need_finance_review', '=', True)]}" groups="base.group_user"/>
-        		<button name="button_submit" string="Review Done" type="object" attrs="{'invisible': ['|', '|', ('state', '=', 'purchase'), ('need_finance_review', '=', False), ('finance_review_done', '=', True)]}" groups="account.group_account_user"/>
+        		<button name="button_legal_reviewd" string="Review Done" type="object" attrs="{'invisible': ['|', '|', ('state', '=', 'purchase'), ('need_finance_review', '=', False), ('need_finance_review_done', '=', True)]}" groups="sunray.group_legal_team"/>
         	</xpath>
         	<xpath expr="//button[@name='button_confirm']" position="replace">
         		<button name="button_confirm" type="object" states="submit" string="Approve Order" id="draft_confirm" groups="sunray.group_hr_line_manager,purchase.group_purchase_manager"/>
@@ -147,7 +158,7 @@
             	<field name="account_id" required = "1"/>
             </xpath>
             <xpath expr="//field[@name='order_line']/tree/field[@name='account_analytic_id']" position="replace">
-            	<field name="account_analytic_id" invisible = "0"/>
+            	<field name="account_analytic_id" required="1" invisible = "0"/>
             </xpath>
             <xpath expr="//field[@name='order_line']/tree/field[@name='analytic_tag_ids']" position="replace">
             	<field name="analytic_tag_ids" invisible = "1" widget="many2many_tags" options="{'color_field': 'color'}"/>
@@ -920,6 +931,44 @@
 	                  <field name="total_cost" widget="monetary" options="{'currency_field': 'currency_id'}"/>
 	            </group>
             </field>
+            <xpath expr="//notebook" position="inside">
+	    		<page string="Logistics">
+	    			 <group string="General Info" col="4" colspan="2">
+		                <field name="order_no"/>
+		                <field name="ship_status"/>
+		                <field name="bu"/>
+		                <field name="type_of_cargo"/>
+		                <field name="supplier"/>
+		                <field name="pfi_no_bl"/>
+		                <field name="incoterms"/>
+		                <field name="incoterms_location"/>
+		                <field name="country_of_supplier_id"/>
+		                <field name="logistics_provider"/>
+		            </group>
+		            <group string="Shipping" col="4" colspan="2">
+		                <field name="mode_of_transport"/>
+		                <field name="date_of_equipment"/>
+		                <field name="target_shipment_date"/>
+		                <field name="actual_shipment_date"/>
+		                <field name="eta"/>
+		                <field name="ata"/>
+		                <field name="arrival_at_warehouse"/>
+		            </group>
+		            <group string="Form M" col="4" colspan="2">
+		                <field name="pfi"/>
+		                <field name="product_certificate"/>
+		                <field name="insurance"/>
+		                <field name="form_m"/>
+		            </group>
+		            <group string="PAAR" col="4" colspan="2">
+		                <field name="bill_of_landing"/>
+		                <field name="ccvo"/>
+		                <field name="packing_list"/>
+		                <field name="soncap"/>
+		                <field name="paar"/>
+		            </group>
+	    		</page>
+	    	</xpath>
 	    </field>
 	</record>
 	
