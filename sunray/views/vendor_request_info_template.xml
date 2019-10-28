@@ -16,7 +16,7 @@
 			<h3 class="text-center">Section 1. GENERAL DATA:</h3>
             <div class="row mt-3">
                 <section id="forms" class="col">
-                    <form action="/website_form/" method="post" class="s_website_form container-fluid mt32" enctype="multipart/form-data" data-model_name="res.partner" data-success_page="/contactus-thank-you" data-editable-form="false">
+                    <form action="/website_form/" method="post" class="s_website_form container-fluid mt32" enctype="multipart/form-data" data-model_name="vendor.request" data-success_page="/contactus-thank-you" data-editable-form="false">
                        	<div class="container">
 				          	<div class="form-group row form-field o_website_form_required">
 			                     <div class="col-md-11 col-sm-8">
@@ -34,28 +34,33 @@
 			                        <input type="text" class="form-control o_website_form_input" name="office_no"/>
 			                     </div>
 			                </div>
-			                <div class="form-group row form-field o_website_form_required_custom">
-			                     <div class="col-md-6 col-sm-8 o_website_form_required">
-			                   		<label class="control-label" for="street">Street</label><br/>
-			                       	<input type="text" class="form-control o_website_form_input" name="street"/>
-			                     </div>
-			                     <div class="col-md-3 col-sm-8">
-			                     	<label class="control-label" for="city">City</label><br/>
-			                        <input type="text" class="form-control o_website_form_input" name="city"/>
-			                     </div>
-			                     <div class="col-md-2 col-sm-8">
-			                     	<label class="control-label" for="postal_code">Postal Code</label><br/>
-			                        <input type="text" class="form-control o_website_form_input" name="postal_code"/>
-			                     </div>
-			                </div>
-			                <div class="form-group row form-field o_website_form_required_custom">
+			             </div>
+			             <div class="form-group row form-field o_website_form_custom">
+		                     <div class="col-md-6 col-sm-8 o_website_form_custom">
+		                   		<label class="control-label" for="street">Street</label><br/>
+		                       	<input type="text" class="form-control o_website_form_input" name="street"/>
+		                     </div>
+		                     <div class="col-md-3 col-sm-8">
+		                     	<label class="control-label" for="city">City</label><br/>
+		                        <input type="text" class="form-control o_website_form_input" name="city"/>
+		                     </div>
+		                     <div class="col-md-2 col-sm-8">
+		                     	<label class="control-label" for="postal_code">Postal Code</label><br/>
+		                        <input type="text" class="form-control o_website_form_input" name="postal_code"/>
+		                     </div>
+		                </div>
+		                <div class="form-group row form-field o_website_form_required_custom">
 			                     <div class="col-md-6 col-sm-8 o_website_form_required">
 			                   		<label class="control-label" for="district">District/ Region</label><br/>
 			                       	<input type="text" class="form-control o_website_form_input" name="district"/>
 			                     </div>
 			                     <div class="col-md-5 col-sm-8">
 			                     	<label class="control-label" for="country">Country</label><br/>
-			                        <input type="text" class="form-control o_website_form_input" name="country"/>
+			                        <select class="form-control" name="country_id">
+									     <t t-foreach="country_id" t-as="country_id">
+									          <option t-attf-value="#{country_id.id}"><t t-esc="country_id.name"/></option>
+									     </t>
+									 </select>
 			                     </div>
 			                </div>
 			                <div class="form-group row form-field o_website_form_required">
@@ -66,8 +71,8 @@
 			                 </div>
 			                 <div class="form-group row form-field o_website_form_required_custom">
 			                     <div class="col-md-6 col-sm-8 o_website_form_required">
-			                   		<label class="control-label" for="vat">VAT eligibility</label><br/>
-			                       	<select class="form-control o_website_form_input" name="applicant_rep_title">
+			                   		<label class="control-label" for="vat_eligible">VAT eligibility</label><br/>
+			                       	<select class="form-control o_website_form_input" name="vat_eligible">
 										  <option value="yes">Yes</option>
 										  <option value="no">No</option>
 									</select>
@@ -81,81 +86,75 @@
 			                        <input type="text" class="form-control o_website_form_input" name="tax_no"/>
 			                     </div>
 			                </div>
-		                 </div>
-                         <strong>
+                         
+                          <strong>
 	                 		<p>
 	                 		<u>Business Legal Structure*** (Please tick the right box)</u>
 	                 		</p>
 	                 	</strong>
-		               	  <div class="form-group row form-field o_website_form_required_custom">
-			                   <div class="col-md-3 col-sm-1">
-			                   		<label class="control-label" for="number_of_scopes">Joint Stock Company</label>
-			                   </div>
-			                   <div class="col-md-1 col-sm-1 pull-left align-left">
-			                   		<input type="radio" class="form-control o_website_form_input" name="number_of_scopes" value="above_20" checked=""/>
-			                   </div>
-			                   <div class="col-md-3 col-sm-1">
-			                   		<label class="control-label" for="number_of_scopes">Limited Liability Company</label>
-			                   </div>
-			                   <div class="col-md-1 col-sm-1 pull-left align-left">
-			                   		<input type="radio" class="form-control o_website_form_input" name="number_of_scopes" value="11_to_20"/>
-			                   </div>
-			                   <div class="col-md-3 col-sm-1">
-			                   		<label class="control-label" for="number_of_scopes">Non-Profit organization </label>
-			                   </div>
-			                   <div class="col-md-1 col-sm-1 pull-left align-left">
-			                   		<input type="radio" class="form-control o_website_form_input" name="number_of_scopes" value="1_to_10" />
-			                   </div>
-			                   <div class="col-md-3 col-sm-1">
-			                   		<label class="control-label" for="number_of_scopes">Public Liability Company</label>
-			                   </div>
-			                   <div class="col-md-1 col-sm-1 pull-left align-left">
-			                   		<input type="radio" class="form-control o_website_form_input" name="number_of_scopes" value="1_to_10" />
-			                   </div>
-			                   <div class="col-md-3 col-sm-1">
-			                   		<label class="control-label" for="number_of_scopes">Business Trust</label>
-			                   </div>
-			                   <div class="col-md-1 col-sm-1 pull-left align-left">
-			                   		<input type="radio" class="form-control o_website_form_input" name="number_of_scopes" value="1_to_10" />
-			                   </div>
-			                   <div class="col-md-3 col-sm-1">
-			                   		<label class="control-label" for="number_of_scopes">Other</label>
-			                   </div>
-			                   <div class="col-md-1 col-sm-1 pull-left align-left">
-			                   		<input type="radio" class="form-control o_website_form_input" name="number_of_scopes" value="1_to_10" />
-			                   </div>
+			              <div class="o_website_form_flex">
+			                <div class="radio o_website_form_flex_item">
+			                  <label>
+			                    <input type="radio" class="o_website_form_input" name="business_legal_structure" value="joint"/>
+			                    <span>Joint Stock Company</span>
+			                  </label>
+			                </div>
+			                <div class="radio o_website_form_flex_item">
+			                  <label>
+			                    <input type="radio" class="o_website_form_input" name="business_legal_structure" value="limited"/>
+			                    <span>Limited Liability Company</span>
+			                  </label>
+			                </div>
+			                <div class="radio o_website_form_flex_item">
+			                  <label>
+			                    <input type="radio" class="o_website_form_input" name="business_legal_structure" value="non"/>
+			                    <span>Non-Profit organization</span>
+			                  </label>
+			                </div>
+			                <div class="radio o_website_form_flex_item">
+			                  <label>
+			                    <input type="radio" class="o_website_form_input" name="business_legal_structure" value="public"/>
+			                    <span>Public Liability Company</span>
+			                  </label>
+			                </div>
+			                <div class="radio o_website_form_flex_item">
+			                  <label>
+			                    <input type="radio" class="o_website_form_input" name="business_legal_structure" value="trust"/>
+			                    <span>Business Trust</span>
+			                  </label>
+			                </div>
+			                <div class="radio o_website_form_flex_item">
+			                  <label>
+			                    <input type="radio" class="o_website_form_input" name="business_legal_structure" value="other"/>
+			                    <span>Other</span>
+			                  </label>
+			                </div>
 			              </div>
-                        
-                        <div class="form-group row form-field o_website_form_required_custom">
-                            <div class="col-lg-3 col-md-4 text-right">
-                                <label class="col-form-label" for="legal">Other, Please specify:</label>
-                            </div>
-                            <div class="col-lg-7 col-md-8">
-                                <input type="text" class="form-control o_website_form_input" name="legal" required=""/>
-                            </div>
-                        </div>
-                        <!-- <div class="form-group row form-field o_website_form_required_custom">
-                            <div class="col-lg-3 col-md-4 text-right">
-                                <label class="col-form-label" for="email">Your Email</label>
-                            </div>
-                            <div class="col-lg-7 col-md-8">
-                                <input type="email" class="form-control o_website_form_input" name="email" required=""/>
-                            </div>
-                        </div>
-                        <div class="form-group row form-field o_website_form_required_custom">
-                            <div class="col-lg-3 col-md-4 text-right">
-                                <label class="col-form-label" for="phone">Your Phone Number</label>
-                            </div>
-                            <div class="col-lg-7 col-md-8">
-                                <input type="text" class="form-control o_website_form_input" name="phone" required=""/>
-                            </div>
-                        </div> -->
+			              <br/>
+			              <div class="form-group row form-field o_website_form_required">
+				            <div class="col-md-4 text-md-left">
+				              <label class="col-form-label" for="message_main_attachment_id">
+				                    Attachments (multiple can be uploaded at once)
+				                </label>
+				            </div>
+				            <div class="col-md-8">
+				              <input type="file" class="form-control o_website_form_input" name="message_main_attachment_id" multiple="1"/>
+				            </div>
+				          </div>
+                         <!-- <div class="form-group row form-field o_website_form_required_custom">
+			                   <div class="col-md-3 col-sm-1">
+			                   		<label class="control-label" for="supplier">Vendor</label>
+			                   </div>
+			                   <div class="col-md-1 col-sm-1 pull-left align-left">
+			                   		<input type="checkbox" value="Yes" class="o_website_form_input" name="supplier"/>
+			                   </div>
+			              </div> -->
                         <div class="form-group row">
-                            <div class="offset-lg-3 offset-md-4 col-md-8 col-lg-7">
-                                <a href="#" role="button" class="btn btn-primary btn-lg o_website_form_send">Submit</a>
-                                <span id="o_website_form_result"></span>
-                            </div>
-                        </div>
+				            <div class="offset-lg-3 offset-md-4 col-md-8 col-lg-7">
+				              <button class="btn btn-primary btn-lg o_website_form_send o_default_snippet_text" data-original-title="" title="">Submit</button>
+				              <span id="o_website_form_result" class="text-danger ml8"/>
+				            </div>
+				          </div>
                     </form>
                 </section>
             </div>
@@ -250,40 +249,40 @@
 	                 	</strong>
 		               	  <div class="form-group row form-field o_website_form_required_custom">
 			                   <div class="col-md-3 col-sm-1">
-			                   		<label class="control-label" for="number_of_scopes">Joint Stock Company</label>
+			                   		<label class="control-label" for="business_legal_structure">Joint Stock Company</label>
 			                   </div>
 			                   <div class="col-md-1 col-sm-1 pull-left align-left">
-			                   		<input type="radio" class="form-control o_website_form_input" name="number_of_scopes" value="above_20" checked=""/>
+			                   		<input type="radio" class="form-control o_website_form_input" name="business_legal_structure" value="joint" checked=""/>
 			                   </div>
 			                   <div class="col-md-3 col-sm-1">
-			                   		<label class="control-label" for="number_of_scopes">Limited Liability Company</label>
+			                   		<label class="control-label" for="business_legal_structure">Limited Liability Company</label>
 			                   </div>
 			                   <div class="col-md-1 col-sm-1 pull-left align-left">
-			                   		<input type="radio" class="form-control o_website_form_input" name="number_of_scopes" value="11_to_20"/>
+			                   		<input type="radio" class="form-control o_website_form_input" name="business_legal_structure" value="limited"/>
 			                   </div>
 			                   <div class="col-md-3 col-sm-1">
-			                   		<label class="control-label" for="number_of_scopes">Non-Profit organization </label>
+			                   		<label class="control-label" for="business_legal_structure">Non-Profit organization</label>
 			                   </div>
 			                   <div class="col-md-1 col-sm-1 pull-left align-left">
-			                   		<input type="radio" class="form-control o_website_form_input" name="number_of_scopes" value="1_to_10" />
+			                   		<input type="radio" class="form-control o_website_form_input" name="business_legal_structure" value="non" />
 			                   </div>
 			                   <div class="col-md-3 col-sm-1">
-			                   		<label class="control-label" for="number_of_scopes">Public Liability Company</label>
+			                   		<label class="control-label" for="business_legal_structure">Public Liability Company</label>
 			                   </div>
 			                   <div class="col-md-1 col-sm-1 pull-left align-left">
-			                   		<input type="radio" class="form-control o_website_form_input" name="number_of_scopes" value="1_to_10" />
+			                   		<input type="radio" class="form-control o_website_form_input" name="business_legal_structure" value="public" />
 			                   </div>
 			                   <div class="col-md-3 col-sm-1">
-			                   		<label class="control-label" for="number_of_scopes">Business Trust</label>
+			                   		<label class="control-label" for="business_legal_structure">Business Trust</label>
 			                   </div>
 			                   <div class="col-md-1 col-sm-1 pull-left align-left">
-			                   		<input type="radio" class="form-control o_website_form_input" name="number_of_scopes" value="1_to_10" />
+			                   		<input type="radio" class="form-control o_website_form_input" name="business_legal_structure" value="trust" />
 			                   </div>
 			                   <div class="col-md-3 col-sm-1">
-			                   		<label class="control-label" for="number_of_scopes">Other</label>
+			                   		<label class="control-label" for="business_legal_structure">Other</label>
 			                   </div>
 			                   <div class="col-md-1 col-sm-1 pull-left align-left">
-			                   		<input type="radio" class="form-control o_website_form_input" name="number_of_scopes" value="1_to_10" />
+			                   		<input type="radio" class="form-control o_website_form_input" name="business_legal_structure" value="other" />
 			                   </div>
 			              </div>
                         
@@ -331,6 +330,49 @@
         </div>
     </t>
 </template>
+
+<template id="contact_information">
+    <t t-call="website.layout">
+        <t t-set="additional_title">Contact Information</t>
+
+        <div id="wrap"  class="container">
+            <h1 class="text-center mt-2">
+                Contact Information Form
+            </h1>
+            <!-- <h2 t-if="job" class="text-center text-muted">
+                <span t-field="job.name"/>
+            </h2>-->
+			<h3 class="text-center">Section 1. GENERAL DATA:</h3>
+            <div class="row mt-3">
+                <section id="forms" class="col">
+                    <form action="/website_form/" method="post" class="s_website_form container-fluid mt32" enctype="multipart/form-data" data-model_name="new.contact.request" data-success_page="/contactus-thank-you" data-editable-form="false">
+                       	<div class="container">
+				          	<div class="form-group row form-field o_website_form_required">
+			                     <div class="col-md-11 col-sm-8">
+			                   		<label class="control-label" for="name">Contact’s Name</label><br/>
+			                        <input type="text" class="form-control o_website_form_input" name="name" required="1"/>
+			                     </div>
+			                 </div>
+			            </div>             
+                        <div class="form-group row">
+                            <div class="offset-lg-3 offset-md-4 col-md-8 col-lg-7">
+                                <a href="#" role="button" class="btn btn-primary btn-lg o_website_form_send">Submit</a>
+                                <span id="o_website_form_result"></span>
+                            </div>
+                        </div>
+                    </form>
+                </section>
+            </div>
+        </div>
+    </t>
+</template>
+
+<function model="ir.model.fields" name="formbuilder_whitelist">
+    <value>new.contact.request</value>
+    <value eval="[
+        'name',
+    ]"/>
+</function>
 
 
 </odoo>

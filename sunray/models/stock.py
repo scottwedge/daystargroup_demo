@@ -414,6 +414,7 @@ class PurchaseOrder(models.Model):
     
     inform_budget_owner = fields.Boolean ('Inform Budget Owner', track_visibility="onchange", copy=False)
     need_finance_review = fields.Boolean ('Finance Review', track_visibility="onchange", copy=False)
+    need_finance_review_done = fields.Boolean ('Finance / Legal Review', track_visibility="onchange", copy=False)
     finance_review_done = fields.Boolean ('Finance Review Done', track_visibility="onchange", copy=False)
     
     state = fields.Selection([
@@ -470,6 +471,7 @@ class PurchaseOrder(models.Model):
     
     @api.multi
     def button_legal_reviewd(self):
+        self.need_finance_review_done = True
         self.write({'state': 'legal_reviewed'})
         subject = "Legal team review has been Done, Purchase Order {} can be confirmed now".format(self.name)
         partner_ids = []
@@ -625,7 +627,7 @@ class PurchaseOrderLine(models.Model):
 #     def type_change(self):
 #         self.product_id = False
     
-    account_analytic_id = fields.Many2one('account.analytic.account', string='Analytic Account', required=False, default=_default_analytic, track_visibility="always")
+    account_analytic_id = fields.Many2one('account.analytic.account', string='Analytic Account', required=False, track_visibility="onchange")
     account_id = fields.Many2one('account.account', string='Account',  domain = [('user_type_id', 'in', [5,8,17,16])])
     need_override = fields.Boolean ('Need Budget Override', track_visibility="onchange", copy=False)
     override_budget = fields.Boolean ('Override Budget', track_visibility="onchange", copy=False)
@@ -654,6 +656,12 @@ class PurchaseRequisition(models.Model):
     _name = "purchase.requisition"
     _inherit = ['purchase.requisition']
     
+    @api.multi
+    def _check_line_manager(self):
+        current_employee = self.env['hr.employee'].search([('user_id', '=', self.env.uid)], limit=1)
+        if current_employee == self.employee_id:
+            raise UserError(_('You are not allowed to approve your own request.'))
+    
     def _default_employee(self):
         self.env['hr.employee'].search([('user_id','=',self.env.uid)])
         return self.env['hr.employee'].search([('user_id','=',self.env.uid)])
@@ -679,10 +687,26 @@ class PurchaseRequisition(models.Model):
     po_manager_approval = fields.Many2one('res.users','Manager Authorization Name', readonly=True, track_visibility='onchange')
     po_manager_position = fields.Char('Manager Authorization Position', readonly=True, track_visibility='onchange')
     
+    submitted = fields.Boolean(string='Submitted')
+    
+    @api.multi
+    def button_submit_purchase_agreement(self):
+        self.submitted = True
+        group_id = self.env['ir.model.data'].xmlid_to_object('sunray.group_hr_line_manager')
+        user_ids = []
+        partner_ids = []
+        for user in group_id.users:
+            user_ids.append(user.id)
+            partner_ids.append(user.partner_id.id)
+        self.message_subscribe(partner_ids=partner_ids)
+        subject = "Purchase Agreement '{}' needs approval".format(self.name)
+        self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
+        return False
+    
     @api.multi
     def action_in_progress(self):
         res = super(PurchaseRequisition, self).action_in_progress()
-        #self._check_vendor_registration()
+        self._check_line_manager()
         self.approval_date = date.today()
         self.manager_approval = self._uid
         return res
@@ -698,7 +722,14 @@ class PurchaseRequisitionLine(models.Model):
     _name = "purchase.requisition.line"
     _inherit = ['purchase.requisition.line']
     
+    @api.onchange('product_id')
+    def _onchange_partner_id(self):
+        self.description = self.product_id.display_name
+        return {}
+    
     project_id = fields.Many2one(comodel_name='project.project', string='Site Location')
+    
+    description = fields.Char(string='Description')
     
 class ProductTemplate(models.Model):
     _inherit = 'product.template'
@@ -801,7 +832,7 @@ class SaleOrder(models.Model):
     
     @api.depends('amount_total')
     def _check_approval(self):
-        if self.amount_total > 1807500.00:
+        if self.amount_total > 10.00:
             self.need_management_approval = True
             group_id = self.env['ir.model.data'].xmlid_to_object('sunray.group_sale_account_budget')
             user_ids = []
@@ -812,7 +843,7 @@ class SaleOrder(models.Model):
             self.message_subscribe(partner_ids=partner_ids)
             subject = "Sales Order {} needs management approval".format(self.name)
             self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
-            return False
+            return self.state
             #raise ValidationError(_('Only your line manager can approve your leave request.'))
         else:
             self.need_approval = False
@@ -903,8 +934,8 @@ class Project(models.Model):
         res = []
         for project in self:
             result = project.name
-            if project.default_site_code:
-                result = str(project.default_site_code) + " " + "-" + " " + str(project.name)
+            if project.site_code_id.name:
+                result = str(project.site_code_id.name) + " " + "-" + " " + str(project.name)
             res.append((project.id, result))
         return res
     
@@ -967,7 +998,7 @@ class Project(models.Model):
     site_code_id = fields.Many2one(comodel_name='site.code', string='Site Code')
     site_code_ids = fields.One2many(comodel_name='site.code', inverse_name='project_id', string='Site Code(s)')
     
-    default_site_code = fields.Char(string='Site Code') 
+    default_site_code = fields.Char(string='old Site Code') 
     
     client_type = fields.Char(string='Client Type')
     site_area = fields.Char(string='Site Area')
@@ -1699,6 +1730,37 @@ class Picking(models.Model):
     
     total_cost = fields.Float(string='Total Cost', compute='_total_cost', track_visibility='onchange', readonly=True)
     send_receipt_mail = fields.Boolean(string='receipt mail')
+    
+    order_no = fields.Char(string='Order No/Model')
+    ship_status = fields.Char(string='Shipment Status')
+    bu = fields.Char(string='BU')
+    type_of_cargo = fields.Char(string='Type of Cargo')
+    supplier = fields.Char(string='Supplier')
+    pfi_no_bl = fields.Char(string='PFI No/BL')
+    incoterms = fields.Char(string='Incoterms')
+    incoterms_location = fields.Char(string='Incoterm Location')
+    country_of_supplier_id = fields.Many2one(comodel_name='res.country', string='Country of Supply')
+    logistics_provider = fields.Char(string='Logistics Provider (3PL Co)')
+    
+    mode_of_transport = fields.Char(string='Mode of Transport')
+    date_of_equipment = fields.Date(string='Date of Equipment needed')
+    target_shipment_date = fields.Date(string='Target Shipment Date')
+    actual_shipment_date = fields.Char(string='Actual Shipment Date')
+    eta = fields.Char(string='ETA')
+    ata = fields.Char(string='ATA')
+    arrival_at_warehouse = fields.Char(string='Arrival at warehouse')
+    
+    pfi = fields.Char(string='PFI')
+    product_certificate = fields.Char(string='Product Certificate')
+    insurance = fields.Char(string='Insurance')
+    form_m = fields.Char(string='Fom M')
+    
+    bill_of_landing = fields.Char(string='Bill of Lading')
+    ccvo = fields.Char(string='Commercial invoice')
+    packing_list = fields.Char(string='Packing list')
+    soncap = fields.Char(string='SONCAP')
+    paar = fields.Char(string='PAAR')
+    
     
     @api.multi
     @api.depends('move_ids_without_package.product_uom_qty')
