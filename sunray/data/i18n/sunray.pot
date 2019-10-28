@@ -1,0 +1,28 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+#	* sunray
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 12.0+e\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2019-01-15 15:18+0000\n"
+"PO-Revision-Date: 2019-01-15 15:18+0000\n"
+"Last-Translator: <>\n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: \n"
+"Plural-Forms: \n"
+
+#. module: sunray
+#: model:ir.model,name:sunray.model_vendor_request
+#: model_terms:ir.ui.view,arch_db:sunray.sunray_vendor_request_form
+msgid "Contact Request"
+msgstr ""
+
+#. module: sunray
+#: model:ir.model.fields,field_description:sunray.field_vendor_request__description
+#: model_terms:ir.ui.view,arch_db:sunray.portal_vendor_request
+msgid "Description"
+msgstr ""
