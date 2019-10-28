@@ -7,6 +7,14 @@ from odoo.tools import email_split, float_is_zero
 from ast import literal_eval
 from odoo.exceptions import UserError, ValidationError
 from odoo import api, fields, models, _
+import traceback
+import sys
+
+
+WHITE_LIST = ['odooprojects']      # Look for these words in the file path.
+EXCLUSIONS = ['']          # Ignore <listcomp>, etc. in the function name.
+
+
 
 PURCHASE_REQUISITION_STATES = [
     ('draft', 'Draft'),
@@ -818,15 +826,124 @@ class SaleOrder(models.Model):
     
     need_management_approval = fields.Boolean('Needs Management Approval', track_visibility="onchange", copy=False, default=False)
     
+#     def _prepare_order_line_move(self, cr, uid, order, line, picking_id, date_planned, context=None):
+#         location_id = order.shop_id.warehouse_id.lot_stock_id.id
+#         output_id = order.shop_id.warehouse_id.lot_output_id.id
+#         return {
+#             'name': line.name,
+#             'picking_id': picking_id,
+#             'product_id': line.product_id.id,
+#             'date': date_planned,
+#             'date_expected': date_planned,
+#             'product_qty': line.product_uom_qty,
+#             'product_uom': line.product_uom.id,
+#             'product_uos_qty': (line.product_uos and line.product_uos_qty) or line.product_uom_qty,
+#             'product_uos': (line.product_uos and line.product_uos.id)\
+#                     or line.product_uom.id,
+#             'product_packaging': line.product_packaging.id,
+#             'partner_id': line.address_allotment_id.id or order.partner_shipping_id.id,
+#             'location_id': location_id,
+#             'location_dest_id': output_id,
+#             'sale_line_id': line.id,
+#             'tracking_id': False,
+#             'state': 'draft',
+#             #'state': 'waiting',
+#             'company_id': order.company_id.id,
+#             'price_unit': line.product_id.standard_price or 0.0
+#         }
+# 
+#     def _prepare_order_picking(self, cr, uid, order, context=None):
+#         pick_name = self.pool.get('ir.sequence').get(cr, uid, 'stock.picking.out')
+#         return {
+#             'name': pick_name,
+#             'origin': order.name,
+#             'date': self.date_to_datetime(cr, uid, order.date_order, context),
+#             'type': 'out',
+#             'state': 'auto',
+#             'move_type': order.picking_policy,
+#             'sale_id': order.id,
+#             'partner_id': order.partner_shipping_id.id,
+#             'note': order.note,
+#             'invoice_state': (order.order_policy=='picking' and '2binvoiced') or 'none',
+#             'company_id': order.company_id.id,
+#         }
+#     
+#     def _create_pickings_and_procurements(self, cr, uid, order, order_lines, picking_id=False, context=None):
+#         """Create the required procurements to supply sales order lines, also connecting
+#         the procurements to appropriate stock moves in order to bring the goods to the
+#         sales order's requested location.
+# 
+#         If ``picking_id`` is provided, the stock moves will be added to it, otherwise
+#         a standard outgoing picking will be created to wrap the stock moves, as returned
+#         by :meth:`~._prepare_order_picking`.
+# 
+#         Modules that wish to customize the procurements or partition the stock moves over
+#         multiple stock pickings may override this method and call ``super()`` with
+#         different subsets of ``order_lines`` and/or preset ``picking_id`` values.
+# 
+#         :param browse_record order: sales order to which the order lines belong
+#         :param list(browse_record) order_lines: sales order line records to procure
+#         :param int picking_id: optional ID of a stock picking to which the created stock moves
+#                                will be added. A new picking will be created if ommitted.
+#         :return: True
+#         """
+#         move_obj = self.pool.get('stock.move')
+#         picking_obj = self.pool.get('stock.picking')
+#         procurement_obj = self.pool.get('procurement.order')
+#         proc_ids = []
+# 
+#         for line in order_lines:
+#             if line.state == 'done':
+#                 continue
+# 
+#             date_planned = self._get_date_planned(cr, uid, order, line, order.date_order, context=context)
+# 
+#             if line.product_id:
+#                 if line.product_id.type in ('product', 'consu'):
+#                     if not picking_id:
+#                         picking_id = picking_obj.create(cr, uid, self._prepare_order_picking(cr, uid, order, context=context))
+#                     move_id = move_obj.create(cr, uid, self._prepare_order_line_move(cr, uid, order, line, picking_id, date_planned, context=context))
+#                 else:
+#                     # a service has no stock move
+#                     move_id = False
+# 
+#                 proc_id = procurement_obj.create(cr, uid, self._prepare_order_line_procurement(cr, uid, order, line, move_id, date_planned, context=context))
+#                 proc_ids.append(proc_id)
+#                 line.write({'procurement_id': proc_id})
+#                 self.ship_recreate(cr, uid, order, line, move_id, proc_id)
+# 
+#         wf_service = netsvc.LocalService("workflow")
+#         if picking_id:
+#             wf_service.trg_validate(uid, 'stock.picking', picking_id, 'button_confirm', cr)
+#         for proc_id in proc_ids:
+#             wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_confirm', cr)
+# 
+#         val = {}
+#         if order.state == 'shipping_except':
+#             val['state'] = 'progress'
+#             val['shipped'] = False
+# 
+#             if (order.order_policy == 'manual'):
+#                 for line in order.order_line:
+#                     if (not line.invoiced) and (line.state not in ('cancel', 'draft')):
+#                         val['state'] = 'manual'
+#                         break
+#         order.write(val)
+#         return True
+
+    
     @api.multi
     def _check_customer_registration(self):
         if self.partner_id.customer_registration == False:
             raise UserError(_('Cant Confirm sale order for an unregistered customer -- Request Customer Registration.'))
+
     
     @api.multi
     def action_confirm(self):
         res = super(SaleOrder, self).action_confirm()
+
         #self._check_approval()
+        
         self._check_customer_registration()
         return res
     
@@ -892,23 +1009,29 @@ class SiteCode(models.Model):
     _name = "site.code"
     _description = "Site Code"
     _order = "name"
-    _inherit = ['mail.thread']
+    _inherits = {'stock.location': 'location_id'}
 
-    location_id = fields.Many2one(comodel_name='res.country.state', string='Site location (State)', required=True, track_visibility='onchange')
+    location_id = fields.Many2one('stock.location', string='Location', ondelete="restrict", required=True)
+
+    state_id = fields.Many2one(comodel_name='res.country.state', string='Site location (State)', required=True, track_visibility='onchange')
     partner_id = fields.Many2one(comodel_name='res.partner', string='Customer', required=True)
     project_id = fields.Many2one(comodel_name='project.project', string='Project', required=False)
-    name = fields.Char('Code', readonly=False, track_visibility='onchange')
+#     name = fields.Char('Code', readonly=False, track_visibility='onchange')
     active = fields.Boolean('Active', default='True')
     
     @api.model
     def create(self, vals):
-        site = self.env['res.country.state'].search([('id','=',vals['location_id'])])
+        site = self.env['res.country.state'].search([('id','=',vals['state_id'])])
         client = self.env['res.partner'].search([('id','=',vals['partner_id'])])
         code = client.parent_account_number + "_" + site.code
         
         no = self.env['ir.sequence'].next_by_code('project.site.code')
         site_code = code + "_" +  str(no)
+        print(site_code)
         vals['name'] = site_code
+        vals['usage'] = 'customer'
+#         res_model, res_id = self.env['ir.model.data'].get_object_reference('stock','stock_location_locations_partner')
+#         product = self.env[res_model].browse(res_id) 
         return super(SiteCode, self).create(vals)
     
     '''
@@ -1716,6 +1839,8 @@ class Picking(models.Model):
     employee_id = fields.Many2one('hr.employee', 'Employee',
         states={'done': [('readonly', True)], 'cancel': [('readonly', True)]}, default=_default_employee,
         help="Default Owner")
+    
+    site_code_id = fields.Many2one(comodel_name="site.code", string="Site Code")
     
     man_confirm = fields.Boolean('Manager Confirmation', track_visibility='onchange')
     #net_lot_id = fields.Many2one(string="Serial Number", related="move_line_ids.lot_id", readonly=True)
