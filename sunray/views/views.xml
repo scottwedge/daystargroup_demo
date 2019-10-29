@@ -1034,6 +1034,12 @@
         </form>
     </field>
     </record>
+    
+    <menuitem action="repair.action_repair_order_tree" id="repair.menu_repair_order" groups="stock.group_stock_user" name="Replacements" sequence="36"
+            web_icon="repair,static/description/icon.png"/>
+            
+    <menuitem action="repair.action_repair_order_tree" id="sunray_maintenance_menu_repair_order" groups="maintenance.group_equipment_manager,base.group_user" name="Replacements" sequence="36"
+            parent="maintenance.menu_maintenance_title"/>
 	
 	<menuitem name="Brand" id="brand_list" parent="stock.menu_product_in_config_stock"
               action="brands_action_window"/>

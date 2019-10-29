@@ -819,6 +819,14 @@ class VendorRequest(models.Model):
                 'code_of_conduct' : self.code_of_conduct,
                 'specific_references' : self.specific_references,
                 'latest_financials' : self.latest_financials,
+                'building_no' : self.building_no,
+                'office_no' : self.office_no,
+                'zip' : self.postal_code,
+                'district' : self.district,
+                'rc' : self.rc,
+                'vat_eligible' : self.vat_eligible,
+                'vat_no' : self.vat_no,
+                'tax_no' : self.tax_no,
             }
             self.env['res.partner'].create(vals)
         else:
