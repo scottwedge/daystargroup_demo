@@ -753,6 +753,13 @@
 				  	<field name="transaction_class" attrs="{'invisible': [('supplier', '!=', True)]}" />
 				  	<field name="transaction_description" attrs="{'invisible': [('supplier', '!=', True)]}" />
 				  	<field name="iban" attrs="{'invisible': [('supplier', '!=', True)]}" />
+				  	<field name="vat_eligible" attrs="{'invisible': [('customer', '=', True)]}"/>
+                    <!-- <field name="vat" placeholder="e.g. BE0477472701"/> --> 
+                    <field name="vat_no" attrs="{'invisible': [('customer', '=', True)]}"/>
+                    <field name="tax_no" attrs="{'invisible': [('customer', '=', True)]}"/>
+                    <field name="rc" attrs="{'invisible': [('customer', '=', True)]}"/>
+                    <field name="business_legal_structure" attrs="{'invisible': [('customer', '=', True)]}"/>
+	                <field name="legal" attrs="{'invisible': [('customer', '=', True)]}"/>
 				</field>
 				<field name="function" position="before">
 		    		<field name="parent_account_number" readonly="0"/>
@@ -903,14 +910,51 @@
 	        </field>
 	</record>
 	
-	<record id="sunray_sale_subscription_view_form" model="ir.ui.view">
-        <field name="name">sunray.sale.subscription.form</field>
-	        <field name="model">sale.subscription</field>
-	        <field name="inherit_id" ref="sale_subscription.sale_subscription_view_form"/>
+	<record id="sunray_maintenance_hr_equipment_request_view_form" model="ir.ui.view">
+        <field name="name">sunray.equipment.request.form</field>
+	        <field name="model">maintenance.request</field>
+	        <field name="inherit_id" ref="maintenance.hr_equipment_request_view_form"/>
 	        <field name="arch" type="xml">
-	        	<xpath expr="//field[@name='recurring_invoice_line_ids']/tree/field[@name='product_id']" position="before">
-	            	<field name="site_code_id" required = "1" domain="[('partner_id','=', parent.partner_id)]"/>
+	        	<xpath expr="//button[@name='archive_equipment_request']" position="before">
+	            	<button string="Create Replacement" name="create_repair_request" type="object" attrs="{'invisible': [('archive', '=', True)]}"/>
 	            </xpath>
+	            <field name="equipment_id" position="replace">
+	            	<field name="equipment_id" context="{'default_category_id':category_id}" invisible="0"/>
+	            </field>
+	            <field name="equipment_id" position="after">
+	            	<field name="product_id" invisible="1"/>
+	            	<field name="site_code_id"/>
+		        </field>
+	        </field>
+	</record>
+	
+	<record id="sunray_view_repair_order_form" model="ir.ui.view">
+        <field name="name">sunray.repair.order.form</field>
+	        <field name="model">repair.order</field>
+	        <field name="inherit_id" ref="repair.view_repair_order_form"/>
+	        <field name="arch" type="xml">
+	            <xpath expr="//field[@name='operations']/tree/field[@name='product_id']" position="after">
+	            	<field name="site_code_id" required = "0" domain="[('partner_id','=', parent.partner_id)]"/>
+	            </xpath>
+	            <xpath expr="//button[@name='action_repair_cancel']" position="after">
+	            	<button name="create_store_request" states="confirmed" string="Store Request" type="object"/>
+	            </xpath>
+	        </field>
+	</record>
+	
+	<record id="sunray_account_asset_view_account_asset_asset_form" model="ir.ui.view">
+        <field name="name">sunray.account.asset.asset.form</field>
+	        <field name="model">account.asset.asset</field>
+	        <field name="inherit_id" ref="account_asset.view_account_asset_asset_form"/>
+	        <field name="arch" type="xml">
+	        	<field name="value" position="after">
+		            <field name="asset_quantity"/>
+		            <field name="site_code_id"/>
+		            <field name="asset_partner_id"/>
+		        </field>
+		        <field name="value_residual" position="after">
+		            <field name="asset_total" widget="monetary" options="{'currency_field': 'currency_id'}"/>
+		        </field>
 	        </field>
 	</record>
 	

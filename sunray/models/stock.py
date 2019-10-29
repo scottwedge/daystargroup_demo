@@ -81,6 +81,21 @@ class Partner(models.Model):
     
     site_code_count = fields.Integer(compute="_site_code_count",string="Site Code(s)", store=False)
     
+    #futher Vendor details
+    building_no = fields.Char(string="Building No.")
+    office_no = fields.Char(string="Office No.")
+    postal_code = fields.Char(string="Postal Code")
+    district = fields.Char(string="District/ Region")
+    
+    rc = fields.Char(string="RC or Business registration nb")
+    vat_eligible = fields.Selection([('yes', 'Yes'), ('no', 'No')], string="VAT eligibility")
+    business_legal_structure = fields.Selection([('joint', 'Joint Stock Company'), ('limited', 'Limited Liability Company'), ('non', 'Non-Profit organization'), ('public', 'Public Liability Company'), ('trust', 'Business Trust'), ('other', 'Other')], 
+                                                string="Business Legal Structure")
+    vat_no = fields.Char(string="Vat No")
+    tax_no = fields.Char(string="Tax No.")
+    legal = fields.Char(string="Other, Please specify:")
+    
+    
     @api.multi
     def _site_code_count(self):
         oe_checklist = self.env['site.code']
@@ -2398,6 +2413,85 @@ class MrpProduction(models.Model):
         return res
     
     
+class Repair(models.Model):
+    _inherit = 'repair.order'
+    
+    @api.multi
+    def create_store_request(self):
+        """
+        Method to open create store request form
+        """
+             
+        view_ref = self.env['ir.model.data'].get_object_reference('sunray', 'sunray_stock_form_view')
+        view_id = view_ref[1] if view_ref else False
+         
+        res = {
+            'type': 'ir.actions.act_window',
+            'name': ('Store Request'),
+            'res_model': 'stock.picking',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'view_id': view_id,
+            'target': 'current',
+            'context': {'default_origin': self.name, "default_is_locked":False, "default_picking_type_id":self.env.ref("sunray.stock_picking_type_emp").id}
+        }
+        
+        return res
+    
+class RepairLine(models.Model):
+    _inherit = 'repair.line'
+        
+    site_code_id = fields.Many2one(comodel_name="site.code", string="Site Code")
+
+class MaintenanceRequest(models.Model):
+    _inherit = 'maintenance.request'
+    
+    site_code_id = fields.Many2one(comodel_name="site.code", string="Site Code")
+    product_id = fields.Many2one(comodel_name='product.product', string='Product')
+    
+    @api.multi
+    def create_repair_request(self):
+        """
+        Method to open create repair order form
+        """
+                     
+        view_ref = self.env['ir.model.data'].get_object_reference('repair', 'view_repair_order_form')
+        view_id = view_ref[1] if view_ref else False
+         
+        res = {
+            'type': 'ir.actions.act_window',
+            'name': ('Repair Order'),
+            'res_model': 'repair.order',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'view_id': view_id,
+            'target': 'current',
+            #'context': {'default_origin': self.name, "default_is_locked":False, "default_picking_type_id":self.env.ref("sunray.stock_picking_type_emp").id, 'default_move_lines': order_lines}
+        }
+        
+        return res
+    
+    @api.multi
+    def create_store_request(self):
+        """
+        Method to open create store request form
+        """
+             
+        view_ref = self.env['ir.model.data'].get_object_reference('sunray', 'sunray_stock_form_view')
+        view_id = view_ref[1] if view_ref else False
+         
+        res = {
+            'type': 'ir.actions.act_window',
+            'name': ('Store Request'),
+            'res_model': 'stock.picking',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'view_id': view_id,
+            'target': 'current',
+            'context': {'default_origin': self.name, "default_is_locked":False, "default_picking_type_id":self.env.ref("sunray.stock_picking_type_emp").id}
+        }
+        
+        return res
     
              
     
