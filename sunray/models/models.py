@@ -482,7 +482,18 @@ class ProductTemplate(models.Model):
             vals['default_code'] = item_code
         return super(ProductTemplate, self).create(vals)
     '''
+
+class PensionManager(models.Model):
+    _name = 'pen.type'
     
+    name = fields.Char(string='Name')
+    contact_person = fields.Char(string='Contact person')
+    phone = fields.Char(string='Phone Number')
+    contact_address = fields.Text(string='Contact Address')
+    pfa_id = fields.Char(string='PFA ID', required=True)
+    email = fields.Char(string='Email')
+    notes = fields.Text(string='Notes')
+
 class Employee(models.Model):
     _name = "hr.employee"
     _description = "Employee"
@@ -490,6 +501,7 @@ class Employee(models.Model):
     
     deactivated = fields.Boolean(string='Deactivated')
     deactivation_date = fields.Date(string='Deactivation Date', readonly=True)
+    pf_id = fields.Many2one('pen.type', string='Penson Fund Administrator', index=True)
     
     @api.multi
     def reminder_deactivate_employee_contract(self):
@@ -904,6 +916,19 @@ class HolidaysRequest(models.Model):
         result = super(HolidaysRequest, self).create(vals)
         result.send_mail()
         return result
+    
+    state = fields.Selection([
+        ('draft', 'To Submit'),
+        ('cancel', 'Cancelled'),
+        ('confirm', 'To Approve'),
+        ('refuse', 'Refused'),
+        ('validate1', 'Second Approval'),
+        ('validate', 'Approved')
+        ], string='Status', readonly=True, track_visibility='onchange', copy=False, default='draft',
+        help="The status is set to 'To Submit', when a leave request is created." +
+        "\nThe status is 'To Approve', when leave request is confirmed by user." +
+        "\nThe status is 'Refused', when leave request is refused by manager." +
+        "\nThe status is 'Approved', when leave request is approved by manager.")
     
     @api.multi
     def _check_line_manager(self):

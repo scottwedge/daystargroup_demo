@@ -35,3 +35,4 @@ access_vendor_requesters_report_line_two,vendor.requesters.report.line.two,model
 access_vendor_internal_approval_checklist,vendor.internal.approval.checklist,model_vendor_internal_approval_checklist,base.group_user,1,1,1,0
 access_site_code,site.code,model_site_code,base.group_user,1,1,1,1
 access_new_contact_request,new.contact.request,model_new_contact_request,base.group_user,1,1,1,1
+access_pen_type_user,pen.type,model_pen_type,hr.group_hr_user,1,1,1,1
