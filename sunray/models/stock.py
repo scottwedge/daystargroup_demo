@@ -2534,7 +2534,7 @@ class HrPayslip(models.Model):
     
     @api.multi
     def action_payslip_done(self):
-        res = super(HrPayslip, self).action_payslip_done()
+        self.compute_sheet()
 
         for slip in self:
             line_ids = []
@@ -2620,7 +2620,7 @@ class HrPayslip(models.Model):
             move = self.env['account.move'].create(move_dict)
             slip.write({'move_id': move.id, 'date': date})
             #move.post()
-        return res
+        return self.write({'state': 'done'})
 
 
 
