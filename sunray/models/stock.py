@@ -2527,7 +2527,13 @@ class MaintenanceRequest(models.Model):
         }
         
         return res
-
+class HrPayslipRun(models.Model):
+    _inherit = 'hr.payslip.run'
+    
+    @api.multi
+    def close_payslip_run(self):
+        self.slip_ids.action_payslip_done()
+        return self.write({'state': 'close'})
 
 class HrPayslip(models.Model):
     _inherit = 'hr.payslip'
