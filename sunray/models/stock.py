@@ -95,7 +95,6 @@ class Partner(models.Model):
     tax_no = fields.Char(string="Tax No.")
     legal = fields.Char(string="Other, Please specify:")
     
-    
     @api.multi
     def _site_code_count(self):
         oe_checklist = self.env['site.code']
@@ -1108,7 +1107,7 @@ class Project(models.Model):
         for project in self:
             result = project.name
             if project.site_code_id.name:
-                result = str(project.site_code_id.name) + " " + "-" + " " + str(project.name)
+                result = str(project.site_code_id.name) + " " + "-" + " " + str(project.name) + " - " + str(project.site_area)
             res.append((project.id, result))
         return res
     
@@ -1193,6 +1192,7 @@ class Project(models.Model):
     monthly_service_fees = fields.Float(string='Monthly Service fees')
     lease_duration = fields.Char(string='If lease, contract duration')
     sales_price = fields.Float(string="Sale Price")
+    site_area = fields.Char(string='Site Area')
     
     #@api.model
     #def create(self, vals):
