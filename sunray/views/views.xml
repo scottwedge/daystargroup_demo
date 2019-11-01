@@ -107,22 +107,20 @@
 				<field name="request_site_code" invisible="1"/>
 			</field>
 			<field name="team_id" position="after">
-				<group col="4" colspan="2" attrs="{'invisible': [('company_id', '!=', 5)]}">
-				  	<field name="client_type"/>
-				  	<field name="site_area"/>
-				  	<field name="site_address"/>
-				  	<field name="site_type"/>
-				  	<field name="region"/>
-				  	<field name="country_id"/>
-				  	<field name="project_status"/>
-				  	<field name="contract_duration"/>
-				  	<field name="coordinates"/>
-				  	<field name="type_of_offer"/>
-				  	<field name="tariff_per_kwp"/>
-				  	<!-- <field name="currency_id"/>  -->
-				  	<field name="monthly_service_fees"/>
-				  	<field name="sales_price"/>
-				</group>
+				  	<field name="client_type" attrs="{'invisible': [('company_id', '!=', 5)]}"/>
+				  	<field name="site_area" attrs="{'invisible': [('company_id', '!=', 5)]}"/>
+				  	<field name="site_address" attrs="{'invisible': [('company_id', '!=', 5)]}"/>
+				  	<field name="site_type" attrs="{'invisible': [('company_id', '!=', 5)]}"/>
+				  	<field name="region" attrs="{'invisible': [('company_id', '!=', 5)]}"/>
+				  	<field name="country_id" attrs="{'invisible': [('company_id', '!=', 5)]}"/>
+				  	<field name="project_status" attrs="{'invisible': [('company_id', '!=', 5)]}"/>
+				  	<field name="contract_duration" attrs="{'invisible': [('company_id', '!=', 5)]}"/>
+				  	<field name="coordinates" attrs="{'invisible': [('company_id', '!=', 5)]}"/>
+				  	<field name="type_of_offer" attrs="{'invisible': [('company_id', '!=', 5)]}"/>
+				  	<field name="tariff_per_kwp" attrs="{'invisible': [('company_id', '!=', 5)]}"/>
+				  	<!-- <field name="currency_id" attrs="{'invisible': [('company_id', '!=', 5)]}"/>  -->
+				  	<field name="monthly_service_fees" attrs="{'invisible': [('company_id', '!=', 5)]}"/>
+				  	<field name="sales_price" attrs="{'invisible': [('company_id', '!=', 5)]}"/>
 			</field>
 			<!-- <xpath expr="//notebook" position="inside">
 					<page string="Additional Information">
