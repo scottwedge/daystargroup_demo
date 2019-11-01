@@ -8,6 +8,11 @@ from ast import literal_eval
 from odoo.exceptions import UserError, AccessError, ValidationError
 from odoo import api, fields, models, _
 
+class Message(models.Model):
+    _inherit = 'mail.message'
+    
+    add_sign = fields.Boolean(default=False)
+    
 class Lead(models.Model):
     _name = "crm.lead"
     _inherit = 'crm.lead'
@@ -50,7 +55,7 @@ class Lead(models.Model):
     
     tariff_per_kwp = fields.Float(string='Tariff per kWh (kWp)')
     
-    currency_id = fields.Many2one(comodel_name='res.currency', string='Currency.')
+    #currency_id = fields.Many2one(comodel_name='res.currency', string='Currency.')
     monthly_service_fees = fields.Float(string='Monthly Service fees')
     #lease_duration = fields.Char(string='If lease, contract duration')
     sales_price = fields.Float(string="Sale Revenue")
@@ -62,6 +67,11 @@ class Lead(models.Model):
     
     site_code_id = fields.Many2one(comodel_name="site.code", string="Site Code")
     site_code_ids = fields.Many2many(comodel_name="site.code", string="Site Code(s)")
+    
+    
+    nord_type_of_sales = fields.Selection([('tendering', 'Tendering'), ('regular', 'Regular')], string='Type of Sales')
+    nord_type_of_offer = fields.Selection([('asset_mang', 'Asset Management'), ('sales_of_drill', 'Sales of drilling fluids and chemicals'), ('sales_of_tools', 'Sales of tools and equipment')], string='Type of Offer')
+    nord_size = fields.Char(string='Size.')
     
     '''
     @api.multi
@@ -610,7 +620,10 @@ class VendorRequest(models.Model):
         customer_code = self.env['res.partner'].search([('parent_account_number', '=', self.parent_account_number)], limit=1)
         if customer_code.parent_account_number == self.parent_account_number:
             raise UserError(_('Customer Code Already Exists'))
-    
+        customer_email = self.env['res.partner'].search([('email', '=', self.contact_email)], limit=1)
+        if customer_email.email == self.email:
+            raise UserError(_('Customer email Already Exists'))
+        
     state = fields.Selection([
         ('draft', 'Draft'),
         ('pending_info', 'Pending Partner info'),

@@ -88,19 +88,43 @@
                 --><button name="button_submit_legal" string="request legal review" type="object" attrs="{'invisible': [('legal_review', '=', True)]}"/>
             	<button name="button_submit_legal_done" string="legal review done" type="object" attrs="{'invisible': ['|', ('legal_review', '!=', True), ('legal_review_done', '=', True)]}"/>
             </xpath>
+            <xpath expr="//field[@name='date_deadline']" position="after">
+			    <field name="company_id"/>
+			</xpath>
 			<field name="tag_ids" position="after">
-				<field name="size"/>
-	    		<field name="type_of_offer"/>
-	    		<field name="site_code_id" domain="[('partner_id','=', partner_id)]" widget="selection"/>
+				<field name="size" attrs="{'invisible': [('company_id', '!=', 5)]}"/>
+	    		<field name="type_of_offer" attrs="{'invisible': [('company_id', '!=', 5)]}"/>
+	    		<field name="site_code_id" domain="[('partner_id','=', partner_id)]" widget="selection" attrs="{'invisible': [('company_id', '!=', 5)]}"/>
 	    		<!-- <field name="site_code_ids" widget="many2many_tags" domain="[('partner_id','=', partner_id)]"/>  -->
 	    		<!-- <field name="budget"/> -->
+	    		<field name="nord_type_of_sales" attrs="{'invisible': [('company_id', '!=', 1)]}"/>
+	    		<field name="nord_type_of_offer" attrs="{'invisible': [('company_id', '!=', 1)]}"/>
+	    		<field name="nord_size" attrs="{'invisible': [('company_id', '!=', 1)]}"/>
 			</field>
 			<field name="name" position="before">
 				<field name="legal_review" invisible="1"/>
 				<field name="legal_review_done" invisible="1"/>
 				<field name="request_site_code" invisible="1"/>
 			</field>
-			<xpath expr="//notebook" position="inside">
+			<field name="name" position="before">
+				<group col="4" colspan="2" attrs="{'invisible': [('company_id', '!=', 5)]}">
+				  	<field name="client_type"/>
+				  	<field name="site_area"/>
+				  	<field name="site_address"/>
+				  	<field name="site_type"/>
+				  	<field name="region"/>
+				  	<field name="country_id"/>
+				  	<field name="project_status"/>
+				  	<field name="contract_duration"/>
+				  	<field name="coordinates"/>
+				  	<field name="type_of_offer"/>
+				  	<field name="tariff_per_kwp"/>
+				  	<!-- <field name="currency_id"/>  -->
+				  	<field name="monthly_service_fees"/>
+				  	<field name="sales_price"/>
+				</group>
+			</field>
+			<!-- <xpath expr="//notebook" position="inside">
 					<page string="Additional Information">
 						<group col="4" colspan="2">
 						  	<field name="client_type"/>
@@ -114,12 +138,12 @@
 						  	<field name="coordinates"/>
 						  	<field name="type_of_offer"/>
 						  	<field name="tariff_per_kwp"/>
-						  	<field name="currency_id"/>
+						  	<field name="currency_id"/>  
 						  	<field name="monthly_service_fees"/>
 						  	<field name="sales_price"/>
 						</group>
 					</page>
-				</xpath>
+				</xpath> -->
 	    </field>
 	</record>
 	

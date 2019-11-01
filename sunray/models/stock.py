@@ -95,7 +95,6 @@ class Partner(models.Model):
     tax_no = fields.Char(string="Tax No.")
     legal = fields.Char(string="Other, Please specify:")
     
-    
     @api.multi
     def _site_code_count(self):
         oe_checklist = self.env['site.code']
