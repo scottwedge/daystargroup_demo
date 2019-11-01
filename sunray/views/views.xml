@@ -106,7 +106,7 @@
 				<field name="legal_review_done" invisible="1"/>
 				<field name="request_site_code" invisible="1"/>
 			</field>
-			<field name="name" position="before">
+			<field name="team_id" position="after">
 				<group col="4" colspan="2" attrs="{'invisible': [('company_id', '!=', 5)]}">
 				  	<field name="client_type"/>
 				  	<field name="site_area"/>
