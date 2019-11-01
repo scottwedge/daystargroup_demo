@@ -2527,6 +2527,7 @@ class MaintenanceRequest(models.Model):
         }
         
         return res
+
 class HrPayslipRun(models.Model):
     _inherit = 'hr.payslip.run'
     
