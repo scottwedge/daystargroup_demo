@@ -92,7 +92,7 @@
 				<field name="size"/>
 	    		<field name="type_of_offer"/>
 	    		<field name="site_code_id" domain="[('partner_id','=', partner_id)]" widget="selection"/>
-	    		<field name="site_code_ids" widget="many2many_tags" domain="[('partner_id','=', partner_id)]"/>
+	    		<!-- <field name="site_code_ids" widget="many2many_tags" domain="[('partner_id','=', partner_id)]"/>  -->
 	    		<!-- <field name="budget"/> -->
 			</field>
 			<field name="name" position="before">
