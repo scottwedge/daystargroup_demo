@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+	<templates>
+	    <t t-name="mail.chatter.ChatComposer" t-extend="mail.chatter.ChatComposer">
+	        <t
+	            t-jquery="input[type='checkbox'][t-att-data-fullname='recipient.full_name']"
+	            t-operation="replace">
+	            <input type="checkbox" t-att-data-fullname="recipient.full_name" />
+	            <input name="box1" type="hidden"   value="0" />
+				<input name="box1" type="checkbox" value="1" />
+	        </t>
+	    </t>
+	</templates>
+
+</odoo>

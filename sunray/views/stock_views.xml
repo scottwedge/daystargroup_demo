@@ -1185,6 +1185,7 @@
 				</field>
 				<field name="partner_id" position="after">
 					<field name="site_code_id" required = "0" domain="[('partner_id','=', partner_id)]"/>
+					<field name="site_area" required = "0"/>
 					<!-- <field name="default_site_code" readonly="1"/>
 					<field name="site_code_ids" readonly="0">
 						<tree editable="top">
