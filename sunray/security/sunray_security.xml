@@ -68,5 +68,25 @@
         <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
     </record>
     
+    <record id="group_below_1st_authorization" model="res.groups">
+        <field name="name">1st Authorization(Below)</field>
+        <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+    
+    <record id="group_below_2nd_authorization" model="res.groups">
+        <field name="name">2nd Authorization(Below)</field>
+        <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+    
+    <record id="group_above_1st_authorization" model="res.groups">
+        <field name="name">1st Authorization(Above)</field>
+        <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+    
+    <record id="group_above_2nd_authorization" model="res.groups">
+        <field name="name">2nd Authorization(Above)</field>
+        <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+    
 </data>
 </odoo>

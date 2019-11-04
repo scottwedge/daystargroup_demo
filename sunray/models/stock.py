@@ -9,7 +9,7 @@ from odoo.exceptions import UserError, ValidationError
 from odoo import api, fields, models, _
 import traceback
 import sys
-
+from odoo.addons import decimal_precision as dp
 
 WHITE_LIST = ['odooprojects']      # Look for these words in the file path.
 EXCLUSIONS = ['']          # Ignore <listcomp>, etc. in the function name.
@@ -18,6 +18,7 @@ EXCLUSIONS = ['']          # Ignore <listcomp>, etc. in the function name.
 
 PURCHASE_REQUISITION_STATES = [
     ('draft', 'Draft'),
+    ('submit', 'Submitted'),
     ('approve', 'Approved'),
     ('ongoing', 'Ongoing'),
     ('in_progress', 'Confirmed'),
@@ -586,7 +587,7 @@ class PurchaseOrder(models.Model):
                     self.message_subscribe(partner_ids=partner_ids)
                     subject = "RFQ {} needs management approval".format(self.name)
                     self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
-                    raise ValidationError(_('Only your line manager can approve your leave request.'))
+                    raise ValidationError(_('Only your line manager can approve your request.'))
                     return False
             else:
                 order.write({'state': 'to approve'})
@@ -723,9 +724,14 @@ class PurchaseRequisition(models.Model):
         self.env['hr.employee'].search([('user_id','=',self.env.uid)])
         return self.env['hr.employee'].search([('user_id','=',self.env.uid)])
     
+    @api.depends('state')
+    def _set_state(self):
+        self.state_blanket_order = self.state
+    
     state = fields.Selection(PURCHASE_REQUISITION_STATES,
                               'Status', track_visibility='onchange', required=True,
                               copy=False, default='draft')
+    state_blanket_order = fields.Selection(PURCHASE_REQUISITION_STATES, compute='_set_state')
     
     #stock_source = fields.Char(string='Source document')
     store_request_id = fields.Many2one('stock.picking','Store Request', readonly=True, track_visibility='onchange')
@@ -746,9 +752,22 @@ class PurchaseRequisition(models.Model):
     
     submitted = fields.Boolean(string='Submitted')
     
+    line_manager_approval_date = fields.Date(string='Line-Manager Approval Date', readonly=True, track_visibility='onchange')
+    line_manager_approval = fields.Many2one('res.users','Line-Manager Approval Name', readonly=True, track_visibility='onchange')
+    
+    total_cost = fields.Float(string='Total Cost', compute='_total_cost', track_visibility='onchange', readonly=True)
+    
+    @api.multi
+    @api.depends('line_ids.price_subtotal')
+    def _total_cost(self):
+        for a in self:
+            for line in a.line_ids:
+                a.total_cost += line.price_subtotal
+    
     @api.multi
     def button_submit_purchase_agreement(self):
         self.submitted = True
+        self.write({'state':'submit'})
         group_id = self.env['ir.model.data'].xmlid_to_object('sunray.group_hr_line_manager')
         user_ids = []
         partner_ids = []
@@ -759,6 +778,18 @@ class PurchaseRequisition(models.Model):
         subject = "Purchase Agreement '{}' needs approval".format(self.name)
         self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
         return False
+    
+    @api.multi
+    def action_line_manager_approval(self):
+        self.write({'state':'approve'})
+        #self.manager_confirm()
+        self.line_manager_approval_date = date.today()
+        self.line_manager_approval = self._uid
+        if self.total_cost < 18:
+            self.check_manager_approval_one()
+        else:
+            if self.total_cost > 18:
+                self.check_manager_approval_two()
     
     @api.multi
     def action_in_progress(self):
@@ -775,6 +806,40 @@ class PurchaseRequisition(models.Model):
         self.po_manager_approval = self._uid
     
     
+    @api.depends('total_price')
+    def check_manager_approval_one(self):
+        if self.total_cost < 18:
+            self.need_approval = True
+            group_id = self.env['ir.model.data'].xmlid_to_object('stock.group_stock_manager')
+            user_ids = []
+            partner_ids = []
+            for user in group_id.users:
+                user_ids.append(user.id)
+                partner_ids.append(user.partner_id.id)
+            self.message_subscribe(partner_ids=partner_ids)
+            subject = "Purchase Agreement {} needs your approval, Below Quota".format(self.name)
+            self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
+            return False
+        else:
+            self.need_approval = False
+            
+    @api.depends('total_price')
+    def check_manager_approval_two(self):
+        if self.total_cost > 18:
+            self.need_approval = True
+            group_id = self.env['ir.model.data'].xmlid_to_object('stock.group_stock_manager')
+            user_ids = []
+            partner_ids = []
+            for user in group_id.users:
+                user_ids.append(user.id)
+                partner_ids.append(user.partner_id.id)
+            self.message_subscribe(partner_ids=partner_ids)
+            subject = "Purchase Agreement {} needs your approval, Above Quota".format(self.name)
+            self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
+            return False
+        else:
+            self.need_approval = False
+    
 class PurchaseRequisitionLine(models.Model):
     _name = "purchase.requisition.line"
     _inherit = ['purchase.requisition.line']
@@ -782,11 +847,22 @@ class PurchaseRequisitionLine(models.Model):
     @api.onchange('product_id')
     def _onchange_partner_id(self):
         self.description = self.product_id.display_name
+        self.price_unit = self.product_id.standard_price
         return {}
+    
+    price_unit = fields.Float(string='Unit Price', digits=dp.get_precision('Product Price'))
     
     project_id = fields.Many2one(comodel_name='project.project', string='Site Location')
     
     description = fields.Char(string='Description')
+    
+    price_subtotal = fields.Float(string="Price Subtotal", compute="_compute_subtotal", readonly=True)
+    
+    @api.one
+    @api.depends('product_qty', 'price_unit')
+    def _compute_subtotal(self):
+        for line in self:
+            self.price_subtotal = line.price_unit * self.product_qty
     
 class ProductTemplate(models.Model):
     _inherit = 'product.template'
@@ -1822,6 +1898,7 @@ class Picking(models.Model):
     
     state = fields.Selection([
         ('draft', 'Draft'),
+        ('approve', 'Approved'),
         ('submit', 'Submitted'),
         ('waiting', 'Waiting Another Operation'),
         ('confirmed', 'Waiting'),
@@ -1856,7 +1933,7 @@ class Picking(models.Model):
     def action_confirm(self):
         res = super(Picking, self).action_confirm()
         if self.picking_type_id.name == 'Staff Store Requests':
-            self.manager_confirm()
+            self.button_approve_srt()
             group_id = self.env['ir.model.data'].xmlid_to_object('stock.group_stock_manager')
             user_ids = []
             partner_ids = []
@@ -1864,10 +1941,21 @@ class Picking(models.Model):
                 user_ids.append(user.id)
                 partner_ids.append(user.partner_id.id)
             self.message_subscribe(partner_ids=partner_ids)
-            subject = "Store request {} has been approved by line manager".format(self.name)
+            subject = "Store request {} has been authorized".format(self.name)
             self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
             return False
         return res
+    
+    @api.multi
+    def action_line_manager_approval(self):
+        self.write({'state':'approve'})
+        self.manager_confirm()
+        if self.total_cost < 18:
+            self.check_manager_approval_one()
+        else:
+            if self.total_cost > 18:
+                self.check_manager_approval_two()
+        
     
     @api.multi
     def manager_confirm(self):
@@ -1896,7 +1984,7 @@ class Picking(models.Model):
     #net_lot_id = fields.Many2one(string="Serial Number", related="move_line_ids.lot_id", readonly=True)
     internal_transfer = fields.Boolean('Internal Transfer?', track_visibility='onchange')
     client_id = fields.Many2one('res.partner', string='Client', index=True, ondelete='cascade', required=False)
-    need_approval = fields.Boolean ('Need Approval', track_visibility="onchange")
+    need_approval = fields.Boolean ('Need Approval', track_visibility="onchange", copy=False)
     #rejection_reason = fields.Many2one('stock.rejection.reason', string='Rejection Reason', index=True, track_visibility='onchange')
     
     project_id = fields.Many2one('project.project', string='Project', index=True, ondelete='cascade', required=False)
@@ -1943,6 +2031,40 @@ class Picking(models.Model):
         for a in self:
             for line in a.move_ids_without_package:
                 a.total_cost += line.price_cost * line.product_uom_qty
+    
+    @api.depends('total_price')
+    def check_manager_approval_one(self):
+        if self.total_price < 18:
+            self.need_approval = True
+            group_id = self.env['ir.model.data'].xmlid_to_object('stock.group_stock_manager')
+            user_ids = []
+            partner_ids = []
+            for user in group_id.users:
+                user_ids.append(user.id)
+                partner_ids.append(user.partner_id.id)
+            self.message_subscribe(partner_ids=partner_ids)
+            subject = "Store request {} needs your approval, Below Quota".format(self.name)
+            self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
+            return False
+        else:
+            self.need_approval = False
+            
+    @api.depends('total_price')
+    def check_manager_approval_two(self):
+        if self.total_price > 18:
+            self.need_approval = True
+            group_id = self.env['ir.model.data'].xmlid_to_object('stock.group_stock_manager')
+            user_ids = []
+            partner_ids = []
+            for user in group_id.users:
+                user_ids.append(user.id)
+                partner_ids.append(user.partner_id.id)
+            self.message_subscribe(partner_ids=partner_ids)
+            subject = "Store request {} needs your approval, Above Quota".format(self.name)
+            self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
+            return False
+        else:
+            self.need_approval = False
     
     '''
     @api.depends('total_price')

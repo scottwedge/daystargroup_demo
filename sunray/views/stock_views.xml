@@ -39,6 +39,10 @@
 	            	<field name="request_date"/>
 	            	<field name="submitted" invisible="1"/>
 	        	</group>
+	        	<group string = "Line Manager Approval" col="4" colspan="4">
+	            	<field name="line_manager_approval"/>
+	            	<field name="line_manager_approval_date"/>
+	        	</group>
            		<group string = "First Authorization" col="4" colspan="4">
 	            	<field name="manager_approval"/>
 	            	<field name="approval_date"/>
@@ -51,12 +55,27 @@
 			<xpath expr="//field[@name='line_ids']/tree/field[@name='product_id']" position="after">
             	<field name="description"/>
             </xpath>
+            <xpath expr="//field[@name='line_ids']/tree/field[@name='price_unit']" position="after">
+            	<field name="price_subtotal"/>
+            </xpath>
             <xpath expr="//button[@name='action_in_progress']" position="before">
             	<button name="button_submit_purchase_agreement" string="Submit To Manager" type="object" groups="base.group_user" attrs="{'invisible': ['|', ('submitted', '=', True), ('state', '!=', 'draft')]}"/>
             </xpath>
-            <xpath expr="//button[@name='action_in_progress']" position="replace">
-            	<button name="action_in_progress" states="draft" string="Approve" type="object" class="btn-primary" groups="sunray.group_hr_line_manager"/>
+            <xpath expr="//button[@name='action_in_progress']" position="before">
+            	<button name="button_submit_purchase_agreement" states="draft" string="Submit To Manager" type="object" groups="base.group_user"/>
+            	<button name="action_line_manager_approval" states="submit" string="Approve" type="object" class="btn-primary" groups="base.group_user"/>
             </xpath>
+            <xpath expr="//button[@name='action_in_progress']" position="replace">
+            	<button name="action_in_progress" states="approve" string="Approve" type="object" class="btn-primary" groups="sunray.group_hr_line_manager"/>
+            </xpath>
+            <xpath expr="//field[@name='line_ids']" position="after">
+	            <group class="oe_subtotal_footer oe_right" colspan="2" name="total">
+	               <div class="oe_subtotal_footer_separator oe_inline o_td_label">
+	                   <label for="total_cost"/>
+	               </div>
+	               <field name="total_cost" nolabel="1" class="oe_subtotal_footer_separator" widget="monetary" options="{'currency_field': 'currency_id'}"/>
+		       	</group>
+		    </xpath>
 	    </field>
 	</record>
   	
@@ -964,7 +983,7 @@
 	    <field name="inherit_id" ref="stock.view_picking_form"/>
 	    <field name="arch" type="xml">
 	    	<xpath expr="//button[@name='action_confirm']" position="after">
-	    		<button name="create_delivery_list" string="Create Delivery List" type="object" attrs="{'invisible': [('state','=','done')]}"/>
+	    		<button name="create_delivery_list" string="Create Delivery List" type="object" attrs="{'invisible': [('state','=','done')]}" invisible="1"/>
 	    	</xpath>
 	    	<xpath expr="//field[@name='move_ids_without_package']/tree/field[@name='quantity_done']" position="after">
             	<field name="price_cost"/>
@@ -976,7 +995,7 @@
 	            </group>
             </field>
             <xpath expr="//notebook" position="inside">
-	    		<page string="Logistics">
+	    		<page string="Logistics" attrs="{'invisible': [('picking_type_id', '!=', 21)]}">
 	    			 <group string="General Info" col="4" colspan="2">
 		                <field name="order_no"/>
 		                <field name="ship_status"/>
@@ -1316,7 +1335,8 @@
                     <field name="show_validate" invisible="1"/>
                     <field name="show_lots_text" invisible="1"/>
                     <button name="button_submit" attrs="{'invisible': [('state', '!=', 'draft')]}" string="Submit To Manager" type="object" class="oe_highlight" groups="base.group_user"/>
-                    <button name="action_confirm" attrs="{'invisible': [('state', '!=', 'submit')]}" string="Approve &amp; Mark To Do" type="object" class="oe_highlight" groups="sunray.group_hr_line_manager"/>
+                    <button name="action_line_manager_approval" attrs="{'invisible': [('state', '!=', 'submit')]}" string="Approve" type="object" class="oe_highlight" groups="sunray.group_hr_line_manager"/>
+                    <button name="action_confirm" attrs="{'invisible': [('state', '!=', 'approve')]}" string="Validate &amp; Mark To Do" type="object" class="oe_highlight" groups="sunray.group_hr_line_manager"/>
                     <button name="action_assign" attrs="{'invisible': [('show_check_availability', '=', False)]}" string="Check Availability" type="object" class="oe_highlight" groups="base.group_user"/>
                     <button name="button_validate" attrs="{'invisible': ['|',('show_validate', '=', False), ('need_approval', '=', True)]}" string="Validate" groups="stock.group_stock_user" type="object" class="oe_highlight"/>
                     <button name="button_approve_srt" attrs="{'invisible': [('need_approval', '=', False)]}" string="Approve" groups="stock.group_stock_user" type="object" class="oe_highlight"/>
@@ -1353,7 +1373,7 @@
                         <button name="%(stock.action_stock_report)d" icon="fa-arrow-up" class="oe_stat_button" string="Up/Down Traceability" type="action" states="done" groups="stock.group_production_lot"/>
                     </div>
 		            	<field name= "need_approval" invisible = "1"/>
-		            	<h3 attrs="{'invisible': [('need_approval', '=', False)]}"><b>Needs Budget Override, The Budget Dept. has been notified </b></h3>
+		            	<h3 attrs="{'invisible': [('need_approval', '=', False)]}"><b>Needs Management Approval, The Management. has been notified </b></h3>
 		            <h1 class="hidden-xs">
                         <field name="name" attrs="{'invisible': [('name','=','/')]}" readonly="1"/>
                     </h1>
