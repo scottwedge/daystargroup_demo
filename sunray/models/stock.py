@@ -785,10 +785,10 @@ class PurchaseRequisition(models.Model):
         #self.manager_confirm()
         self.line_manager_approval_date = date.today()
         self.line_manager_approval = self._uid
-        if self.total_cost < 18:
+        if self.total_cost < 18150000.00:
             self.check_manager_approval_one()
         else:
-            if self.total_cost > 18:
+            if self.total_cost > 18150000.00:
                 self.check_manager_approval_two()
     
     @api.multi
@@ -808,9 +808,9 @@ class PurchaseRequisition(models.Model):
     
     @api.depends('total_price')
     def check_manager_approval_one(self):
-        if self.total_cost < 18:
+        if self.total_cost < 18150000.00:
             self.need_approval = True
-            group_id = self.env['ir.model.data'].xmlid_to_object('stock.group_stock_manager')
+            group_id = self.env['ir.model.data'].xmlid_to_object('sunray.group_below_1st_authorization')
             user_ids = []
             partner_ids = []
             for user in group_id.users:
@@ -825,9 +825,9 @@ class PurchaseRequisition(models.Model):
             
     @api.depends('total_price')
     def check_manager_approval_two(self):
-        if self.total_cost > 18:
+        if self.total_cost > 18150000.00:
             self.need_approval = True
-            group_id = self.env['ir.model.data'].xmlid_to_object('stock.group_stock_manager')
+            group_id = self.env['ir.model.data'].xmlid_to_object('sunray.group_above_1st_authorization')
             user_ids = []
             partner_ids = []
             for user in group_id.users:
@@ -1950,10 +1950,10 @@ class Picking(models.Model):
     def action_line_manager_approval(self):
         self.write({'state':'approve'})
         self.manager_confirm()
-        if self.total_cost < 18:
+        if self.total_cost < 18150000.00:
             self.check_manager_approval_one()
         else:
-            if self.total_cost > 18:
+            if self.total_cost > 18150000.00:
                 self.check_manager_approval_two()
         
     
@@ -2034,9 +2034,9 @@ class Picking(models.Model):
     
     @api.depends('total_price')
     def check_manager_approval_one(self):
-        if self.total_price < 18:
+        if self.total_price < 18150000.00:
             self.need_approval = True
-            group_id = self.env['ir.model.data'].xmlid_to_object('stock.group_stock_manager')
+            group_id = self.env['ir.model.data'].xmlid_to_object('sunray.group_below_1st_authorization')
             user_ids = []
             partner_ids = []
             for user in group_id.users:
@@ -2051,9 +2051,9 @@ class Picking(models.Model):
             
     @api.depends('total_price')
     def check_manager_approval_two(self):
-        if self.total_price > 18:
+        if self.total_price > 18150000.00:
             self.need_approval = True
-            group_id = self.env['ir.model.data'].xmlid_to_object('stock.group_stock_manager')
+            group_id = self.env['ir.model.data'].xmlid_to_object('sunray.group_above_1st_authorization')
             user_ids = []
             partner_ids = []
             for user in group_id.users:
