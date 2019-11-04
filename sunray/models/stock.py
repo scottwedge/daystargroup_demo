@@ -2334,13 +2334,15 @@ class AccountInvoice(models.Model):
     def _check_customer_registration(self):
         if self.partner_id.customer_registration == False:
             raise UserError(_('Cant validate invoice for an unregistered customer -- Request Customer Registration.'))
-        
+    
+    '''    
     @api.multi
     def action_invoice_open(self):
         res = super(AccountInvoice, self).action_invoice_open()
         self._check_customer_registration()
         return res
-    
+    '''
+        
 class AccountInvoiceLine(models.Model):
     _inherit = "account.invoice.line"
     
