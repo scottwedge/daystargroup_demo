@@ -45,8 +45,8 @@ class Lead(models.Model):
     site_type = fields.Char(string='Site Type')
     region = fields.Char(string='Region')
     country_id = fields.Many2one(comodel_name='res.country', string="Country")
-    project_status = fields.Char(string='Status.')
-    contract_duration = fields.Date(string='Contract Duration (year)')
+    #project_status = fields.Char(string='Status.')
+    contract_duration = fields.Char(string='Contract Duration (year)')
     coordinates = fields.Char(string='Coordinates')
     
     type_of_offer = fields.Selection([('lease_to_own', 'Lease to Own'), ('pass_battery', 'PaaS Battery'), ('paas_diesel', 'PaaS Diesel'),
@@ -141,7 +141,7 @@ class Lead(models.Model):
     @api.model
     def create(self, vals):
         result = super(Lead, self).create(vals)
-        result.check_lead_approval()
+        result.send_introductory_mail()
         return result
     
     @api.multi
