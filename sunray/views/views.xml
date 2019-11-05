@@ -120,14 +120,6 @@
 				  	<field name="site_type" attrs="{'invisible': [('company_id', '!=', 5)]}"/>
 				  	<field name="region" attrs="{'invisible': [('company_id', '!=', 5)]}"/>
 				  	<field name="country_id" attrs="{'invisible': [('company_id', '!=', 5)]}"/>
-				  	<field name="project_status" attrs="{'invisible': [('company_id', '!=', 5)]}"/>
-				  	<field name="contract_duration" attrs="{'invisible': [('company_id', '!=', 5)]}"/>
-				  	<field name="coordinates" attrs="{'invisible': [('company_id', '!=', 5)]}"/>
-				  	<field name="type_of_offer" attrs="{'invisible': [('company_id', '!=', 5)]}"/>
-				  	<field name="tariff_per_kwp" attrs="{'invisible': [('company_id', '!=', 5)]}"/>
-				  	<!-- <field name="currency_id" attrs="{'invisible': [('company_id', '!=', 5)]}"/>  -->
-				  	<field name="monthly_service_fees" attrs="{'invisible': [('company_id', '!=', 5)]}"/>
-				  	<field name="sales_price" attrs="{'invisible': [('company_id', '!=', 5)]}"/>
 			</field>
 			<!-- <xpath expr="//notebook" position="inside">
 					<page string="Additional Information">

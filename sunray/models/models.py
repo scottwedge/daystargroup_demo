@@ -66,7 +66,7 @@ class Lead(models.Model):
     request_site_code = fields.Boolean(string="Request Site Code")
     
     site_code_id = fields.Many2one(comodel_name="site.code", string="Site Code")
-    site_code_ids = fields.Many2many(comodel_name="site.code", string="Site Code(s)")
+    #site_code_ids = fields.Many2many(comodel_name="site.code", string="Site Code(s)")
     
     
     nord_type_of_sales = fields.Selection([('tendering', 'Tendering'), ('regular', 'Regular')], string='Type of Sales')
