@@ -68,7 +68,7 @@ class Partner(models.Model):
     
     parent_account_number = fields.Char(string='Customer Code', required=False, index=True, copy=False, store=True)
     
-    client_code = fields.Char(string='Client Code', required=False, index=True, copy=False, store=True)
+    #client_code = fields.Char(string='Client Code', required=False, index=True, copy=False, store=True)
     
     vendor_registration = fields.Boolean ('Vendor fully Registered', track_visibility="onchange", readonly=True)
     customer_registration = fields.Boolean ('Customer fully Registered', track_visibility="onchange", readonly=True)
@@ -88,13 +88,15 @@ class Partner(models.Model):
     postal_code = fields.Char(string="Postal Code")
     district = fields.Char(string="District/ Region")
     
-    rc = fields.Char(string="RC or Business registration nb")
+    rc = fields.Char(string="RC or Business registration number")
     vat_eligible = fields.Selection([('yes', 'Yes'), ('no', 'No')], string="VAT eligibility")
     business_legal_structure = fields.Selection([('joint', 'Joint Stock Company'), ('limited', 'Limited Liability Company'), ('non', 'Non-Profit organization'), ('public', 'Public Liability Company'), ('trust', 'Business Trust'), ('other', 'Other')], 
                                                 string="Business Legal Structure")
     vat_no = fields.Char(string="Vat No")
     tax_no = fields.Char(string="Tax No.")
     legal = fields.Char(string="Other, Please specify:")
+    
+    potential_customer = fields.Boolean(string='Potential Customer')
     
     @api.multi
     def _site_code_count(self):
