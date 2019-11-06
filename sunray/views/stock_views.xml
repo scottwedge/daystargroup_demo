@@ -510,8 +510,7 @@
 	                </group>
 	                <field name="project_change_request_line_ids">
 	                   <tree editable="bottom">
-	                       <!-- <field name="s_n" readonly="1" style="oe_left"/>
-	                       <field name="project_change_request_decision"/>  -->
+	                       <!-- <field name="s_n" readonly="1" style="oe_left"/>-->
 	                       <field name="project_change_request_description"/>
 	                       <field name="comments"/>
 	                   </tree>
