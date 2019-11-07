@@ -2332,18 +2332,29 @@ class Picking(models.Model):
 class AccountInvoice(models.Model):
     _inherit = "account.invoice"
     
+    from_sale = fields.Boolean(string='Sale', compute='_check_sale_from', track_visibility="onchange", readonly=True)
+    
+    @api.depends('origin')
+    def _check_sale_from(self):
+        if self.origin:
+            if "SO0" in self.origin:
+                self.from_sale = True
+            
+    def _default_employee(self):
+        self.env['hr.employee'].search([('user_id','=',self.env.uid)])
+        return self.env['hr.employee'].search([('user_id','=',self.env.uid)])
+    
     @api.multi
     def _check_customer_registration(self):
+        current_employee = self.env['hr.employee'].search([('user_id', '=', self.env.uid)], limit=1)
         if self.partner_id.customer_registration == False:
             raise UserError(_('Cant validate invoice for an unregistered customer -- Request Customer Registration.'))
+        if not current_employee == 637:
+            raise UserError(_('You are not allowed to approve your own request.'))
     
-    '''    
-    @api.multi
-    def action_invoice_open(self):
-        res = super(AccountInvoice, self).action_invoice_open()
-        self._check_customer_registration()
-        return res
-    '''
+    employee_id = fields.Many2one('hr.employee', 'Employee',
+        states={'done': [('readonly', True)], 'cancel': [('readonly', True)]}, default=_default_employee)
+        
         
 class AccountInvoiceLine(models.Model):
     _inherit = "account.invoice.line"
@@ -2352,6 +2363,8 @@ class AccountInvoiceLine(models.Model):
     def _onchange_site_id(self):
         self.account_analytic_id = self.site_code_id.project_id.analytic_account_id
         return {}
+    
+    from_sale = fields.Boolean(string='Sale', related='invoice_id.from_sale', track_visibility="onchange", readonly=True)
     
     site_code_id = fields.Many2one(comodel_name="site.code", string="Site Code")
 

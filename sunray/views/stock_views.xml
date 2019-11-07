@@ -502,7 +502,6 @@
 	                    <field name="project_id" required="1" readonly="1"/>
 	                    <field name="partner_id"/>
 	                    <field name="employee_id"/>
-	
 	                </group>
 	                <group col="4" colspan="4">
 	                    <field name="date"/>
@@ -908,6 +907,26 @@
 	            </xpath>
 	            <xpath expr="//field[@name='order_line']/tree/field[@name='name']" position="after">
 	            	<field name="analytic_account_id" required = "1"/>
+	            </xpath>
+	        </field>
+	</record>
+	
+	<record id="sunray_account_invoice_form" model="ir.ui.view">
+        <field name="name">sunray.account.invoice.form</field>
+	        <field name="model">account.invoice</field>
+	        <field name="inherit_id" ref="account.invoice_form"/>
+	        <field name="arch" type="xml">
+	        	<xpath expr="//field[@name='team_id']" position="after">
+	            	<field name="from_sale" invisible="1"/>
+	            </xpath>
+	            <xpath expr="//field[@name='invoice_line_ids']/tree/field[@name='price_unit']" position="after">
+	            	<field name="from_sale" invisible="1"/>
+	            </xpath>
+	        	<xpath expr="//field[@name='invoice_line_ids']/tree/field[@name='price_unit']" position="replace">
+	            	<field name="price_unit" string="Price" attrs="{'readonly': [('from_sale', '=', True)]}"/>
+	            </xpath>
+	            <xpath expr="//field[@name='invoice_line_ids']/tree/field[@name='name']" position="after">
+	            	<field name="site_code_id" domain="[('partner_id','=', parent.partner_id)]"/>
 	            </xpath>
 	        </field>
 	</record>
