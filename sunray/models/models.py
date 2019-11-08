@@ -621,8 +621,8 @@ class VendorRequest(models.Model):
         if customer_code.parent_account_number == self.parent_account_number:
             raise UserError(_('Customer Code Already Exists'))
         customer_email = self.env['res.partner'].search([('email', '=', self.contact_email)], limit=1)
-        if customer_email.email == self.email:
-            raise UserError(_('Customer email Already Exists'))
+        #if customer_email.email == self.email:
+        #    raise UserError(_('Customer email Already Exists'))
         
     state = fields.Selection([
         ('draft', 'Draft'),
