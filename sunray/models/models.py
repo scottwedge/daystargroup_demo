@@ -633,7 +633,7 @@ class VendorRequest(models.Model):
         ('reject', 'Rejected'),
         ], string='Status', readonly=True, index=True, copy=False, default='draft', track_visibility='onchange')
     
-    parent_account_number = fields.Char(string='Customer Code', index=True, copy=False, store=True, readonly=True, states={'validate': [('readonly', False)]})
+    parent_account_number = fields.Char(string='Customer Code', index=True, copy=False, store=True, readonly=False, states={'validate': [('readonly', False)]})
     
     employee_id = fields.Many2one(comodel_name='hr.employee', string='Requesting Employee', default=_default_employee)
     
