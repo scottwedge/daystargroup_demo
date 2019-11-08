@@ -59,6 +59,10 @@ class Partner(models.Model):
         default='contact',
         help="Used by Sales and Purchase Apps to select the relevant address depending on the context.")
     
+    name = fields.Char(index=True, track_visibility="onchange")
+    bank_ids = fields.One2many('res.partner.bank', 'partner_id', string='Banks', track_visibility="onchange")
+    email = fields.Char(track_visibility="onchange")
+    
     tax_compliance = fields.Selection([('1', '1'), ('2', '2'), ('3', '3'), ('4', '4'), ('5', '5')], string='Tax compliance', required=False)
     due_diligence_form = fields.Selection([('1', '1'), ('2', '2'), ('3', '3'), ('4', '4'), ('5', '5')], string='Due Diligence Form', required=False)
     cac = fields.Selection([('1', '1'), ('2', '2'), ('3', '3'), ('4', '4'), ('5', '5')], string='CAC', required=False)
@@ -97,6 +101,16 @@ class Partner(models.Model):
     legal = fields.Char(string="Other, Please specify:")
     
     potential_customer = fields.Boolean(string='Potential Customer')
+    
+    '''
+    @api.onchange('name')
+    def _onchange_name(self):
+        subject = "Store request {} has been approved and validated".format(self.name)
+        partner_ids = []
+        for partner in self.message_partner_ids:
+            partner_ids.append(partner.id)
+        self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
+    '''
     
     @api.multi
     def _site_code_count(self):
@@ -451,6 +465,9 @@ class PurchaseOrder(models.Model):
     po_manager_approval = fields.Many2one('res.users','Manager Authorization Name', readonly=True, track_visibility='onchange')
     po_manager_position = fields.Char('Manager Authorization Position', readonly=True, track_visibility='onchange')
     
+    line_manager_approval_date = fields.Date(string='Line-Manager Approval Date', readonly=True, track_visibility='onchange')
+    line_manager_approval = fields.Many2one('res.users','Line-Manager Approval Name', readonly=True, track_visibility='onchange')
+    
     client_id = fields.Many2one('res.partner','Client', track_visibility='onchange')
     
     project_id = fields.Many2one(comodel_name='project.project', string='Project')
@@ -466,7 +483,8 @@ class PurchaseOrder(models.Model):
         ('draft', 'RFQ'),
         ('sent', 'RFQ Sent'),
         ('to approve', 'To Approve'),
-        ('submit', 'Manager Approval'),
+        ('submit', ' Line Manager Approval'),
+        ('management', 'Management Approval'),
         ('legal', 'Awaiting Legal Review'),
         ('legal_reviewed', 'Reviewed'),
         ('purchase', 'Purchase Order'),
@@ -498,7 +516,63 @@ class PurchaseOrder(models.Model):
     def button_submit(self):
         self.write({'state': 'submit'})
         self.request_date = date.today()
-        return {}
+        group_id = self.env['ir.model.data'].xmlid_to_object('sunray.group_hr_line_manager')
+        user_ids = []
+        partner_ids = []
+        for user in group_id.users:
+            user_ids.append(user.id)
+            partner_ids.append(user.partner_id.id)
+        self.message_subscribe(partner_ids=partner_ids)
+        subject = "RFQ '{}' needs approval".format(self.name)
+        self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
+        return False
+    
+    @api.multi
+    def action_line_manager_approval(self):
+        self.write({'state':'management'})
+        #self.manager_confirm()
+        self.line_manager_approval_date = date.today()
+        self.line_manager_approval = self._uid
+        if self.amount_total < 18150000.00:
+            self.check_manager_approval_one()
+        else:
+            if self.amount_total > 18150000.00:
+                self.check_manager_approval_two()
+    
+    @api.depends('amount_total')
+    def check_manager_approval_one(self):
+        if self.amount_total < 18150000.00:
+            self.need_management_approval = True
+            group_id = self.env['ir.model.data'].xmlid_to_object('sunray.group_below_1st_authorization')
+            user_ids = []
+            partner_ids = []
+            for user in group_id.users:
+                user_ids.append(user.id)
+                partner_ids.append(user.partner_id.id)
+            self.message_subscribe(partner_ids=partner_ids)
+            subject = "RFQ {} needs your approval, Below Quota".format(self.name)
+            self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
+            return False
+        else:
+            self.need_management_approval = False
+            
+    @api.depends('amount_total')
+    def check_manager_approval_two(self):
+        if self.amount_total > 18150000.00:
+            self.need_management_approval = True
+            group_id = self.env['ir.model.data'].xmlid_to_object('sunray.group_above_1st_authorization')
+            user_ids = []
+            partner_ids = []
+            for user in group_id.users:
+                user_ids.append(user.id)
+                partner_ids.append(user.partner_id.id)
+            self.message_subscribe(partner_ids=partner_ids)
+            subject = "RFQ {} needs your approval, Above Quota".format(self.name)
+            self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
+            return False
+        else:
+            self.need_management_approval = False
+  
     
     @api.multi
     def button_submit_legal(self):
@@ -560,7 +634,7 @@ class PurchaseOrder(models.Model):
     @api.multi
     def button_confirm(self):
         for order in self:
-            if order.state not in ['draft','submit', 'sent']:
+            if order.state not in ['draft','submit', 'sent', 'management']:
                 continue
             #self._check_line_manager()
             self._check_line_manager()
@@ -577,20 +651,6 @@ class PurchaseOrder(models.Model):
                         and order.amount_total < self.env.user.company_id.currency_id.compute(order.company_id.po_double_validation_amount, order.currency_id))\
                     or order.user_has_groups('purchase.group_purchase_manager'):
                 order.button_approve()
-                
-            elif self.amount_total > 10.00:
-                    self.need_management_approval = True
-                    group_id = self.env['ir.model.data'].xmlid_to_object('sunray.group_sale_account_budget')
-                    user_ids = []
-                    partner_ids = []
-                    for user in group_id.users:
-                        user_ids.append(user.id)
-                        partner_ids.append(user.partner_id.id)
-                    self.message_subscribe(partner_ids=partner_ids)
-                    subject = "RFQ {} needs management approval".format(self.name)
-                    self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
-                    raise ValidationError(_('Only your line manager can approve your request.'))
-                    return False
             else:
                 order.write({'state': 'to approve'})
         return True
@@ -1130,14 +1190,31 @@ class SaleSubscriptionLine(models.Model):
     
     site_code_id = fields.Many2one(comodel_name="site.code", string="Site Code")
     
-    #analytic_account_id = fields.Many2one('account.analytic.account', string="Analytic Account", copy=False)
+    account_analytic_id = fields.Many2one(comodel_name='account.analytic.account', string="Analytic Account", copy=False)
     
 class SiteCode(models.Model):
     _name = "site.code"
     _description = "Site Code"
     _order = "name"
     _inherits = {'stock.location': 'location_id'}
-
+    
+    @api.multi
+    def name_get(self):
+        res = []
+        for site in self:
+            result = site.name
+            if site.name:
+                result = str(site.name) + " " + "-" + " " + str(site.partner_id.name) + " - " + str(site.site_area)
+            res.append((site.id, result))
+        return res
+    
+    @api.onchange('project_id')
+    def _onchange_project_id(self):
+        self.partner_id = self.project_id.partner_id
+        self.state_id = self.project_id.site_location_id
+        self.site_area = self.project_id.site_area
+        return {}
+    
     location_id = fields.Many2one('stock.location', string='Location', ondelete="restrict", required=True)
 
     state_id = fields.Many2one(comodel_name='res.country.state', string='Site location (State)', required=True, track_visibility='onchange')
@@ -1145,6 +1222,7 @@ class SiteCode(models.Model):
     project_id = fields.Many2one(comodel_name='project.project', string='Project', required=False)
 #     name = fields.Char('Code', readonly=False, track_visibility='onchange')
     active = fields.Boolean('Active', default='True')
+    site_area = fields.Char('Site Area')
     
     @api.model
     def create(self, vals):
@@ -1185,7 +1263,7 @@ class Project(models.Model):
         for project in self:
             result = project.name
             if project.site_code_id.name:
-                result = str(project.site_code_id.name) + " " + "-" + " " + str(project.name) + " - " + str(project.site_area)
+                result = str(project.site_code_id.name) + " " + "-" + " " + str(project.partner_id.name) + " - " + str(project.site_area)
             res.append((project.id, result))
         return res
     
@@ -1200,6 +1278,8 @@ class Project(models.Model):
         ('customer_sign_off', 'Customer Sign off'),
         ('close_out', ' Close out'),
         ], string='Stage', readonly=False, index=True, copy=False, default='kick_off', track_visibility='onchange')
+    
+    name = fields.Char("Name", index=True, required=True, track_visibility='onchange')
     
     checklist_count = fields.Integer(compute="_checklist_count",string="Checklist", store=False)
     

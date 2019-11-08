@@ -62,7 +62,6 @@
             	<button name="button_submit_purchase_agreement" string="Submit To Manager" type="object" groups="base.group_user" attrs="{'invisible': ['|', ('submitted', '=', True), ('state', '!=', 'draft')]}"/>
             </xpath>
             <xpath expr="//button[@name='action_in_progress']" position="before">
-            	<button name="button_submit_purchase_agreement" states="draft" string="Submit To Manager" type="object" groups="base.group_user"/>
             	<button name="action_line_manager_approval" states="submit" string="Approve" type="object" class="btn-primary" groups="base.group_user"/>
             </xpath>
             <xpath expr="//button[@name='action_in_progress']" position="replace">
@@ -144,11 +143,19 @@
         		<button name="button_request_finance_review" string="Request Finance Review" type="object" attrs="{'invisible': ['|', ('state', '=', 'purchase'), ('need_finance_review', '=', True)]}" groups="base.group_user"/>
         		<button name="button_legal_reviewd" string="Review Done" type="object" attrs="{'invisible': ['|', '|', ('state', '=', 'purchase'), ('need_finance_review', '=', False), ('need_finance_review_done', '=', True)]}" groups="sunray.group_legal_team"/>
         	</xpath>
+        	
+        	<xpath expr="//button[@name='button_confirm']" position="after">
+        		<button name="action_line_manager_approval" type="object" states="submit" string="Approve" id="draft_confirm" groups="sunray.group_hr_line_manager,purchase.group_purchase_manager"/>
+        	</xpath>
+        	<xpath expr="//button[@name='button_cancel']" position="after">
+        		<button name="button_cancel" type="object" states="submit" string="Decline" id="draft_decline" groups="sunray.group_hr_line_manager,purchase.group_purchase_manager"/>
+        	</xpath>
+        	
         	<xpath expr="//button[@name='button_confirm']" position="replace">
-        		<button name="button_confirm" type="object" states="submit" string="Approve Order" id="draft_confirm" groups="sunray.group_hr_line_manager,purchase.group_purchase_manager"/>
+        		<button name="button_confirm" type="object" states="management" string="Approve Order" id="draft_confirm" groups="sunray.group_hr_line_manager,purchase.group_purchase_manager"/>
         	</xpath>
         	<xpath expr="//button[@name='button_cancel']" position="replace">
-        		<button name="button_cancel" type="object" states="submit" string="Decline Order" id="draft_decline" groups="sunray.group_hr_line_manager,purchase.group_purchase_manager"/>
+        		<button name="button_cancel" type="object" states="management" string="Decline Order" id="draft_decline" groups="sunray.group_hr_line_manager,purchase.group_purchase_manager"/>
         	</xpath>
         	
         	<xpath expr="//button[@name='button_approve']" position="after">
@@ -191,11 +198,15 @@
 		            	<field name="department_name" invisible="0"/>
 		            	<field name="request_date"/>
 		        	</group>
-            		<group string = "Approved By" col="4" colspan="4">
+		        	<group string = "Line Manager Approval" col="4" colspan="4">
+		            	<field name="line_manager_approval"/>
+		            	<field name="line_manager_approval_date"/>
+		        	</group>
+            		<group string = "First Authorization" col="4" colspan="4">
 		            	<field name="manager_approval"/>
 		            	<field name="approval_date"/>
 		        	</group>
-	            	<group string = "Authorized By" col="4" colspan="4">
+	            	<group string = "Second Authorization" col="4" colspan="4">
 		            	<field name="po_manager_approval"/>
 		            	<field name="po_approval_date"/>
 	            	</group>
@@ -626,6 +637,7 @@
             <field name="partner_id"/>
             <field name="state_id"/>
             <field name="project_id"/>
+            <field name="site_area"/>
         </field>
     </record>
 	
@@ -649,6 +661,7 @@
                     	<field name="state_id"/>
                     	<field name="name" string="Code" readonly="1" required="0"/>
                     	<field name="project_id"/>
+                    	<field name="site_area"/>
                         <!-- <field name="active"/>  -->
                     </group>
                 </sheet>
@@ -907,6 +920,18 @@
 	            </xpath>
 	            <xpath expr="//field[@name='order_line']/tree/field[@name='name']" position="after">
 	            	<field name="analytic_account_id" required = "1"/>
+	            </xpath>
+	        </field>
+	</record>
+	
+	<record id="sunray_sale_subscription_view_form" model="ir.ui.view">
+        <field name="name">sunray.sale.subscription.form</field>
+	        <field name="model">sale.subscription</field>
+	        <field name="inherit_id" ref="sale_subscription.sale_subscription_view_form"/>
+	        <field name="arch" type="xml">
+	            <xpath expr="//field[@name='recurring_invoice_line_ids']/tree/field[@name='name']" position="after">
+	            	<field name="site_code_id" required = "0" domain="[('partner_id','=', parent.partner_id)]"/>
+	            	<field name="account_analytic_id" required = "1"/>
 	            </xpath>
 	        </field>
 	</record>
@@ -1222,6 +1247,7 @@
 				</field>
 				<field name="partner_id" position="after">
 					<field name="site_code_id" required = "0" domain="[('partner_id','=', partner_id)]"/>
+					<field name="site_location_id" required = "0"/>
 					<field name="site_area" required = "0"/>
 					<!-- <field name="default_site_code" readonly="1"/>
 					<field name="site_code_ids" readonly="0">
