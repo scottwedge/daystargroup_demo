@@ -46,7 +46,7 @@ class Lead(models.Model):
     region = fields.Char(string='Region')
     country_id = fields.Many2one(comodel_name='res.country', string="Country")
     #project_status = fields.Char(string='Status.')
-    contract_duration = fields.Char(string='Contract Duration (year)')
+    contract_duration = fields.Float(string='Contract Duration (year)')
     coordinates = fields.Char(string='Coordinates')
     
     type_of_offer = fields.Selection([('lease_to_own', 'Lease to Own'), ('pass_battery', 'PaaS Battery'), 
@@ -68,10 +68,13 @@ class Lead(models.Model):
     site_code_id = fields.Many2one(comodel_name="site.code", string="Site Code")
     #site_code_ids = fields.Many2many(comodel_name="site.code", string="Site Code(s)")
     
+    opportunity_created_date = fields.Datetime(string="Opportunity Creation Date")
     
     nord_type_of_sales = fields.Selection([('tendering', 'Tendering'), ('regular', 'Regular')], string='Type of Sales')
     nord_type_of_offer = fields.Selection([('asset_mang', 'Asset Management'), ('sales_of_drill', 'Sales of drilling fluids and chemicals'), ('sales_of_tools', 'Sales of tools and equipment')], string='Type of Offer')
     nord_size = fields.Char(string='Size.')
+    
+    private_lead = fields.Boolean(string="private lead")
     
     '''
     @api.multi
@@ -86,6 +89,12 @@ class Lead(models.Model):
             vals['default_site_code'] = site_code
     '''
     
+    '''
+    @api.onchange('create_date')
+    def _onchange_opportunity_create_date(self):
+        self.opportunity_created_date = self.create_date
+    '''
+            
     @api.multi
     def button_reset(self):
         self.write({'state': 'draft'})
@@ -142,6 +151,7 @@ class Lead(models.Model):
     def create(self, vals):
         result = super(Lead, self).create(vals)
         result.send_introductory_mail()
+        result.opportunity_created_date = result.create_date
         return result
     
     @api.multi

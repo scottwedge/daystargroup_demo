@@ -392,7 +392,7 @@
     </record>
 
 
- <!-- project decision-->
+ 	<!-- project decision-->
     <record model="ir.actions.act_window" id="sunray_project_decisionform_action">
         <field name="name">Project Decision</field>
         <field name="res_model">project.decision</field>

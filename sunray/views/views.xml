@@ -120,6 +120,7 @@
 				  	<field name="country_id" attrs="{'invisible': [('company_id', '!=', 5)]}"/>
 				  	<field name="monthly_service_fees" attrs="{'invisible': [('company_id', '!=', 5)]}"/>
 			  		<field name="sales_price" attrs="{'invisible': [('company_id', '!=', 5)]}"/>
+			  		<field name="opportunity_created_date"/>
 			</field>
 			<!-- <xpath expr="//notebook" position="inside">
 					<page string="Additional Information">
@@ -202,6 +203,9 @@
                         type="object"
                         attrs="{'invisible': ['&amp;', ('probability', '=', 0), ('active', '=', False)]}"/>
             </xpath>
+            <field name="mobile" position="after">
+				<field name="private_lead"/>
+			</field>
 	    </field>
 	</record>
 	
