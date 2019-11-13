@@ -263,6 +263,37 @@ class HrExpenseSheet(models.Model):
         return {}
     
     @api.multi
+    def expense_md_approval_notification(self):
+        group_id = self.env['ir.model.data'].xmlid_to_object('sunray.group_md')
+        user_ids = []
+        partner_ids = []
+        for user in group_id.users:
+            user_ids.append(user.id)
+            partner_ids.append(user.partner_id.id)
+        self.message_subscribe(partner_ids=partner_ids)
+        subject = "Expense '{}' needs approval".format(self.name)
+        self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
+        return False
+    
+    @api.multi
+    def approve_expense_sheets(self):
+        if not self.user_has_groups('hr_expense.group_hr_expense_user'):
+            raise UserError(_("Only Managers and HR Officers can approve expenses"))
+        elif not self.user_has_groups('hr_expense.group_hr_expense_manager'):
+            current_managers = self.employee_id.parent_id.user_id | self.employee_id.department_id.manager_id.user_id
+
+            if self.employee_id.user_id == self.env.user:
+                raise UserError(_("You cannot approve your own expenses"))
+
+            if not self.env.user in current_managers:
+                raise UserError(_("You can only approve your department expenses"))
+
+        responsible_id = self.user_id.id or self.env.user.id
+        self.write({'state': 'approve', 'user_id': responsible_id})
+        self.activity_update()
+        self.expense_md_approval_notification()
+    
+    @api.multi
     def action_sheet_move_create(self):
         if any(sheet.state != 'confirmed' for sheet in self):
             raise UserError(_("You can only generate accounting entry for approved expense(s)."))
