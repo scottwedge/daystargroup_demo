@@ -552,6 +552,11 @@ class Employee(models.Model):
             self.deactivated = True
             self.deactivation_date = date.today()
             self.reminder_deactivate_employee_contract()
+
+class Department(models.Model):
+    _inherit = "hr.department"
+    
+    department_code = fields.Char(string='Department Code')
     
 class Job(models.Model):
 
