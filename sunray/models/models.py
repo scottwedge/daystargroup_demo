@@ -1320,6 +1320,23 @@ class EmployeeContract(models.Model):
             self.trial_date_end_bool = False
             return False
     
+    enabled_for_pension = fields.Boolean(string="Enabled for Pension")
+    enabled_for_nhf = fields.Boolean(string="Enabled for NHF")
+    loan_enabled = fields.Boolean(string="Loan enabled")
+    outstanding_loan = fields.Float(string="Outstanding loan")
+    additional_pension_contributions = fields.Float(string="Additional pension contributions")
+    enabled_for_annual_bonus = fields.Boolean(string="Enabled for Annual Bonus")
+    enabled_for_overtime = fields.Boolean(string="Enabled for Overtime")
+    training_social_membership = fields.Float(string="Training & social Membership Allw.(%)")
+    communication_allw = fields.Float(string="Communication Allw.(%)")
+    feeding_allw = fields.Float(string="Feeding Allw.(%)")
+    housing_allw = fields.Float(string="Housing(%)")
+    transport_allw = fields.Float(string="Transport(%)")
+    basic = fields.Float(string="Basic(%)")
+    annual_salary = fields.Float(string="Annual Salary")
+    
+    
+    
 class AvailabilityRequest(models.Model):
     _name = "availability.request"
     _inherit = ['mail.thread', 'mail.activity.mixin']

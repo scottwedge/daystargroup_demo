@@ -661,7 +661,7 @@
                     	<field name="state_id"/>
                     	<field name="name" string="Code" readonly="1" required="0"/>
                     	<field name="project_id"/>
-                    	<field name="site_area"/>
+                    	<field name="site_area" required="1"/>
                         <!-- <field name="active"/>  -->
                     </group>
                 </sheet>
@@ -1247,8 +1247,8 @@
 				</field>
 				<field name="partner_id" position="after">
 					<field name="site_code_id" required = "0" domain="[('partner_id','=', partner_id)]"/>
-					<field name="site_location_id" required = "0"/>
-					<field name="site_area" required = "0"/>
+					<field name="site_location_id" required = "1"/>
+					<field name="site_area" required = "1"/>
 					<!-- <field name="default_site_code" readonly="1"/>
 					<field name="site_code_ids" readonly="0">
 						<tree editable="top">
