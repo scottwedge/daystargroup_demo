@@ -457,7 +457,6 @@ class HelpdeskTicket(models.Model):
     project_id = fields.Many2one(comodel_name='project.project', string='Project')
     project_site_code = fields.Char(string='Site Code', related='project_id.default_site_code', store = True)
     
-    
 class ItemType(models.Model):
     _name = "item.type"
     _description = "Item Types"
