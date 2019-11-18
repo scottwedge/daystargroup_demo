@@ -45,11 +45,11 @@ class Lead(models.Model):
     site_type = fields.Char(string='Site Type')
     region = fields.Char(string='Region')
     country_id = fields.Many2one(comodel_name='res.country', string="Country")
-    project_status = fields.Char(string='Status.')
-    contract_duration = fields.Date(string='Contract Duration (year)')
+    #project_status = fields.Char(string='Status.')
+    contract_duration = fields.Float(string='Contract Duration (year)')
     coordinates = fields.Char(string='Coordinates')
     
-    type_of_offer = fields.Selection([('lease_to_own', 'Lease to Own'), ('pass_battery', 'PaaS Battery'), ('paas_diesel', 'PaaS Diesel'),
+    type_of_offer = fields.Selection([('lease_to_own', 'Lease to Own'), ('pass_battery', 'PaaS Battery'), 
                                       ('pass_diesel', 'PaaS Diesel'), ('saas', 'SaaS'), ('sale', 'Sale')], string='Service Type', required=False,default='saas')
     #atm_power_at_night = fields.Selection([('yes', 'Yes'), ('no', 'No'),], string='Does the system power ATM night/we?', required=False,default='yes')
     
@@ -66,12 +66,15 @@ class Lead(models.Model):
     request_site_code = fields.Boolean(string="Request Site Code")
     
     site_code_id = fields.Many2one(comodel_name="site.code", string="Site Code")
-    site_code_ids = fields.Many2many(comodel_name="site.code", string="Site Code(s)")
+    #site_code_ids = fields.Many2many(comodel_name="site.code", string="Site Code(s)")
     
+    opportunity_created_date = fields.Datetime(string="Opportunity Creation Date")
     
     nord_type_of_sales = fields.Selection([('tendering', 'Tendering'), ('regular', 'Regular')], string='Type of Sales')
     nord_type_of_offer = fields.Selection([('asset_mang', 'Asset Management'), ('sales_of_drill', 'Sales of drilling fluids and chemicals'), ('sales_of_tools', 'Sales of tools and equipment')], string='Type of Offer')
     nord_size = fields.Char(string='Size.')
+    
+    private_lead = fields.Boolean(string="private lead")
     
     '''
     @api.multi
@@ -86,6 +89,12 @@ class Lead(models.Model):
             vals['default_site_code'] = site_code
     '''
     
+    '''
+    @api.onchange('create_date')
+    def _onchange_opportunity_create_date(self):
+        self.opportunity_created_date = self.create_date
+    '''
+            
     @api.multi
     def button_reset(self):
         self.write({'state': 'draft'})
@@ -141,7 +150,8 @@ class Lead(models.Model):
     @api.model
     def create(self, vals):
         result = super(Lead, self).create(vals)
-        result.check_lead_approval()
+        result.send_introductory_mail()
+        result.opportunity_created_date = result.create_date
         return result
     
     @api.multi
@@ -447,7 +457,6 @@ class HelpdeskTicket(models.Model):
     project_id = fields.Many2one(comodel_name='project.project', string='Project')
     project_site_code = fields.Char(string='Site Code', related='project_id.default_site_code', store = True)
     
-    
 class ItemType(models.Model):
     _name = "item.type"
     _description = "Item Types"
@@ -542,6 +551,11 @@ class Employee(models.Model):
             self.deactivated = True
             self.deactivation_date = date.today()
             self.reminder_deactivate_employee_contract()
+
+class Department(models.Model):
+    _inherit = "hr.department"
+    
+    department_code = fields.Char(string='Department Code')
     
 class Job(models.Model):
 
@@ -621,8 +635,8 @@ class VendorRequest(models.Model):
         if customer_code.parent_account_number == self.parent_account_number:
             raise UserError(_('Customer Code Already Exists'))
         customer_email = self.env['res.partner'].search([('email', '=', self.contact_email)], limit=1)
-        if customer_email.email == self.email:
-            raise UserError(_('Customer email Already Exists'))
+        #if customer_email.email == self.email:
+        #    raise UserError(_('Customer email Already Exists'))
         
     state = fields.Selection([
         ('draft', 'Draft'),
@@ -633,7 +647,7 @@ class VendorRequest(models.Model):
         ('reject', 'Rejected'),
         ], string='Status', readonly=True, index=True, copy=False, default='draft', track_visibility='onchange')
     
-    parent_account_number = fields.Char(string='Customer Code', index=True, copy=False, store=True, readonly=True, states={'validate': [('readonly', False)]})
+    parent_account_number = fields.Char(string='Customer Code', index=True, copy=False, store=True, readonly=False, states={'validate': [('readonly', False)]})
     
     employee_id = fields.Many2one(comodel_name='hr.employee', string='Requesting Employee', default=_default_employee)
     
@@ -1304,6 +1318,23 @@ class EmployeeContract(models.Model):
             self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
             self.trial_date_end_bool = False
             return False
+    
+    enabled_for_pension = fields.Boolean(string="Enabled for Pension")
+    enabled_for_nhf = fields.Boolean(string="Enabled for NHF")
+    loan_enabled = fields.Boolean(string="Loan enabled")
+    outstanding_loan = fields.Float(string="Outstanding loan")
+    additional_pension_contributions = fields.Float(string="Additional pension contributions")
+    enabled_for_annual_bonus = fields.Boolean(string="Enabled for Annual Bonus")
+    enabled_for_overtime = fields.Boolean(string="Enabled for Overtime")
+    training_social_membership = fields.Float(string="Training & social Membership Allw.(%)")
+    communication_allw = fields.Float(string="Communication Allw.(%)")
+    feeding_allw = fields.Float(string="Feeding Allw.(%)")
+    housing_allw = fields.Float(string="Housing(%)")
+    transport_allw = fields.Float(string="Transport(%)")
+    basic = fields.Float(string="Basic(%)")
+    annual_salary = fields.Float(string="Annual Salary")
+    
+    
     
 class AvailabilityRequest(models.Model):
     _name = "availability.request"

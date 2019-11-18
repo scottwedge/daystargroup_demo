@@ -89,7 +89,7 @@
             	<button name="button_submit_legal_done" string="legal review done" type="object" attrs="{'invisible': ['|', ('legal_review', '!=', True), ('legal_review_done', '=', True)]}"/>
             </xpath>
             <xpath expr="//field[@name='date_deadline']" position="after">
-			    <field name="company_id"/>
+			    <field name="company_id" invisible="1"/>
 			</xpath>
 			<field name="tag_ids" position="after">
 				<field name="size" attrs="{'invisible': [('company_id', '!=', 5)]}"/>
@@ -102,8 +102,6 @@
 			  	<field name="type_of_offer" attrs="{'invisible': [('company_id', '!=', 5)]}"/>
 			  	<field name="tariff_per_kwp" attrs="{'invisible': [('company_id', '!=', 5)]}"/>
 			  	<!-- <field name="currency_id" attrs="{'invisible': [('company_id', '!=', 5)]}"/>  -->
-			  	<field name="monthly_service_fees" attrs="{'invisible': [('company_id', '!=', 5)]}"/>
-			  	<field name="sales_price" attrs="{'invisible': [('company_id', '!=', 5)]}"/>
 	    		<field name="nord_type_of_sales" attrs="{'invisible': [('company_id', '!=', 1)]}"/>
 	    		<field name="nord_type_of_offer" attrs="{'invisible': [('company_id', '!=', 1)]}"/>
 	    		<field name="nord_size" attrs="{'invisible': [('company_id', '!=', 1)]}"/>
@@ -120,14 +118,9 @@
 				  	<field name="site_type" attrs="{'invisible': [('company_id', '!=', 5)]}"/>
 				  	<field name="region" attrs="{'invisible': [('company_id', '!=', 5)]}"/>
 				  	<field name="country_id" attrs="{'invisible': [('company_id', '!=', 5)]}"/>
-				  	<field name="project_status" attrs="{'invisible': [('company_id', '!=', 5)]}"/>
-				  	<field name="contract_duration" attrs="{'invisible': [('company_id', '!=', 5)]}"/>
-				  	<field name="coordinates" attrs="{'invisible': [('company_id', '!=', 5)]}"/>
-				  	<field name="type_of_offer" attrs="{'invisible': [('company_id', '!=', 5)]}"/>
-				  	<field name="tariff_per_kwp" attrs="{'invisible': [('company_id', '!=', 5)]}"/>
-				  	<!-- <field name="currency_id" attrs="{'invisible': [('company_id', '!=', 5)]}"/>  -->
 				  	<field name="monthly_service_fees" attrs="{'invisible': [('company_id', '!=', 5)]}"/>
-				  	<field name="sales_price" attrs="{'invisible': [('company_id', '!=', 5)]}"/>
+			  		<field name="sales_price" attrs="{'invisible': [('company_id', '!=', 5)]}"/>
+			  		<field name="opportunity_created_date"/>
 			</field>
 			<!-- <xpath expr="//notebook" position="inside">
 					<page string="Additional Information">
@@ -160,6 +153,24 @@
 			<field name="job_id" position="after">
 	    		<field name="trial_date_end_bool" invisible="1"/>
 			</field>
+			<xpath expr="//page[@name='information']" position="inside">
+				<group col="4" colspan="2">
+					<field name="annual_salary"/>
+		    		<field name="basic"/>
+		    		<field name="transport_allw"/>
+		    		<field name="housing_allw"/>
+		    		<field name="feeding_allw"/>
+		    		<field name="communication_allw"/>
+		    		<field name="training_social_membership"/>
+		    		<field name="enabled_for_overtime"/>
+		    		<field name="enabled_for_annual_bonus"/>
+		    		<field name="additional_pension_contributions"/>
+		    		<field name="outstanding_loan"/>
+		    		<field name="loan_enabled"/>
+		    		<field name="enabled_for_nhf"/>
+		    		<field name="enabled_for_pension"/>
+				</group>
+			</xpath>
 	    </field>
 	</record>
 	
@@ -177,6 +188,18 @@
 	    			<button name="button_deactivate_employee" string="Deactivate Employee" type="object" class="oe_highlight" groups="hr.group_hr_manager" attrs="{'invisible': [('deactivated', '=', True)]}" confirm="Confirm Deactivation of Employee"/>
             	</header>
             </xpath>
+        </field>
+    </record>
+    
+    <record id="sunray_hr_view_department_form" model="ir.ui.view">
+        <field name="name">sunray.hr.department.form</field>
+        <field name="model">hr.department</field>
+        <field name="priority" eval="7" />
+        <field name="inherit_id" ref="hr.view_department_form"/>
+        <field name="arch" type="xml">
+        	<field name="parent_id" position="after">
+	    		<field name="department_code"/>
+			</field>
         </field>
     </record>
 	
@@ -210,6 +233,9 @@
                         type="object"
                         attrs="{'invisible': ['&amp;', ('probability', '=', 0), ('active', '=', False)]}"/>
             </xpath>
+            <field name="mobile" position="after">
+				<field name="private_lead"/>
+			</field>
 	    </field>
 	</record>
 	

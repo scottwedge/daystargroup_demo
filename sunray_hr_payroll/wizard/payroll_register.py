@@ -47,7 +47,7 @@ class payroll_reg(models.TransientModel):
     end_date = fields.Date('End Date', required=True)
     employee_ids = fields.Many2many('hr.employee', 'payroll_register_rel', 'payroll_year_id', 'employee_id', 'Employees', required=True)
     rule_ids = fields.Many2many('hr.salary.rule', 'payroll_register_rel_salary', 'reg_id', 'rule_id', 'Salary Rules', required=True)
-    xls_output = fields.Boolean('Excel Output', help='Tick if you want to output of report in excel sheet')
+    xls_output = fields.Boolean('Excel Output', help='Tick if you want to output of report in excel sheet', default=True)
 
 
     def get_months_tol(self):
@@ -139,6 +139,9 @@ class payroll_reg(models.TransientModel):
         employees  = emp_obj.browse(emp_ids)
         for emp_id in employees:
             emp_salary.append(emp_id.name)
+            #emp_salary.append(emp_id.contract_id.date_start)
+            #emp_salary.append(emp_id.job_id.name)
+            #emp_salary.append(emp_id.contract_id.annual_salary)
             total = 0.0
             if excel:
                 emp_salary, total, total_mnths = self.get_salary1(form, emp_id.id, emp_salary, total_mnths=total_excel_months)

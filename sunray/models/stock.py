@@ -9,7 +9,7 @@ from odoo.exceptions import UserError, ValidationError
 from odoo import api, fields, models, _
 import traceback
 import sys
-
+from odoo.addons import decimal_precision as dp
 
 WHITE_LIST = ['odooprojects']      # Look for these words in the file path.
 EXCLUSIONS = ['']          # Ignore <listcomp>, etc. in the function name.
@@ -18,6 +18,7 @@ EXCLUSIONS = ['']          # Ignore <listcomp>, etc. in the function name.
 
 PURCHASE_REQUISITION_STATES = [
     ('draft', 'Draft'),
+    ('submit', 'Submitted'),
     ('approve', 'Approved'),
     ('ongoing', 'Ongoing'),
     ('in_progress', 'Confirmed'),
@@ -58,6 +59,10 @@ class Partner(models.Model):
         default='contact',
         help="Used by Sales and Purchase Apps to select the relevant address depending on the context.")
     
+    name = fields.Char(index=True, track_visibility="onchange")
+    bank_ids = fields.One2many('res.partner.bank', 'partner_id', string='Banks', track_visibility="onchange")
+    email = fields.Char(track_visibility="onchange")
+    
     tax_compliance = fields.Selection([('1', '1'), ('2', '2'), ('3', '3'), ('4', '4'), ('5', '5')], string='Tax compliance', required=False)
     due_diligence_form = fields.Selection([('1', '1'), ('2', '2'), ('3', '3'), ('4', '4'), ('5', '5')], string='Due Diligence Form', required=False)
     cac = fields.Selection([('1', '1'), ('2', '2'), ('3', '3'), ('4', '4'), ('5', '5')], string='CAC', required=False)
@@ -67,7 +72,7 @@ class Partner(models.Model):
     
     parent_account_number = fields.Char(string='Customer Code', required=False, index=True, copy=False, store=True)
     
-    client_code = fields.Char(string='Client Code', required=False, index=True, copy=False, store=True)
+    #client_code = fields.Char(string='Client Code', required=False, index=True, copy=False, store=True)
     
     vendor_registration = fields.Boolean ('Vendor fully Registered', track_visibility="onchange", readonly=True)
     customer_registration = fields.Boolean ('Customer fully Registered', track_visibility="onchange", readonly=True)
@@ -87,13 +92,25 @@ class Partner(models.Model):
     postal_code = fields.Char(string="Postal Code")
     district = fields.Char(string="District/ Region")
     
-    rc = fields.Char(string="RC or Business registration nb")
+    rc = fields.Char(string="RC or Business registration number")
     vat_eligible = fields.Selection([('yes', 'Yes'), ('no', 'No')], string="VAT eligibility")
     business_legal_structure = fields.Selection([('joint', 'Joint Stock Company'), ('limited', 'Limited Liability Company'), ('non', 'Non-Profit organization'), ('public', 'Public Liability Company'), ('trust', 'Business Trust'), ('other', 'Other')], 
                                                 string="Business Legal Structure")
     vat_no = fields.Char(string="Vat No")
     tax_no = fields.Char(string="Tax No.")
     legal = fields.Char(string="Other, Please specify:")
+    
+    potential_customer = fields.Boolean(string='Potential Customer')
+    
+    '''
+    @api.onchange('name')
+    def _onchange_name(self):
+        subject = "Store request {} has been approved and validated".format(self.name)
+        partner_ids = []
+        for partner in self.message_partner_ids:
+            partner_ids.append(partner.id)
+        self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
+    '''
     
     @api.multi
     def _site_code_count(self):
@@ -244,6 +261,37 @@ class HrExpenseSheet(models.Model):
     def button_md_approval(self):
         self.write({'state': 'confirmed'})
         return {}
+    
+    @api.multi
+    def expense_md_approval_notification(self):
+        group_id = self.env['ir.model.data'].xmlid_to_object('sunray.group_md')
+        user_ids = []
+        partner_ids = []
+        for user in group_id.users:
+            user_ids.append(user.id)
+            partner_ids.append(user.partner_id.id)
+        self.message_subscribe(partner_ids=partner_ids)
+        subject = "Expense '{}' needs approval".format(self.name)
+        self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
+        return False
+    
+    @api.multi
+    def approve_expense_sheets(self):
+        if not self.user_has_groups('hr_expense.group_hr_expense_user'):
+            raise UserError(_("Only Managers and HR Officers can approve expenses"))
+        elif not self.user_has_groups('hr_expense.group_hr_expense_manager'):
+            current_managers = self.employee_id.parent_id.user_id | self.employee_id.department_id.manager_id.user_id
+
+            if self.employee_id.user_id == self.env.user:
+                raise UserError(_("You cannot approve your own expenses"))
+
+            if not self.env.user in current_managers:
+                raise UserError(_("You can only approve your department expenses"))
+
+        responsible_id = self.user_id.id or self.env.user.id
+        self.write({'state': 'approve', 'user_id': responsible_id})
+        self.activity_update()
+        self.expense_md_approval_notification()
     
     @api.multi
     def action_sheet_move_create(self):
@@ -448,6 +496,9 @@ class PurchaseOrder(models.Model):
     po_manager_approval = fields.Many2one('res.users','Manager Authorization Name', readonly=True, track_visibility='onchange')
     po_manager_position = fields.Char('Manager Authorization Position', readonly=True, track_visibility='onchange')
     
+    line_manager_approval_date = fields.Date(string='Line-Manager Approval Date', readonly=True, track_visibility='onchange')
+    line_manager_approval = fields.Many2one('res.users','Line-Manager Approval Name', readonly=True, track_visibility='onchange')
+    
     client_id = fields.Many2one('res.partner','Client', track_visibility='onchange')
     
     project_id = fields.Many2one(comodel_name='project.project', string='Project')
@@ -463,7 +514,8 @@ class PurchaseOrder(models.Model):
         ('draft', 'RFQ'),
         ('sent', 'RFQ Sent'),
         ('to approve', 'To Approve'),
-        ('submit', 'Manager Approval'),
+        ('submit', ' Line Manager Approval'),
+        ('management', 'Management Approval'),
         ('legal', 'Awaiting Legal Review'),
         ('legal_reviewed', 'Reviewed'),
         ('purchase', 'Purchase Order'),
@@ -495,7 +547,63 @@ class PurchaseOrder(models.Model):
     def button_submit(self):
         self.write({'state': 'submit'})
         self.request_date = date.today()
-        return {}
+        group_id = self.env['ir.model.data'].xmlid_to_object('sunray.group_hr_line_manager')
+        user_ids = []
+        partner_ids = []
+        for user in group_id.users:
+            user_ids.append(user.id)
+            partner_ids.append(user.partner_id.id)
+        self.message_subscribe(partner_ids=partner_ids)
+        subject = "RFQ '{}' needs approval".format(self.name)
+        self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
+        return False
+    
+    @api.multi
+    def action_line_manager_approval(self):
+        self.write({'state':'management'})
+        #self.manager_confirm()
+        self.line_manager_approval_date = date.today()
+        self.line_manager_approval = self._uid
+        if self.amount_total < 18150000.00:
+            self.check_manager_approval_one()
+        else:
+            if self.amount_total > 18150000.00:
+                self.check_manager_approval_two()
+    
+    @api.depends('amount_total')
+    def check_manager_approval_one(self):
+        if self.amount_total < 18150000.00:
+            self.need_management_approval = True
+            group_id = self.env['ir.model.data'].xmlid_to_object('sunray.group_below_1st_authorization')
+            user_ids = []
+            partner_ids = []
+            for user in group_id.users:
+                user_ids.append(user.id)
+                partner_ids.append(user.partner_id.id)
+            self.message_subscribe(partner_ids=partner_ids)
+            subject = "RFQ {} needs your approval, Below Quota".format(self.name)
+            self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
+            return False
+        else:
+            self.need_management_approval = False
+            
+    @api.depends('amount_total')
+    def check_manager_approval_two(self):
+        if self.amount_total > 18150000.00:
+            self.need_management_approval = True
+            group_id = self.env['ir.model.data'].xmlid_to_object('sunray.group_above_1st_authorization')
+            user_ids = []
+            partner_ids = []
+            for user in group_id.users:
+                user_ids.append(user.id)
+                partner_ids.append(user.partner_id.id)
+            self.message_subscribe(partner_ids=partner_ids)
+            subject = "RFQ {} needs your approval, Above Quota".format(self.name)
+            self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
+            return False
+        else:
+            self.need_management_approval = False
+  
     
     @api.multi
     def button_submit_legal(self):
@@ -557,7 +665,7 @@ class PurchaseOrder(models.Model):
     @api.multi
     def button_confirm(self):
         for order in self:
-            if order.state not in ['draft','submit', 'sent']:
+            if order.state not in ['draft','submit', 'sent', 'management']:
                 continue
             #self._check_line_manager()
             self._check_line_manager()
@@ -574,20 +682,6 @@ class PurchaseOrder(models.Model):
                         and order.amount_total < self.env.user.company_id.currency_id.compute(order.company_id.po_double_validation_amount, order.currency_id))\
                     or order.user_has_groups('purchase.group_purchase_manager'):
                 order.button_approve()
-                
-            elif self.amount_total > 10.00:
-                    self.need_management_approval = True
-                    group_id = self.env['ir.model.data'].xmlid_to_object('sunray.group_sale_account_budget')
-                    user_ids = []
-                    partner_ids = []
-                    for user in group_id.users:
-                        user_ids.append(user.id)
-                        partner_ids.append(user.partner_id.id)
-                    self.message_subscribe(partner_ids=partner_ids)
-                    subject = "RFQ {} needs management approval".format(self.name)
-                    self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
-                    raise ValidationError(_('Only your line manager can approve your leave request.'))
-                    return False
             else:
                 order.write({'state': 'to approve'})
         return True
@@ -723,9 +817,14 @@ class PurchaseRequisition(models.Model):
         self.env['hr.employee'].search([('user_id','=',self.env.uid)])
         return self.env['hr.employee'].search([('user_id','=',self.env.uid)])
     
+    @api.depends('state')
+    def _set_state(self):
+        self.state_blanket_order = self.state
+    
     state = fields.Selection(PURCHASE_REQUISITION_STATES,
                               'Status', track_visibility='onchange', required=True,
                               copy=False, default='draft')
+    state_blanket_order = fields.Selection(PURCHASE_REQUISITION_STATES, compute='_set_state')
     
     #stock_source = fields.Char(string='Source document')
     store_request_id = fields.Many2one('stock.picking','Store Request', readonly=True, track_visibility='onchange')
@@ -746,9 +845,22 @@ class PurchaseRequisition(models.Model):
     
     submitted = fields.Boolean(string='Submitted')
     
+    line_manager_approval_date = fields.Date(string='Line-Manager Approval Date', readonly=True, track_visibility='onchange')
+    line_manager_approval = fields.Many2one('res.users','Line-Manager Approval Name', readonly=True, track_visibility='onchange')
+    
+    total_cost = fields.Float(string='Total Cost', compute='_total_cost', track_visibility='onchange', readonly=True)
+    
+    @api.multi
+    @api.depends('line_ids.price_subtotal')
+    def _total_cost(self):
+        for a in self:
+            for line in a.line_ids:
+                a.total_cost += line.price_subtotal
+    
     @api.multi
     def button_submit_purchase_agreement(self):
         self.submitted = True
+        self.write({'state':'submit'})
         group_id = self.env['ir.model.data'].xmlid_to_object('sunray.group_hr_line_manager')
         user_ids = []
         partner_ids = []
@@ -759,6 +871,18 @@ class PurchaseRequisition(models.Model):
         subject = "Purchase Agreement '{}' needs approval".format(self.name)
         self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
         return False
+    
+    @api.multi
+    def action_line_manager_approval(self):
+        self.write({'state':'approve'})
+        #self.manager_confirm()
+        self.line_manager_approval_date = date.today()
+        self.line_manager_approval = self._uid
+        if self.total_cost < 18150000.00:
+            self.check_manager_approval_one()
+        else:
+            if self.total_cost > 18150000.00:
+                self.check_manager_approval_two()
     
     @api.multi
     def action_in_progress(self):
@@ -775,6 +899,40 @@ class PurchaseRequisition(models.Model):
         self.po_manager_approval = self._uid
     
     
+    @api.depends('total_price')
+    def check_manager_approval_one(self):
+        if self.total_cost < 18150000.00:
+            self.need_approval = True
+            group_id = self.env['ir.model.data'].xmlid_to_object('sunray.group_below_1st_authorization')
+            user_ids = []
+            partner_ids = []
+            for user in group_id.users:
+                user_ids.append(user.id)
+                partner_ids.append(user.partner_id.id)
+            self.message_subscribe(partner_ids=partner_ids)
+            subject = "Purchase Agreement {} needs your approval, Below Quota".format(self.name)
+            self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
+            return False
+        else:
+            self.need_approval = False
+            
+    @api.depends('total_price')
+    def check_manager_approval_two(self):
+        if self.total_cost > 18150000.00:
+            self.need_approval = True
+            group_id = self.env['ir.model.data'].xmlid_to_object('sunray.group_above_1st_authorization')
+            user_ids = []
+            partner_ids = []
+            for user in group_id.users:
+                user_ids.append(user.id)
+                partner_ids.append(user.partner_id.id)
+            self.message_subscribe(partner_ids=partner_ids)
+            subject = "Purchase Agreement {} needs your approval, Above Quota".format(self.name)
+            self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
+            return False
+        else:
+            self.need_approval = False
+    
 class PurchaseRequisitionLine(models.Model):
     _name = "purchase.requisition.line"
     _inherit = ['purchase.requisition.line']
@@ -782,11 +940,22 @@ class PurchaseRequisitionLine(models.Model):
     @api.onchange('product_id')
     def _onchange_partner_id(self):
         self.description = self.product_id.display_name
+        self.price_unit = self.product_id.standard_price
         return {}
+    
+    price_unit = fields.Float(string='Unit Price', digits=dp.get_precision('Product Price'))
     
     project_id = fields.Many2one(comodel_name='project.project', string='Site Location')
     
     description = fields.Char(string='Description')
+    
+    price_subtotal = fields.Float(string="Price Subtotal", compute="_compute_subtotal", readonly=True)
+    
+    @api.one
+    @api.depends('product_qty', 'price_unit')
+    def _compute_subtotal(self):
+        for line in self:
+            self.price_subtotal = line.price_unit * self.product_qty
     
 class ProductTemplate(models.Model):
     _inherit = 'product.template'
@@ -1047,19 +1216,79 @@ class SaleOrderLine(models.Model):
             }))
         return values
     
+    @api.multi
+    def _timesheet_create_project(self):
+        """ Generate project for the given so line, and link it.
+            :param project: record of project.project in which the task should be created
+            :return task: record of the created task
+        """
+        self.ensure_one()
+        account = self.order_id.analytic_account_id
+        if not account:
+            self.order_id._create_analytic_account(prefix=self.product_id.default_code or None)
+            account = self.order_id.analytic_account_id
+
+        # create the project or duplicate one
+        values = {
+            'name': '%s - %s' % (self.order_id.client_order_ref, self.order_id.name) if self.order_id.client_order_ref else self.site_code_id.name + " " + "-" + " " + self.order_id.partner_id.name + " - " + self.site_code_id.site_area,
+            'allow_timesheets': True,
+            'analytic_account_id': account.id,
+            'partner_id': self.order_id.partner_id.id,
+            'sale_line_id': self.id,
+            'sale_order_id': self.order_id.id,
+            'site_code_id': self.site_code_id.id,
+            'site_area': self.site_code_id.site_area,
+            'site_location_id': self.site_code_id.state_id.id,
+            'active': True,
+        }
+        if self.product_id.project_template_id:
+            values['name'] = "%s - %s" % (values['name'], self.product_id.project_template_id.name)
+            project = self.product_id.project_template_id.copy(values)
+            project.tasks.write({
+                'sale_line_id': self.id,
+                'partner_id': self.order_id.partner_id.id,
+                'email_from': self.order_id.partner_id.email,
+            })
+            # duplicating a project doesn't set the SO on sub-tasks
+            project.tasks.filtered(lambda task: task.parent_id != False).write({
+                'sale_line_id': self.id,
+            })
+        else:
+            project = self.env['project.project'].create(values)
+        # link project as generated by current so line
+        self.write({'project_id': project.id})
+        return project
+    
 class SaleSubscriptionLine(models.Model):
     _inherit = "sale.subscription.line"
     
     site_code_id = fields.Many2one(comodel_name="site.code", string="Site Code")
     
-    #analytic_account_id = fields.Many2one('account.analytic.account', string="Analytic Account", copy=False)
+    account_analytic_id = fields.Many2one(comodel_name='account.analytic.account', string="Analytic Account", copy=False)
     
 class SiteCode(models.Model):
     _name = "site.code"
     _description = "Site Code"
     _order = "name"
     _inherits = {'stock.location': 'location_id'}
-
+    
+    @api.multi
+    def name_get(self):
+        res = []
+        for site in self:
+            result = site.name
+            if site.name:
+                result = str(site.name) + " " + "-" + " " + str(site.partner_id.name) + " - " + str(site.site_area)
+            res.append((site.id, result))
+        return res
+    
+    @api.onchange('project_id')
+    def _onchange_project_id(self):
+        self.partner_id = self.project_id.partner_id
+        self.state_id = self.project_id.site_location_id
+        self.site_area = self.project_id.site_area
+        return {}
+    
     location_id = fields.Many2one('stock.location', string='Location', ondelete="restrict", required=True)
 
     state_id = fields.Many2one(comodel_name='res.country.state', string='Site location (State)', required=True, track_visibility='onchange')
@@ -1067,6 +1296,7 @@ class SiteCode(models.Model):
     project_id = fields.Many2one(comodel_name='project.project', string='Project', required=False)
 #     name = fields.Char('Code', readonly=False, track_visibility='onchange')
     active = fields.Boolean('Active', default='True')
+    site_area = fields.Char('Site Area')
     
     @api.model
     def create(self, vals):
@@ -1107,7 +1337,7 @@ class Project(models.Model):
         for project in self:
             result = project.name
             if project.site_code_id.name:
-                result = str(project.site_code_id.name) + " " + "-" + " " + str(project.name) + " - " + str(project.site_area)
+                result = str(project.site_code_id.name) + " " + "-" + " " + str(project.partner_id.name) + " - " + str(project.site_area)
             res.append((project.id, result))
         return res
     
@@ -1122,6 +1352,8 @@ class Project(models.Model):
         ('customer_sign_off', 'Customer Sign off'),
         ('close_out', ' Close out'),
         ], string='Stage', readonly=False, index=True, copy=False, default='kick_off', track_visibility='onchange')
+    
+    name = fields.Char("Name", index=True, required=True, track_visibility='onchange')
     
     checklist_count = fields.Integer(compute="_checklist_count",string="Checklist", store=False)
     
@@ -1822,6 +2054,7 @@ class Picking(models.Model):
     
     state = fields.Selection([
         ('draft', 'Draft'),
+        ('approve', 'Approved'),
         ('submit', 'Submitted'),
         ('waiting', 'Waiting Another Operation'),
         ('confirmed', 'Waiting'),
@@ -1856,7 +2089,7 @@ class Picking(models.Model):
     def action_confirm(self):
         res = super(Picking, self).action_confirm()
         if self.picking_type_id.name == 'Staff Store Requests':
-            self.manager_confirm()
+            self.button_approve_srt()
             group_id = self.env['ir.model.data'].xmlid_to_object('stock.group_stock_manager')
             user_ids = []
             partner_ids = []
@@ -1864,10 +2097,21 @@ class Picking(models.Model):
                 user_ids.append(user.id)
                 partner_ids.append(user.partner_id.id)
             self.message_subscribe(partner_ids=partner_ids)
-            subject = "Store request {} has been approved by line manager".format(self.name)
+            subject = "Store request {} has been authorized".format(self.name)
             self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
             return False
         return res
+    
+    @api.multi
+    def action_line_manager_approval(self):
+        self.write({'state':'approve'})
+        self.manager_confirm()
+        if self.total_cost < 18150000.00:
+            self.check_manager_approval_one()
+        else:
+            if self.total_cost > 18150000.00:
+                self.check_manager_approval_two()
+        
     
     @api.multi
     def manager_confirm(self):
@@ -1896,7 +2140,7 @@ class Picking(models.Model):
     #net_lot_id = fields.Many2one(string="Serial Number", related="move_line_ids.lot_id", readonly=True)
     internal_transfer = fields.Boolean('Internal Transfer?', track_visibility='onchange')
     client_id = fields.Many2one('res.partner', string='Client', index=True, ondelete='cascade', required=False)
-    need_approval = fields.Boolean ('Need Approval', track_visibility="onchange")
+    need_approval = fields.Boolean ('Need Approval', track_visibility="onchange", copy=False)
     #rejection_reason = fields.Many2one('stock.rejection.reason', string='Rejection Reason', index=True, track_visibility='onchange')
     
     project_id = fields.Many2one('project.project', string='Project', index=True, ondelete='cascade', required=False)
@@ -1943,6 +2187,40 @@ class Picking(models.Model):
         for a in self:
             for line in a.move_ids_without_package:
                 a.total_cost += line.price_cost * line.product_uom_qty
+    
+    @api.depends('total_price')
+    def check_manager_approval_one(self):
+        if self.total_price < 18150000.00:
+            self.need_approval = True
+            group_id = self.env['ir.model.data'].xmlid_to_object('sunray.group_below_1st_authorization')
+            user_ids = []
+            partner_ids = []
+            for user in group_id.users:
+                user_ids.append(user.id)
+                partner_ids.append(user.partner_id.id)
+            self.message_subscribe(partner_ids=partner_ids)
+            subject = "Store request {} needs your approval, Below Quota".format(self.name)
+            self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
+            return False
+        else:
+            self.need_approval = False
+            
+    @api.depends('total_price')
+    def check_manager_approval_two(self):
+        if self.total_price > 18150000.00:
+            self.need_approval = True
+            group_id = self.env['ir.model.data'].xmlid_to_object('sunray.group_above_1st_authorization')
+            user_ids = []
+            partner_ids = []
+            for user in group_id.users:
+                user_ids.append(user.id)
+                partner_ids.append(user.partner_id.id)
+            self.message_subscribe(partner_ids=partner_ids)
+            subject = "Store request {} needs your approval, Above Quota".format(self.name)
+            self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
+            return False
+        else:
+            self.need_approval = False
     
     '''
     @api.depends('total_price')
@@ -2208,17 +2486,30 @@ class Picking(models.Model):
 class AccountInvoice(models.Model):
     _inherit = "account.invoice"
     
+    from_sale = fields.Boolean(string='Sale', compute='_check_sale_from', track_visibility="onchange", readonly=True)
+    
+    @api.depends('origin')
+    def _check_sale_from(self):
+        if self.origin:
+            if "SO0" in self.origin:
+                self.from_sale = True
+            
+    def _default_employee(self):
+        self.env['hr.employee'].search([('user_id','=',self.env.uid)])
+        return self.env['hr.employee'].search([('user_id','=',self.env.uid)])
+    
     @api.multi
     def _check_customer_registration(self):
+        current_employee = self.env['hr.employee'].search([('user_id', '=', self.env.uid)], limit=1)
         if self.partner_id.customer_registration == False:
             raise UserError(_('Cant validate invoice for an unregistered customer -- Request Customer Registration.'))
-        
-    @api.multi
-    def action_invoice_open(self):
-        res = super(AccountInvoice, self).action_invoice_open()
-        self._check_customer_registration()
-        return res
+        if not current_employee == 637:
+            raise UserError(_('You are not allowed to approve your own request.'))
     
+    employee_id = fields.Many2one('hr.employee', 'Employee',
+        states={'done': [('readonly', True)], 'cancel': [('readonly', True)]}, default=_default_employee)
+        
+        
 class AccountInvoiceLine(models.Model):
     _inherit = "account.invoice.line"
     
@@ -2226,6 +2517,8 @@ class AccountInvoiceLine(models.Model):
     def _onchange_site_id(self):
         self.account_analytic_id = self.site_code_id.project_id.analytic_account_id
         return {}
+    
+    from_sale = fields.Boolean(string='Sale', related='invoice_id.from_sale', track_visibility="onchange", readonly=True)
     
     site_code_id = fields.Many2one(comodel_name="site.code", string="Site Code")
 
