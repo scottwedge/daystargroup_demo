@@ -1315,6 +1315,8 @@ class EmployeeContract(models.Model):
     
     trial_date_end_bool = fields.Boolean(string="Update Probation", store=True)
     
+    prorate_salary = fields.Boolean(string='Prorate Salary')
+    
     @api.onchange('trial_date_end')
     def send_notification(self):
         self.trial_date_end_bool = True
