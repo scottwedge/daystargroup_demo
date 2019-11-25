@@ -522,6 +522,9 @@ class Employee(models.Model):
     deactivation_date = fields.Date(string='Deactivation Date', readonly=True)
     pf_id = fields.Many2one('pen.type', string='Penson Fund Administrator', index=True)
     
+    pension_institution = fields.Char(string="Pension Institution")
+    pension_account_number = fields.Char(string="Pension Account Number")
+    
     @api.multi
     def reminder_deactivate_employee_contract(self):
         group_id = self.env['ir.model.data'].xmlid_to_object('hr.group_hr_manager')
@@ -556,6 +559,24 @@ class Department(models.Model):
     _inherit = "hr.department"
     
     department_code = fields.Char(string='Department Code')
+    
+    @api.model
+    def create(self, vals):
+        result = super(Department, self).create(vals)
+        result.create_analytic_account()
+        return result
+    
+    @api.multi
+    def create_analytic_account(self):
+        self.ensure_one()
+        # create the department analytic account
+        values = {
+            'name': '%s' % (self.name),
+            'department_id': self.id,
+            'active': True,
+        }
+        department = self.env['account.analytic.account'].create(values)
+        return department
     
 class Job(models.Model):
 
