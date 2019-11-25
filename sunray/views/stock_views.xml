@@ -929,6 +929,9 @@
 	        <field name="model">sale.subscription</field>
 	        <field name="inherit_id" ref="sale_subscription.sale_subscription_view_form"/>
 	        <field name="arch" type="xml">
+	        	<field name="tag_ids" position="after">
+		            <field name="sale_order_id"/>
+		        </field>
 	            <xpath expr="//field[@name='recurring_invoice_line_ids']/tree/field[@name='name']" position="after">
 	            	<field name="site_code_id" required = "0" domain="[('partner_id','=', parent.partner_id)]"/>
 	            	<field name="account_analytic_id" required = "1"/>
