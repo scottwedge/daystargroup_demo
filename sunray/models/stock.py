@@ -102,6 +102,8 @@ class Partner(models.Model):
     
     potential_customer = fields.Boolean(string='Potential Customer')
     
+    stored_display_name = fields.Char(string="stored_display_name")
+    
     '''
     @api.onchange('name')
     def _onchange_name(self):
@@ -1301,6 +1303,7 @@ class SiteCode(models.Model):
 #     name = fields.Char('Code', readonly=False, track_visibility='onchange')
     active = fields.Boolean('Active', default='True')
     site_area = fields.Char('Site Area')
+    stored_display_name = fields.Char(string="stored_display_name")
     
     @api.model
     def create(self, vals):
