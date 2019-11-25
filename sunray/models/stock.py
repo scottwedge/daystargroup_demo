@@ -2496,6 +2496,19 @@ class AccountAnalyticAccount(models.Model):
     
     department_id = fields.Many2one(comodel_name='hr.department', string='Department')
     
+    '''
+    @api.multi
+    def name_get(self):
+        if self.project_ids:
+            res = []
+            for project in self.project_ids:
+                result = project.name
+                if project.site_code_id.name:
+                    result = str(project.site_code_id.name) + " " + "-" + " " + str(project.partner_id.name) + " - " + str(project.site_area)
+                res.append((project.id, result))
+            return res
+    '''
+    
 class AccountInvoice(models.Model):
     _inherit = "account.invoice"
     
