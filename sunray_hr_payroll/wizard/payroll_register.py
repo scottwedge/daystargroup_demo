@@ -139,9 +139,11 @@ class payroll_reg(models.TransientModel):
         employees  = emp_obj.browse(emp_ids)
         for emp_id in employees:
             emp_salary.append(emp_id.name)
-            #emp_salary.append(emp_id.contract_id.date_start)
-            #emp_salary.append(emp_id.job_id.name)
-            #emp_salary.append(emp_id.contract_id.annual_salary)
+            emp_salary.append(emp_id.contract_id.date_start)
+            emp_salary.append(emp_id.job_id.name)
+            emp_salary.append(emp_id.pension_institution)
+            emp_salary.append(emp_id.pension_account_number)
+            emp_salary.append(emp_id.contract_id.annual_salary)
             total = 0.0
             if excel:
                 emp_salary, total, total_mnths = self.get_salary1(form, emp_id.id, emp_salary, total_mnths=total_excel_months)
@@ -202,7 +204,7 @@ class payroll_reg(models.TransientModel):
             
             pfa_dict = dict(zip(pfa_list,zip_pfa_list))
             
-            bf_pfa_list = ['Name'] + main_header[0]
+            bf_pfa_list = ['Name', 'Start Date', 'Employee Position', 'Pension Institution', 'Pension Account Number', 'Annual Salary'] + main_header[0]
             count_bf_pfa_list = len(bf_pfa_list)            
             af_pfa_list = ['Total']            
             comp_list = bf_pfa_list +  af_pfa_list + pfa_list
