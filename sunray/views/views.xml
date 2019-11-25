@@ -93,7 +93,7 @@
 			</xpath>
 			<field name="tag_ids" position="after">
 				<field name="size" attrs="{'invisible': [('company_id', '!=', 5)]}"/>
-	    		<field name="type_of_offer" attrs="{'invisible': [('company_id', '!=', 5)]}"/>
+	    		<!-- <field name="type_of_offer" attrs="{'invisible': [('company_id', '!=', 5)]}"/> -->
 	    		<field name="site_code_id" domain="[('partner_id','=', partner_id)]" widget="selection" attrs="{'invisible': [('company_id', '!=', 5)]}"/>
 	    		<!-- <field name="site_code_ids" widget="many2many_tags" domain="[('partner_id','=', partner_id)]"/>  -->
 	    		<!-- <field name="budget"/> -->	    		
@@ -187,6 +187,12 @@
             	<header>
 	    			<button name="button_deactivate_employee" string="Deactivate Employee" type="object" class="oe_highlight" groups="hr.group_hr_manager" attrs="{'invisible': [('deactivated', '=', True)]}" confirm="Confirm Deactivation of Employee"/>
             	</header>
+            </xpath>
+            <xpath expr="//page[@name='personal_information']" position="inside">
+            	<group string="Pension">
+            		<field name="pension_institution"/>
+            		<field name="pension_account_number"/>
+            	</group>
             </xpath>
         </field>
     </record>
