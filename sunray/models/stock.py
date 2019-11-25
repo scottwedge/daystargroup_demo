@@ -139,7 +139,6 @@ class Partner(models.Model):
         return super(Partner, self).create(vals)
     '''
     
-    '''
     @api.multi
     def name_get(self):
         res = []
@@ -150,7 +149,6 @@ class Partner(models.Model):
                 result = str(partner.name) + " " + str(partner.parent_account_number)
             res.append((partner.id, result))
         return res
-    '''
     
     @api.multi
     def button_reset(self):
@@ -1276,7 +1274,10 @@ class SiteCode(models.Model):
     _order = "name"
     _inherits = {'stock.location': 'location_id'}
     
-    '''
+    @api.multi
+    def get_display_name(self):
+        self.display_name = str(self.name) + " " + "-" + " " + str(self.partner_id.name) + " - " + str(self.site_area)
+        
     @api.multi
     def name_get(self):
         res = []
@@ -1286,7 +1287,6 @@ class SiteCode(models.Model):
                 result = str(site.name) + " " + "-" + " " + str(site.partner_id.name) + " - " + str(site.site_area)
             res.append((site.id, result))
         return res
-    '''
     
     @api.onchange('project_id')
     def _onchange_project_id(self):
@@ -2495,6 +2495,19 @@ class AccountAnalyticAccount(models.Model):
     _inherit = 'account.analytic.account'
     
     department_id = fields.Many2one(comodel_name='hr.department', string='Department')
+    
+    '''
+    @api.multi
+    def name_get(self):
+        if self.project_ids:
+            res = []
+            for project in self.project_ids:
+                result = project.name
+                if project.site_code_id.name:
+                    result = str(project.site_code_id.name) + " " + "-" + " " + str(project.partner_id.name) + " - " + str(project.site_area)
+                res.append((project.id, result))
+            return res
+    '''
     
 class AccountInvoice(models.Model):
     _inherit = "account.invoice"
