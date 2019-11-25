@@ -1305,7 +1305,7 @@ class SiteCode(models.Model):
     site_area = fields.Char('Site Area')
     stored_display_name = fields.Char(string="stored_display_name")
     display_name = fields.Char(string="display_name", store=True)
-    
+
     @api.model
     def create(self, vals):
         site = self.env['res.country.state'].search([('id','=',vals['state_id'])])
