@@ -1317,7 +1317,7 @@ class SiteCode(models.Model):
     @api.multi
     def get_display_name(self):
         self.display_name = str(self.name) + " " + "-" + " " + str(self.partner_id.name) + " - " + str(self.site_area)
-    
+        
     @api.multi
     def name_get(self):
         res = []
