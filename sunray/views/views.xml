@@ -168,7 +168,7 @@
 		    		<field name="outstanding_loan"/>
 		    		<field name="loan_enabled"/>
 		    		<field name="enabled_for_nhf"/>
-		    		<field name="enabled_for_pension"/>
+		    		<field name="prorate_salary"/>
 				</group>
 			</xpath>
 	    </field>
