@@ -958,6 +958,9 @@
 	        	<xpath expr="//field[@name='team_id']" position="after">
 	            	<field name="from_sale" invisible="1"/>
 	            </xpath>
+	            <xpath expr="//field[@name='payment_term_id']" position="after">
+	            	<field name="type_of_invoice" invisible="1"/>
+	            </xpath>
 	            <xpath expr="//field[@name='invoice_line_ids']/tree/field[@name='price_unit']" position="after">
 	            	<field name="from_sale" invisible="1"/>
 	            </xpath>
@@ -966,6 +969,7 @@
 	            </xpath>
 	            <xpath expr="//field[@name='invoice_line_ids']/tree/field[@name='name']" position="after">
 	            	<field name="site_code_id" domain="[('partner_id','=', parent.partner_id)]"/>
+	            	<field name="rate_min"/>
 	            </xpath>
 	        </field>
 	</record>

@@ -2554,6 +2554,11 @@ class AccountInvoice(models.Model):
     
     from_sale = fields.Boolean(string='Sale', compute='_check_sale_from', track_visibility="onchange", readonly=True)
     
+    type_of_invoice = fields.Selection([
+        ('regular', 'Regular'),
+        ('additional_hours', 'Additional Hours')], string='Type of Invoice',
+        default='regular', track_visibility='onchange')
+    
     @api.depends('origin')
     def _check_sale_from(self):
         if self.origin:
@@ -2585,6 +2590,8 @@ class AccountInvoiceLine(models.Model):
         return {}
     
     from_sale = fields.Boolean(string='Sale', related='invoice_id.from_sale', track_visibility="onchange", readonly=True)
+    
+    rate_min = fields.Char(string='Rate/min')
     
     site_code_id = fields.Many2one(comodel_name="site.code", string="Site Code")
 
