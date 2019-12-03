@@ -2549,6 +2549,10 @@ class AccountAnalyticAccount(models.Model):
             return res
     '''
     
+class AccountMove(models.Model):
+    _name = "account.move"
+    _inherit = ['account.move', 'mail.thread', 'mail.activity.mixin']
+    
 class AccountInvoice(models.Model):
     _inherit = "account.invoice"
     
