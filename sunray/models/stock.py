@@ -2604,8 +2604,8 @@ class AccountInvoiceLine(models.Model):
     
     site_code_id = fields.Many2one(comodel_name="site.code", string="Site Code")
     
-    account_analytic_id = fields.Many2one('account.analytic.account',
-        string='Analytic Account', required=True)
+    #account_analytic_id = fields.Many2one('account.analytic.account',
+        #string='Analytic Account', required=True)
 
 class AccountAssetAsset(models.Model):
     _inherit = 'account.asset.asset'
