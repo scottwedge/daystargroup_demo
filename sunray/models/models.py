@@ -554,6 +554,38 @@ class Employee(models.Model):
             self.deactivated = True
             self.deactivation_date = date.today()
             self.reminder_deactivate_employee_contract()
+    
+    
+    @api.multi
+    def send_birthday_mail(self):
+        test = False
+        employees = self.env['hr.employee'].search([])
+        
+        for self in employees:
+            if self.active == True:
+                if self.birthday:
+                    test = datetime.datetime.strptime(str(self.birthday), "%Y-%m-%d")
+                    
+                    birthday_day = test.day
+                    birthday_month = test.month
+                    
+                    today = datetime.datetime.now().strftime("%Y-%m-%d")
+                    
+                    test_today = datetime.datetime.today().strptime(today, "%Y-%m-%d")
+                    birthday_day_today = test_today.day
+                    birthday_month_today = test_today.month
+                    
+                    if birthday_month == birthday_month_today:
+                        if birthday_day == birthday_day_today:
+                            config = self.env['mail.template'].sudo().search([('name','=','Birthday Congratulations')], limit=1)
+                            mail_obj = self.env['mail.mail']
+                            if config:
+                                values = config.generate_email(self.id)
+                                mail = mail_obj.create(values)
+                                if mail:
+                                    mail.send()
+                                return True
+        return
 
 class Department(models.Model):
     _inherit = "hr.department"
@@ -1357,7 +1389,38 @@ class EmployeeContract(models.Model):
     basic = fields.Float(string="Basic(%)")
     annual_salary = fields.Float(string="Annual Salary")
     
-    
+    @api.multi
+    def send_anniversary_mail(self):
+        
+        test = False
+        employees = self.env['hr.contract'].search([])
+        
+        for self in employees:
+            if self.employee_id.active == True:
+                if self.date_start:
+                    test = datetime.datetime.strptime(str(self.date_start), "%Y-%m-%d")
+                    
+                    date_start_day = test.day
+                    date_start_month = test.month
+                    
+                    today = datetime.datetime.now().strftime("%Y-%m-%d")
+                    
+                    test_today = datetime.datetime.today().strptime(today, "%Y-%m-%d")
+                    date_start_day_today = test_today.day
+                    date_start_month_today = test_today.month
+                    
+                    
+                    if date_start_month == date_start_month_today:
+                        if date_start_day == date_start_day_today:
+                            config = self.env['mail.template'].sudo().search([('name','=','Work Annivasary')], limit=1)
+                            mail_obj = self.env['mail.mail']
+                            if config:
+                                values = config.generate_email(self.id)
+                                mail = mail_obj.create(values)
+                                if mail:
+                                    mail.send()
+                                return True
+        return
     
 class AvailabilityRequest(models.Model):
     _name = "availability.request"
