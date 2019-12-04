@@ -2549,6 +2549,10 @@ class AccountAnalyticAccount(models.Model):
             return res
     '''
     
+class AccountMove(models.Model):
+    _name = "account.move"
+    _inherit = ['account.move', 'mail.thread', 'mail.activity.mixin']
+    
 class AccountInvoice(models.Model):
     _inherit = "account.invoice"
     
@@ -2558,6 +2562,11 @@ class AccountInvoice(models.Model):
         ('regular', 'Regular'),
         ('additional_hours', 'Additional Hours')], string='Type of Invoice',
         default='regular', track_visibility='onchange')
+    
+    @api.multi
+    def update_analytic_account(self):
+        for line in self.invoice_line_ids:
+            line.account_analytic_id = line.site_code_id.project_id.analytic_account_id
     
     @api.depends('origin')
     def _check_sale_from(self):
@@ -2594,6 +2603,9 @@ class AccountInvoiceLine(models.Model):
     rate_min = fields.Char(string='Rate/min')
     
     site_code_id = fields.Many2one(comodel_name="site.code", string="Site Code")
+    
+    #account_analytic_id = fields.Many2one('account.analytic.account',
+        #string='Analytic Account', required=True)
 
 class AccountAssetAsset(models.Model):
     _inherit = 'account.asset.asset'
