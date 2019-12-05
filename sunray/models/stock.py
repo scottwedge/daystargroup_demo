@@ -244,6 +244,13 @@ class Partner(models.Model):
         action['domain'] = literal_eval(action['domain'])
         action['domain'].append(('partner_id', 'child_of', self.id))
         return action
+
+class HrExpense(models.Model):
+    _name = "hr.expense"
+    _inherit = "hr.expense"
+    
+    
+    analytic_account_id = fields.Many2one('account.analytic.account', string='Analytic Account', states={'post': [('readonly', True)], 'done': [('readonly', True)]}, oldname='analytic_account', required=True)
     
 class HrExpenseSheet(models.Model):
     _name = "hr.expense.sheet"
@@ -780,7 +787,7 @@ class PurchaseOrderLine(models.Model):
 #     def type_change(self):
 #         self.product_id = False
     
-    account_analytic_id = fields.Many2one('account.analytic.account', string='Analytic Account', required=False, track_visibility="onchange")
+    account_analytic_id = fields.Many2one('account.analytic.account', string='Analytic Account', required=True, track_visibility="onchange")
     account_id = fields.Many2one('account.account', string='Account',  domain = [('user_type_id', 'in', [5,8,17,16])])
     need_override = fields.Boolean ('Need Budget Override', track_visibility="onchange", copy=False)
     override_budget = fields.Boolean ('Override Budget', track_visibility="onchange", copy=False)
@@ -952,6 +959,8 @@ class PurchaseRequisitionLine(models.Model):
     description = fields.Char(string='Description')
     
     price_subtotal = fields.Float(string="Price Subtotal", compute="_compute_subtotal", readonly=True)
+    
+    account_analytic_id = fields.Many2one('account.analytic.account', string='Analytic Account', required=True)
     
     @api.one
     @api.depends('product_qty', 'price_unit')
