@@ -2564,6 +2564,18 @@ class AccountInvoice(models.Model):
         default='regular', track_visibility='onchange')
     
     @api.multi
+    def _check_analytic_account(self):
+        for line in self.invoice_line_ids:
+            if not line.account_analytic_id:
+                raise UserError(_('Please ensure analytic account has been set on all invoice lines'))
+    
+    @api.multi
+    def action_invoice_open(self):
+        res = super(AccountInvoice, self).action_invoice_open()
+        self._check_analytic_account()
+        return res
+    
+    @api.multi
     def update_analytic_account(self):
         for line in self.invoice_line_ids:
             line.account_analytic_id = line.site_code_id.project_id.analytic_account_id
