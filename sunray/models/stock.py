@@ -980,7 +980,7 @@ class ProductTemplate(models.Model):
         
         for self in product:
             if self.product_expiration_date:
-                test = datetime.datetime.strptime(self.product_expiration_date, "%Y-%m-%d")
+                test = datetime.datetime.strptime(str(self.product_expiration_date), "%Y-%m-%d")
                 
                 birthday_day = test.day
                 birthday_month = test.month
@@ -1013,7 +1013,7 @@ class ProductTemplate(models.Model):
         for self in product:
             if self.product_expiration_date:
                 
-                current_dates = datetime.datetime.strptime(self.product_expiration_date, "%Y-%m-%d")
+                current_dates = datetime.datetime.strptime(str(self.product_expiration_date), "%Y-%m-%d")
                 current_datesz = current_dates - relativedelta(days=7)
                 
                 date_start_day = current_datesz.day
@@ -1344,6 +1344,12 @@ class SiteCode(models.Model):
         self.site_area = self.project_id.site_area
         return {}
     
+    @api.multi
+    def _check_site_code(self):
+        site_code = self.env['site.code'].search([('name', '=', self.name)], limit=1)
+        if site_code.name == self.name:
+            raise UserError(_('Site Code Already Exists'))
+    
     location_id = fields.Many2one('stock.location', string='Location', ondelete="restrict", required=True)
 
     state_id = fields.Many2one(comodel_name='res.country.state', string='Site location (State)', required=True, track_visibility='onchange')
@@ -1354,18 +1360,27 @@ class SiteCode(models.Model):
     site_area = fields.Char('Site Area')
     stored_display_name = fields.Char(string="stored_display_name")
     display_name = fields.Char(string="display_name", store=True)
+    num = fields.Integer(string="Num", store=True)
 
     @api.model
     def create(self, vals):
         site = self.env['res.country.state'].search([('id','=',vals['state_id'])])
         client = self.env['res.partner'].search([('id','=',vals['partner_id'])])
-        code = client.parent_account_number + "_" + site.code
+        #existing_site = self.env['site.code'].search([('state_id','=',vals['state_id']), ('partner_id', '=',vals['partner_id'])], limit=1)
+        #if existing_site:
+        #    self.num = existing_site.num + 1
+        #else:
+        #    self.num = 1
+        
+        #code = client.parent_account_number + "_" + site.code
         
         no = self.env['ir.sequence'].next_by_code('project.site.code')
+        #no = self.num
         site_code = code + "_" +  str(no)
         print(site_code)
         vals['name'] = site_code
         vals['usage'] = 'customer'
+        self._check_site_code()
 #         res_model, res_id = self.env['ir.model.data'].get_object_reference('stock','stock_location_locations_partner')
 #         product = self.env[res_model].browse(res_id) 
         return super(SiteCode, self).create(vals)
@@ -2575,8 +2590,10 @@ class AccountInvoice(models.Model):
     @api.multi
     def _check_analytic_account(self):
         for line in self.invoice_line_ids:
-            if not line.account_analytic_id:
-                raise UserError(_('Please ensure analytic account has been set on all invoice lines'))
+            if not line.display_type:
+                if not line.account_analytic_id:
+                    raise UserError(_('Please ensure analytic account has been set on all invoice lines'))
+                
     
     @api.multi
     def action_invoice_open(self):
