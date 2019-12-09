@@ -662,6 +662,7 @@
                     	<field name="name" string="Code" readonly="1" required="0"/>
                     	<field name="project_id"/>
                     	<field name="site_area" required="1"/>
+                    	<field name="num" invisible="1"/>
                         <!-- <field name="active"/>  -->
                     </group>
                 </sheet>
