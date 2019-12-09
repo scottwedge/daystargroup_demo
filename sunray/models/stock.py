@@ -1372,7 +1372,7 @@ class SiteCode(models.Model):
         #else:
         #    self.num = 1
         
-        #code = client.parent_account_number + "_" + site.code
+        code = client.parent_account_number + "_" + site.code
         
         no = self.env['ir.sequence'].next_by_code('project.site.code')
         #no = self.num
