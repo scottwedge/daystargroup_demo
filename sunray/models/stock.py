@@ -2653,6 +2653,12 @@ class AccountAssetAsset(models.Model):
     site_code_id = fields.Many2one(comodel_name="site.code", string="Site Code")
     asset_partner_id = fields.Many2one(comodel_name="res.partner", string="Customer")
     
+    type_of_close = fields.Selection([
+        ('sold', 'Sold'),
+        ('decommissioned', 'Decommissioned')], string='Type of Closure', track_visibility='onchange')
+    
+    date_of_decommissioned = fields.Date(string='Date of Decommission')
+    
     @api.onchange('site_code_id')
     def _onchange_partner_id(self):
         self.asset_partner_id = self.site_code_id.partner_id
@@ -2661,7 +2667,19 @@ class AccountAssetAsset(models.Model):
     @api.depends('value', 'asset_quantity')
     def _compute_asset_total(self):
         self.asset_total = self.value * self.asset_quantity
+    
+    @api.multi
+    def update_analytic_account(self):
+        for line in self:
+            line.account_analytic_id = line.site_code_id.project_id.analytic_account_id
             
+    @api.multi
+    def _update_all_analytic_account(self):
+        assets = self.env['account.asset.asset'].search([])
+        for self in assets:
+            if not self.account_analytic_id:
+                self.account_analytic_id = self.site_code_id.project_id.analytic_account_id
+    
 class StockMove(models.Model):
     _inherit = "stock.move"
     
