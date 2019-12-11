@@ -975,7 +975,7 @@
 	        </field>
 	</record>
 	
-	<record id="sunray_account_asset_view_account_asset_asset_form" model="ir.ui.view">
+	<record id="sunray_account_asset_view_account_asset_asset_forms" model="ir.ui.view">
         <field name="name">sunray.account.asset.asset.form</field>
 	        <field name="model">account.asset.asset</field>
 	        <field name="inherit_id" ref="account_asset.view_account_asset_asset_form"/>
@@ -987,6 +987,10 @@
 		        </field>
 		        <field name="value_residual" position="after">
 		            <field name="asset_total" widget="monetary" options="{'currency_field': 'currency_id'}"/>
+		        </field>
+		        <field name="prorata" position="before">
+		            <field name="type_of_close" states="close"/>
+		            <field name="date_of_decommissioned" attrs="{'invisible': [('type_of_close', '!=', 'decommissioned')]}"/>
 		        </field>
 	        </field>
 	</record>
