@@ -2670,11 +2670,10 @@ class AccountAssetAsset(models.Model):
     
     @api.multi
     def update_analytic_account(self):
-        for line in self:
-            if not line.account_analytic_id:
-                line.account_analytic_id = line.site_code_id.project_id.analytic_account_id
-            if not line.asset_partner_id:
-                line.asset_partner_id = self.site_code_id.partner_id
+        if not self.account_analytic_id:
+            self.account_analytic_id = self.site_code_id.project_id.analytic_account_id
+        if not self.asset_partner_id:
+            self.asset_partner_id = self.site_code_id.partner_id
             
     @api.multi
     def _update_all_analytic_account(self):
