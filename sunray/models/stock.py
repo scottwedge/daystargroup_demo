@@ -2679,7 +2679,7 @@ class AccountAssetAsset(models.Model):
     def _update_all_analytic_account(self):
         assets = self.env['account.asset.asset'].search([])
         for assets in assets:
-            self.update_analytic_account()
+            #self.update_analytic_account()
             if not assets.account_analytic_id:
                 assets.account_analytic_id = assets.site_code_id.project_id.analytic_account_id
             if not assets.asset_partner_id:
