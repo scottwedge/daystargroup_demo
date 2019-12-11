@@ -2676,9 +2676,11 @@ class AccountAssetAsset(models.Model):
     @api.multi
     def _update_all_analytic_account(self):
         assets = self.env['account.asset.asset'].search([])
-        for self in assets:
-            if not self.account_analytic_id:
-                self.account_analytic_id = self.site_code_id.project_id.analytic_account_id
+        #for self in assets:
+        if not assets.account_analytic_id:
+            assets.account_analytic_id = assets.site_code_id.project_id.analytic_account_id
+        if not assets.asset_partner_id:
+            assets.asset_partner_id = self.site_code_id.partner_id
     
 class StockMove(models.Model):
     _inherit = "stock.move"
