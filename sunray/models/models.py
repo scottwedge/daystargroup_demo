@@ -39,10 +39,11 @@ class Lead(models.Model):
     #default_site_code = fields.Char(string='Site Code') 
     #default_site_code = fields.Char(string='Site Code')
     
-    client_type = fields.Char(string='Client Type')
+    client_type = fields.Many2one(comodel_name='customer.type', related='partner_id.customer_type_id', string='Customer Type')
     site_area = fields.Char(string='Site Area')
     site_address = fields.Char(string='Site Address')
     site_type = fields.Char(string='Site Type')
+    #site_location_id = fields.Many2one(comodel_name='res.country.state', string='Site location', track_visibility='onchange')
     region = fields.Char(string='Region')
     country_id = fields.Many2one(comodel_name='res.country', string="Country")
     #project_status = fields.Char(string='Status.')

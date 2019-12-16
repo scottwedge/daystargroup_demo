@@ -41,6 +41,14 @@
       <field name="view_mode">tree,form</field>
     </record>
     
+    <record model="ir.actions.act_window" id="customer_type_action_window">
+      <field name="name">Customer Type</field>
+      <field name="res_model">customer.type</field>
+      <field name="context">{}</field>
+      <field name="domain">[]</field>
+      <field name="view_mode">tree,form</field>
+    </record>
+    
     <record model="ir.ui.view" id="new_contact_request_tree_view">
         <field name="name">new.contact.request.tree</field>
         <field name="model">new.contact.request</field>
@@ -116,6 +124,7 @@
 				  	<field name="site_area" attrs="{'invisible': [('company_id', '!=', 5)]}"/>
 				  	<field name="site_address" attrs="{'invisible': [('company_id', '!=', 5)]}"/>
 				  	<field name="site_type" attrs="{'invisible': [('company_id', '!=', 5)]}"/>
+				  	<field name="site_location_id" attrs="{'invisible': [('company_id', '!=', 5)]}"/>
 				  	<field name="region" attrs="{'invisible': [('company_id', '!=', 5)]}"/>
 				  	<field name="country_id" attrs="{'invisible': [('company_id', '!=', 5)]}"/>
 				  	<field name="monthly_service_fees" attrs="{'invisible': [('company_id', '!=', 5)]}"/>
@@ -1114,6 +1123,9 @@
               
     <menuitem name="Contact Request" id="contact_request_menu" parent="crm.crm_menu_root"
               action="ContactRequest_action_window" sequence="12"/>
+              
+    <menuitem name="Customer Type" id="customer_type_menu" parent="crm.crm_menu_config"
+              action="customer_type_action_window" sequence="4"/>
               
    	<menuitem name="Legal Approval(Vendor Request)" id="vendor_legal_approval_request_menu" parent="purchase.menu_procurement_management"
               action="sunray_vendor_legal_approval_action_window" sequence="100" groups="sunray.group_legal_team"/>

@@ -794,6 +794,7 @@
 				</field>
 				<field name="function" position="before">
 		    		<field name="parent_account_number" readonly="0"/>
+		    		<field name="customer_type_id" readonly="0"/>
 		    		<!-- <field name="client_code" readonly="0"/> -->
 				</field>
 				<xpath expr="//notebook" position="inside">
