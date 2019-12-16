@@ -104,6 +104,8 @@ class Partner(models.Model):
     
     stored_display_name = fields.Char(string="stored_display_name")
     
+    customer_type_id = fields.Many2one(comodel_name='customer.type', string='Customer Type')
+    
     '''
     @api.onchange('name')
     def _onchange_name(self):
@@ -244,6 +246,12 @@ class Partner(models.Model):
         action['domain'] = literal_eval(action['domain'])
         action['domain'].append(('partner_id', 'child_of', self.id))
         return action
+
+class CustomerType(models.Model):
+    _name = "customer.type"
+    _description = 'Customer Type'
+    
+    name = fields.Char(string='Name', required=True)
 
 class HrExpense(models.Model):
     _name = "hr.expense"
@@ -1344,11 +1352,13 @@ class SiteCode(models.Model):
         self.site_area = self.project_id.site_area
         return {}
     
+    '''
     @api.multi
     def _check_site_code(self):
         site_code = self.env['site.code'].search([('name', '=', self.name)], limit=1)
         if site_code.name == self.name:
             raise UserError(_('Site Code Already Exists'))
+    '''
     
     location_id = fields.Many2one('stock.location', string='Location', ondelete="restrict", required=True)
 

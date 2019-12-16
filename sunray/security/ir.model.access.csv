@@ -36,3 +36,4 @@ access_vendor_internal_approval_checklist,vendor.internal.approval.checklist,mod
 access_site_code,site.code,model_site_code,base.group_user,1,1,1,1
 access_new_contact_request,new.contact.request,model_new_contact_request,base.group_user,1,1,1,1
 access_pen_type_user,pen.type,model_pen_type,hr.group_hr_user,1,1,1,1
+access_customer_type,customer.type,model_customer_type,base.group_user,1,1,1,1
