@@ -698,7 +698,8 @@ class PurchaseOrder(models.Model):
                     or (order.company_id.po_double_validation == 'two_step'\
                         and order.amount_total < self.env.user.company_id.currency_id.compute(order.company_id.po_double_validation_amount, order.currency_id)):
                     #or order.user_has_groups('purchase.group_purchase_manager'):
-                order.button_approve()
+                #order.button_approve()
+                print("don't confirm po even with po manager access")
             else:
                 order.write({'state': 'to approve'})
         return True
