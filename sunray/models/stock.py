@@ -700,6 +700,7 @@ class PurchaseOrder(models.Model):
                     #or order.user_has_groups('purchase.group_purchase_manager'):
                 #order.button_approve()
                 print("don't confirm po even with po manager access")
+                order.write({'state': 'to approve'})
             else:
                 order.write({'state': 'to approve'})
         return True
