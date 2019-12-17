@@ -33,9 +33,25 @@
       <field name="view_mode">tree,form</field>
     </record>
     
+    <record model="ir.actions.act_window" id="PotentialCustomer_action_window">
+      <field name="name">Potential Customer</field>
+      <field name="res_model">res.partner</field>
+      <field name="context">{"default_supplier": 0, "default_customer": 0, "default_potential_customer": 1}</field>
+      <field name="domain">[('potential_customer', '=', True)]</field>
+      <field name="view_mode">tree,form</field>
+    </record>
+    
     <record model="ir.actions.act_window" id="ContactRequest_action_window">
       <field name="name">Contacts Request</field>
       <field name="res_model">new.contact.request</field>
+      <field name="context">{}</field>
+      <field name="domain">[]</field>
+      <field name="view_mode">tree,form</field>
+    </record>
+    
+    <record model="ir.actions.act_window" id="customer_type_action_window">
+      <field name="name">Customer Type</field>
+      <field name="res_model">customer.type</field>
       <field name="context">{}</field>
       <field name="domain">[]</field>
       <field name="view_mode">tree,form</field>
@@ -116,6 +132,7 @@
 				  	<field name="site_area" attrs="{'invisible': [('company_id', '!=', 5)]}"/>
 				  	<field name="site_address" attrs="{'invisible': [('company_id', '!=', 5)]}"/>
 				  	<field name="site_type" attrs="{'invisible': [('company_id', '!=', 5)]}"/>
+				  	<field name="site_location_id" attrs="{'invisible': [('company_id', '!=', 5)]}"/>
 				  	<field name="region" attrs="{'invisible': [('company_id', '!=', 5)]}"/>
 				  	<field name="country_id" attrs="{'invisible': [('company_id', '!=', 5)]}"/>
 				  	<field name="monthly_service_fees" attrs="{'invisible': [('company_id', '!=', 5)]}"/>
@@ -657,6 +674,7 @@
 	            <group>
 	            	
 	                <group>
+	                	<field name="potential_partner_id"/>
 	                    <field name="type" attrs="{'invisible': [('parent_id','=', False)]}" groups="base.group_no_one"/>
 	                    <label for="street" string="Address"/>
 	                    <div class="o_address_format">
@@ -693,7 +711,8 @@
 	                <group>
 	                    <field name="function" placeholder="e.g. Sales Director"
 	                        attrs="{'invisible': [('is_company','=', True)]}"/>
-	                    <field name="parent_account_number" attrs="{'invisible': [('supplier', '=', True)], 'required': [('customer', '=', True), ('state', '=', 'validate')]}"/>
+	                    <field name="parent_account_number" attrs="{'invisible': [('supplier', '=', True)], 'required': ['|', ('customer', '=', True), ('state', '=', 'validate')]}"/>
+	                    <field name="customer_type_id"/>
 	                    <field name="phone" widget="phone"/>
 	                    <field name="mobile" widget="phone"/>
 	                    <field name="contact_email" widget="email" context="{'gravatar_image': True}"/>
@@ -1096,6 +1115,17 @@
     </field>
     </record>
     
+    <record id="sunray_view_res_partner_filter" model="ir.ui.view">
+        <field name="name">sunray.res.partner.search.form</field>
+	        <field name="model">res.partner</field>
+	        <field name="inherit_id" ref="base.view_res_partner_filter"/>
+	        <field name="arch" type="xml">
+	            <xpath expr="//filter[@name='supplier']" position="after">
+	            	<filter string="Potential Customer" name="potential_customer" domain="[('potential_customer','=',True)]"/>
+	            </xpath>
+	        </field>
+	</record>
+    
     <menuitem action="repair.action_repair_order_tree" id="repair.menu_repair_order" groups="stock.group_stock_user" name="Replacements" sequence="36"
             web_icon="repair,static/description/icon.png"/>
             
@@ -1114,6 +1144,12 @@
               
     <menuitem name="Contact Request" id="contact_request_menu" parent="crm.crm_menu_root"
               action="ContactRequest_action_window" sequence="12"/>
+    
+    <menuitem name="Potential Customer" id="potential_customer_menu" parent="crm.crm_menu_sales"
+              action="PotentialCustomer_action_window" sequence="90"/>
+	    
+    <menuitem name="Customer Type" id="customer_type_menu" parent="crm.crm_menu_config"
+              action="customer_type_action_window" sequence="4"/>
               
    	<menuitem name="Legal Approval(Vendor Request)" id="vendor_legal_approval_request_menu" parent="purchase.menu_procurement_management"
               action="sunray_vendor_legal_approval_action_window" sequence="100" groups="sunray.group_legal_team"/>

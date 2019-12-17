@@ -100,9 +100,11 @@ class Partner(models.Model):
     tax_no = fields.Char(string="Tax No.")
     legal = fields.Char(string="Other, Please specify:")
     
-    potential_customer = fields.Boolean(string='Potential Customer')
+    potential_customer = fields.Boolean(string='Potential Customer', default=True)
     
     stored_display_name = fields.Char(string="stored_display_name")
+    
+    customer_type_id = fields.Many2one(comodel_name='customer.type', string='Customer Type')
     
     '''
     @api.onchange('name')
@@ -244,6 +246,12 @@ class Partner(models.Model):
         action['domain'] = literal_eval(action['domain'])
         action['domain'].append(('partner_id', 'child_of', self.id))
         return action
+
+class CustomerType(models.Model):
+    _name = "customer.type"
+    _description = 'Customer Type'
+    
+    name = fields.Char(string='Name', required=True)
 
 class HrExpense(models.Model):
     _name = "hr.expense"
@@ -688,8 +696,8 @@ class PurchaseOrder(models.Model):
             # Deal with double validation process
             if order.company_id.po_double_validation == 'one_step'\
                     or (order.company_id.po_double_validation == 'two_step'\
-                        and order.amount_total < self.env.user.company_id.currency_id.compute(order.company_id.po_double_validation_amount, order.currency_id))\
-                    or order.user_has_groups('purchase.group_purchase_manager'):
+                        and order.amount_total < self.env.user.company_id.currency_id.compute(order.company_id.po_double_validation_amount, order.currency_id)):
+                    #or order.user_has_groups('purchase.group_purchase_manager'):
                 order.button_approve()
             else:
                 order.write({'state': 'to approve'})
@@ -1344,11 +1352,13 @@ class SiteCode(models.Model):
         self.site_area = self.project_id.site_area
         return {}
     
+    '''
     @api.multi
     def _check_site_code(self):
         site_code = self.env['site.code'].search([('name', '=', self.name)], limit=1)
         if site_code.name == self.name:
             raise UserError(_('Site Code Already Exists'))
+    '''
     
     location_id = fields.Many2one('stock.location', string='Location', ondelete="restrict", required=True)
 
@@ -2679,7 +2689,7 @@ class AccountAssetAsset(models.Model):
     def _update_all_analytic_account(self):
         assets = self.env['account.asset.asset'].search([])
         for assets in assets:
-            self.update_analytic_account()
+            #self.update_analytic_account()
             if not assets.account_analytic_id:
                 assets.account_analytic_id = assets.site_code_id.project_id.analytic_account_id
             if not assets.asset_partner_id:
