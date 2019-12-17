@@ -100,7 +100,7 @@ class Partner(models.Model):
     tax_no = fields.Char(string="Tax No.")
     legal = fields.Char(string="Other, Please specify:")
     
-    potential_customer = fields.Boolean(string='Potential Customer')
+    potential_customer = fields.Boolean(string='Potential Customer', default=True)
     
     stored_display_name = fields.Char(string="stored_display_name")
     

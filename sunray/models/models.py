@@ -757,6 +757,30 @@ class VendorRequest(models.Model):
     company_type = fields.Selection(string='Company Type',
         selection=[('company', 'Company'), ('person', 'Individual')], default='company')
     
+    potential_partner_id = fields.Many2one(comodel_name='res.partner', string="Potential Customer")
+    customer_type_id = fields.Many2one(comodel_name='customer.type', string='Customer Type')
+    
+    @api.onchange('potential_partner_id')
+    def _onchange_opportunity_create_date(self):
+        self.name = self.potential_partner_id.name
+        self.contact_email = self.potential_partner_id.email
+        self.parent_account_number = self.potential_partner_id.parent_account_number
+        self.building_no = self.potential_partner_id.building_no
+        self.office_no = self.potential_partner_id.office_no
+        self.postal_code = self.potential_partner_id.postal_code
+        self.street = self.potential_partner_id.street
+        self.vat_no = self.potential_partner_id.vat_no
+        self.tax_no = self.potential_partner_id.tax_no
+        self.district = self.potential_partner_id.district
+        self.rc = self.potential_partner_id.rc
+        self.phone = self.potential_partner_id.phone
+        self.mobile = self.potential_partner_id.mobile
+        self.city = self.potential_partner_id.city
+        self.country_id = self.potential_partner_id.country_id
+        self.state_id = self.potential_partner_id.state_id
+        self.parent_id = self.potential_partner_id.parent_id
+        self.company_type = self.potential_partner_id.company_type
+        self.customer_type_id = self.potential_partner_id.customer_type_id
     
     @api.multi
     def button_submit_legal(self):
@@ -923,44 +947,89 @@ class VendorRequest(models.Model):
             }
             self.env['res.partner'].create(vals)
         else:
-            self._check_customer_code()
             self.customer_registration = True
-            vals = {
-                'name' : self.name,
-                'customer_registration' : self.customer_registration,
-                'company_type' : self.company_type,
-                'parent_account_number' : self.parent_account_number,
-                'image' : self.image,
-                'parent_id' : self.parent_id.id,
-                'street' : self.street,
-                'street2' : self.street2,
-                'city' : self.city,
-                'state_id' : self.state_id.id,
-                'zip' : self.zip,
-                'country_id' : self.country_id.id,            
-                'vat' : self.vat,
-                'function' : self.function,
-                'phone' : self.phone,
-                'mobile' : self.mobile,
-                'email' : self.contact_email,
-                'customer': self.customer,
-                'supplier' : self.supplier,
-                'company' : self.company_id.id,
-                'completed_customer_information' : self.completed_customer_information,
-                'report_of_proposers_follow_up' : self.report_of_proposers_follow_up,
-                'true_copy_incorporation' : self.true_copy_incorporation,
-                'true_copy_memorandum' : self.true_copy_memorandum,
-                'sign_and_stamp' : self.Vat_cert,
-                'current_dpr' : self.current_dpr,
-                'commercial_certificate' : self.commercial_certificate,
-                'proposers_report' : self.proposers_report,
-                'recommendation_letters_from_applicant' : self.recommendation_letters_from_applicant,
-                'evidence_of_tax' : self.evidence_of_tax,
-                'code_of_conduct' : self.code_of_conduct,
-                'latest_financials' : self.latest_financials,
-            }
-            self.env['res.partner'].create(vals)
-        return {}
+            if self.potential_partner_id:
+                self.potential_partner_id.customer_registration = True
+                self.potential_partner_id.potential_customer = False
+                self.potential_partner_id.name = self.name
+                self.potential_partner_id.customer_registration = self.customer_registration
+                self.potential_partner_id.company_type = self.company_type
+                self.potential_partner_id.parent_account_number = self.parent_account_number
+                self.potential_partner_id.image = self.image
+                self.potential_partner_id.parent_id = self.parent_id
+                self.potential_partner_id.building_no = self.building_no
+                self.potential_partner_id.office_no = self.office_no
+                self.potential_partner_id.postal_code = self.postal_code
+                self.potential_partner_id.vat_no = self.vat_no
+                self.potential_partner_id.tax_no = self.tax_no
+                self.potential_partner_id.district = self.district
+                self.potential_partner_id.rc = self.rc
+                self.potential_partner_id.street = self.street
+                self.potential_partner_id.street2 = self.street2
+                self.potential_partner_id.city = self.city
+                self.potential_partner_id.state_id = self.state_id
+                self.potential_partner_id.zip = self.zip
+                self.potential_partner_id.country_id = self.country_id      
+                self.potential_partner_id.vat = self.vat
+                self.potential_partner_id.function = self.function
+                self.potential_partner_id.phone = self.phone
+                self.potential_partner_id.mobile = self.mobile
+                self.potential_partner_id.email = self.contact_email
+                self.potential_partner_id.customer = self.customer
+                self.potential_partner_id.supplier = self.supplier
+                self.potential_partner_id.company_id = self.company_id
+                self.potential_partner_id.completed_customer_information = self.completed_customer_information
+                self.potential_partner_id.report_of_proposers_follow_up = self.report_of_proposers_follow_up
+                self.potential_partner_id.true_copy_incorporation = self.true_copy_incorporation
+                self.potential_partner_id.true_copy_memorandum = self.true_copy_memorandum
+                self.potential_partner_id.Vat_cert = self.Vat_cert
+                self.potential_partner_id.current_dpr = self.current_dpr
+                self.potential_partner_id.commercial_certificate = self.commercial_certificate
+                self.potential_partner_id.proposers_report = self.proposers_report
+                self.potential_partner_id.recommendation_letters_from_applicant = self.recommendation_letters_from_applicant,
+                self.potential_partner_id.evidence_of_tax = self.evidence_of_tax
+                self.potential_partner_id.code_of_conduct = self.code_of_conduct
+                self.potential_partner_id.latest_financials = self.latest_financials
+                self.potential_partner_id.customer_type_id = self.customer_type_id
+            else:
+                self._check_customer_code()
+                vals = {
+                    'name' : self.name,
+                    'customer_registration' : self.customer_registration,
+                    'company_type' : self.company_type,
+                    'parent_account_number' : self.parent_account_number,
+                    'image' : self.image,
+                    'parent_id' : self.parent_id.id,
+                    'street' : self.street,
+                    'street2' : self.street2,
+                    'city' : self.city,
+                    'state_id' : self.state_id.id,
+                    'zip' : self.zip,
+                    'country_id' : self.country_id.id,            
+                    'vat' : self.vat,
+                    'function' : self.function,
+                    'phone' : self.phone,
+                    'mobile' : self.mobile,
+                    'email' : self.contact_email,
+                    'customer': self.customer,
+                    'supplier' : self.supplier,
+                    'company' : self.company_id.id,
+                    'completed_customer_information' : self.completed_customer_information,
+                    'report_of_proposers_follow_up' : self.report_of_proposers_follow_up,
+                    'true_copy_incorporation' : self.true_copy_incorporation,
+                    'true_copy_memorandum' : self.true_copy_memorandum,
+                    'sign_and_stamp' : self.Vat_cert,
+                    'current_dpr' : self.current_dpr,
+                    'commercial_certificate' : self.commercial_certificate,
+                    'proposers_report' : self.proposers_report,
+                    'recommendation_letters_from_applicant' : self.recommendation_letters_from_applicant,
+                    'evidence_of_tax' : self.evidence_of_tax,
+                    'code_of_conduct' : self.code_of_conduct,
+                    'latest_financials' : self.latest_financials,
+                    'customer_type_id' : self.customer_type_id,
+                }
+                self.env['res.partner'].create(vals)
+                return {}
     
     @api.multi
     def open_checklist_ticket(self):
