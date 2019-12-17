@@ -797,6 +797,9 @@
 		    		<field name="customer_type_id" readonly="0"/>
 		    		<!-- <field name="client_code" readonly="0"/> -->
 				</field>
+				<field name="customer" position="after">
+		    		<field name="potential_customer"/>
+				</field>
 				<xpath expr="//notebook" position="inside">
 					<page string="Vendor Checklist" name="extra" attrs="{'invisible': [('supplier', '!=', True)]}">
                     	<group string="REQUIRED DOCUMENTS"/>

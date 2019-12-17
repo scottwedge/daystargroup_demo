@@ -54,7 +54,7 @@ class Lead(models.Model):
                                       ('pass_diesel', 'PaaS Diesel'), ('saas', 'SaaS'), ('sale', 'Sale')], string='Service Type', required=False,default='saas')
     #atm_power_at_night = fields.Selection([('yes', 'Yes'), ('no', 'No'),], string='Does the system power ATM night/we?', required=False,default='yes')
     
-    tariff_per_kwp = fields.Float(string='Tariff per kWh (kWp)')
+    tariff_per_kwp = fields.Float(string='Tariff per kWh')
     
     #currency_id = fields.Many2one(comodel_name='res.currency', string='Currency.')
     monthly_service_fees = fields.Float(string='Monthly Service fees')
@@ -289,6 +289,8 @@ class Stage(models.Model):
     
     company_id = fields.Many2one('res.company', string='Company', store=True,
         default=lambda self: self.env.user.company_id, track_visibility='onchange')
+    
+    active = fields.Boolean(string='Active')
     
 class SubAccount(models.Model):
         
