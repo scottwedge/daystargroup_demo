@@ -709,6 +709,7 @@ class PurchaseOrder(models.Model):
     def button_approve(self):
         res = super(PurchaseOrder, self).button_approve()
         self._check_vendor_registration()
+        self._check_line_manager()
         self.po_approval_date = date.today()
         self.po_manager_approval = self._uid
         return res
