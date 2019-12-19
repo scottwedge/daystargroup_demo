@@ -2619,7 +2619,7 @@ class AccountInvoice(models.Model):
         self.action_invoice_cancel()
         self.action_invoice_draft()
         for line in self.tax_line_ids:
-            if line.account_id == 20661:
+            if line.account_id.id == 20661:
                 line.account_id = 20949
     
     @api.multi
