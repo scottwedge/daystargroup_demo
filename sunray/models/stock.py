@@ -2615,6 +2615,14 @@ class AccountInvoice(models.Model):
         return res
     
     @api.multi
+    def update_vat(self):
+        self.action_invoice_cancel()
+        self.action_invoice_draft()
+        for line in self.tax_line_ids:
+            if line.account_id.id == 20661:
+                line.account_id = 20949
+    
+    @api.multi
     def update_analytic_account(self):
         for line in self.invoice_line_ids:
             line.account_analytic_id = line.site_code_id.project_id.analytic_account_id
