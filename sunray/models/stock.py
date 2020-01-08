@@ -100,7 +100,7 @@ class Partner(models.Model):
     tax_no = fields.Char(string="Tax No.")
     legal = fields.Char(string="Other, Please specify:")
     
-    potential_customer = fields.Boolean(string='Potential Customer', default=True)
+    potential_customer = fields.Boolean(string='Potential Customer', default=False)
     
     stored_display_name = fields.Char(string="stored_display_name")
     
@@ -115,6 +115,11 @@ class Partner(models.Model):
             partner_ids.append(partner.id)
         self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
     '''
+    
+    @api.onchange('customer')
+    def _onchange_customer(self):
+        if self.customer == True:
+            self.potential_customer = True
     
     @api.multi
     def _site_code_count(self):
@@ -1393,7 +1398,7 @@ class SiteCode(models.Model):
         print(site_code)
         vals['name'] = site_code
         vals['usage'] = 'customer'
-        self._check_site_code()
+        #self._check_site_code()
 #         res_model, res_id = self.env['ir.model.data'].get_object_reference('stock','stock_location_locations_partner')
 #         product = self.env[res_model].browse(res_id) 
         return super(SiteCode, self).create(vals)
