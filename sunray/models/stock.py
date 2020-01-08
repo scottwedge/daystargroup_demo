@@ -1396,7 +1396,7 @@ class SiteCode(models.Model):
         #no = self.num
         site_code = code + "_" +  str(no)
         print(site_code)
-        vals['name'] = site_code
+        #vals['name'] = site_code
         vals['usage'] = 'customer'
         #self._check_site_code()
 #         res_model, res_id = self.env['ir.model.data'].get_object_reference('stock','stock_location_locations_partner')
