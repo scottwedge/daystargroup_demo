@@ -456,10 +456,9 @@ class PurchaseOrder(models.Model):
     _name = "purchase.order"
     _inherit = ['purchase.order']
     
-    #@api.onchange('project_id')
-    #def _onchange_partner_id(self):
-    #    self.partner_id = self.project_id.partner_id
-    #    return {}
+    @api.onchange('partner_id')
+    def _onchange_partner_id(self):
+        self.partner_ref = self.partner_id.ref
     
     @api.multi
     def _check_line_manager(self):
@@ -899,6 +898,7 @@ class PurchaseRequisition(models.Model):
     
     @api.multi
     def action_line_manager_approval(self):
+        self._check_line_manager()
         self.write({'state':'approve'})
         #self.manager_confirm()
         self.line_manager_approval_date = date.today()
@@ -922,6 +922,16 @@ class PurchaseRequisition(models.Model):
         self.write({'state': 'open'})
         self.po_approval_date = date.today()
         self.po_manager_approval = self._uid
+        group_id = self.env['ir.model.data'].xmlid_to_object('purchase..group_purchase_manager')
+        user_ids = []
+        partner_ids = []
+        for user in group_id.users:
+            user_ids.append(user.id)
+            partner_ids.append(user.partner_id.id)
+        self.message_subscribe(partner_ids=partner_ids)
+        subject = "Purchase Agreement {} has been confirmed & approved".format(self.name)
+        self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
+        return False
     
     
     @api.depends('total_price')
