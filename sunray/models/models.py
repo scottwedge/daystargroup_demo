@@ -7,11 +7,17 @@ from dateutil.relativedelta import relativedelta
 from ast import literal_eval
 from odoo.exceptions import UserError, AccessError, ValidationError
 from odoo import api, fields, models, _
+from email.policy import default
 
 class Message(models.Model):
     _inherit = 'mail.message'
     
     add_sign = fields.Boolean(default=False)
+    
+class CountryState(models.Model):
+    _inherit = 'res.country.state'
+    
+    region = fields.Char(string='Region')
     
 class Lead(models.Model):
     _name = "crm.lead"
@@ -44,7 +50,7 @@ class Lead(models.Model):
     site_address = fields.Char(string='Site Address')
     site_type = fields.Char(string='Site Type')
     #site_location_id = fields.Many2one(comodel_name='res.country.state', string='Site location', track_visibility='onchange')
-    region = fields.Char(string='Region')
+    region = fields.Char(string='Region', related='site_location_id.region')
     country_id = fields.Many2one(comodel_name='res.country', string="Country")
     #project_status = fields.Char(string='Status.')
     contract_duration = fields.Float(string='Contract Duration (year)')
@@ -68,6 +74,9 @@ class Lead(models.Model):
     
     site_code_id = fields.Many2one(comodel_name="site.code", string="Site Code")
     #site_code_ids = fields.Many2many(comodel_name="site.code", string="Site Code(s)")
+    #new_currency_id = fields.Many2one(comodel_name="res.currency", string='Stored Currency', default=lambda self: self.env.user.company_id.currency_id.id, store=True)
+    total_capacity = fields.Float(string='Total Capacity (kWp)')
+    solar_capacity = fields.Float(string='Solar Capacity (kWp)')
     
     opportunity_created_date = fields.Datetime(string="Opportunity Creation Date")
     

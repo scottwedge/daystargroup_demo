@@ -1319,6 +1319,9 @@
 						  	<field name="type_of_offer"/>
 						  	<field name="atm_power_at_night"/>
 						  	<field name="pv_installed_capacity"/>
+						  	<field name="tariff_per_kwp"/>
+						  	<field name="solar_capacity"/>
+			  				<field name="total_capacity"/>
 						  	<field name="currency_id"/>
 						  	<field name="monthly_service_fees"/>
 						  	<field name="lease_duration"/>

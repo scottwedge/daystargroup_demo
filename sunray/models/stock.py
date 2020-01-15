@@ -456,10 +456,9 @@ class PurchaseOrder(models.Model):
     _name = "purchase.order"
     _inherit = ['purchase.order']
     
-    #@api.onchange('project_id')
-    #def _onchange_partner_id(self):
-    #    self.partner_id = self.project_id.partner_id
-    #    return {}
+    @api.onchange('partner_id')
+    def _onchange_partner_id(self):
+        self.partner_ref = self.partner_id.ref
     
     @api.multi
     def _check_line_manager(self):
@@ -899,6 +898,7 @@ class PurchaseRequisition(models.Model):
     
     @api.multi
     def action_line_manager_approval(self):
+        self._check_line_manager()
         self.write({'state':'approve'})
         #self.manager_confirm()
         self.line_manager_approval_date = date.today()
@@ -922,6 +922,16 @@ class PurchaseRequisition(models.Model):
         self.write({'state': 'open'})
         self.po_approval_date = date.today()
         self.po_manager_approval = self._uid
+        group_id = self.env['ir.model.data'].xmlid_to_object('purchase..group_purchase_manager')
+        user_ids = []
+        partner_ids = []
+        for user in group_id.users:
+            user_ids.append(user.id)
+            partner_ids.append(user.partner_id.id)
+        self.message_subscribe(partner_ids=partner_ids)
+        subject = "Purchase Agreement {} has been confirmed & approved".format(self.name)
+        self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
+        return False
     
     
     @api.depends('total_price')
@@ -1494,23 +1504,27 @@ class Project(models.Model):
     
     default_site_code = fields.Char(string='old Site Code') 
     
-    client_type = fields.Char(string='Client Type')
+    client_type = fields.Many2one(comodel_name='customer.type', related='partner_id.customer_type_id', string='Customer Type')
     site_area = fields.Char(string='Site Area')
     site_address = fields.Char(string='Site Address')
     site_type = fields.Char(string='Site Type')
-    region = fields.Char(string='Region')
+    region = fields.Char(string='Region', related='site_location_id.region')
     country_id = fields.Many2one(comodel_name='res.country', string="Country")
     project_status = fields.Char(string='Status')
     commissioning_date = fields.Date(string='Commissioning date')
     coordinates = fields.Char(string='Coordinates')
     
     type_of_offer = fields.Selection([('lease_to_own', 'Lease to Own'), ('pass_battery', 'PaaS Battery'), ('paas_diesel', 'PaaS Diesel'),
-                                      ('pass_diesel', 'PaaS Diesel'), ('saas', 'SaaS'), ('sale', 'Sale')], string='Type of Offer', required=False,default='saas')
+                                      ('pass_diesel', 'PaaS Diesel'), ('saas', 'SaaS'), ('sale', 'Sale')], string='Service Type', required=False,default='saas')
     atm_power_at_night = fields.Selection([('yes', 'Yes'), ('no', 'No'),], string='Does the system power ATM night/we?', required=False,default='yes')
     
-    pv_installed_capacity = fields.Float(string='PV installed capacity (kWp)')
+    pv_installed_capacity = fields.Float(string='Size (kWp)')
+    tariff_per_kwp = fields.Float(string='Tariff per kWh')
+    total_capacity = fields.Float(string='Total Capacity (kWp)')
+    solar_capacity = fields.Float(string='Solar Capacity (kWp)')
     
-    currency_id = fields.Many2one(comodel_name='res.currency', string='Currency')
+    new_currency_id = fields.Many2one(comodel_name="res.currency", string='Stored Currency', default=lambda self: self.env.user.company_id.currency_id.id, store=True)
+    currency_id = fields.Many2one(comodel_name='res.currency', string='Currency', readonly=False)
     monthly_service_fees = fields.Float(string='Monthly Service fees')
     lease_duration = fields.Char(string='If lease, contract duration')
     sales_price = fields.Float(string="Sale Price")
