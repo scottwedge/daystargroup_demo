@@ -105,6 +105,14 @@ class Lead(models.Model):
         self.opportunity_created_date = self.create_date
     '''
             
+    @api.onchange('stage_id')
+    def create_project(self):
+        if self.stage_id == 29:
+            debit_line = self.env['project.project'].sudo().create({
+                     'name': self.site_code_id.name,
+                     'crm_lead_id': self.id
+                })
+            
     @api.multi
     def button_reset(self):
         self.write({'state': 'draft'})
