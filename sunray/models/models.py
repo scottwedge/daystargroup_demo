@@ -107,7 +107,7 @@ class Lead(models.Model):
             
     @api.onchange('stage_id')
     def create_project(self):
-        if self.stage_id == 29:
+        if self.stage_id.id == 29:
             debit_line = self.env['project.project'].sudo().create({
                      'name': self.site_code_id.name,
                      'crm_lead_id': self.id
