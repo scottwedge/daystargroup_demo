@@ -74,7 +74,7 @@ class Lead(models.Model):
     
     site_code_id = fields.Many2one(comodel_name="site.code", string="Site Code")
     #site_code_ids = fields.Many2many(comodel_name="site.code", string="Site Code(s)")
-    new_currency_id = fields.Many2one(comodel_name="res.currency", string='stored Currency', store=True)
+    #new_currency_id = fields.Many2one(comodel_name="res.currency", string='stored Currency', store=True)
     total_capacity = fields.Float(string='Total Capacity (kWp)')
     solar_capacity = fields.Float(string='Solar Capacity (kWp)')
     
