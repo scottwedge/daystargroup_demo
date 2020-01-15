@@ -1508,7 +1508,7 @@ class Project(models.Model):
     site_area = fields.Char(string='Site Area')
     site_address = fields.Char(string='Site Address')
     site_type = fields.Char(string='Site Type')
-    region = fields.Char(string='Region')
+    region = fields.Char(string='Region', related='site_location_id.region')
     country_id = fields.Many2one(comodel_name='res.country', string="Country")
     project_status = fields.Char(string='Status')
     commissioning_date = fields.Date(string='Commissioning date')
@@ -1519,6 +1519,9 @@ class Project(models.Model):
     atm_power_at_night = fields.Selection([('yes', 'Yes'), ('no', 'No'),], string='Does the system power ATM night/we?', required=False,default='yes')
     
     pv_installed_capacity = fields.Float(string='PV installed capacity (kWp)')
+    
+    total_capacity = fields.Float(string='Total Capacity (kWp)')
+    solar_capacity = fields.Float(string='Solar Capacity (kWp)')
     
     currency_id = fields.Many2one(comodel_name='res.currency', string='Currency')
     monthly_service_fees = fields.Float(string='Monthly Service fees')
