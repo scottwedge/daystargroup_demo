@@ -1504,7 +1504,7 @@ class Project(models.Model):
     
     default_site_code = fields.Char(string='old Site Code') 
     
-    client_type = fields.Char(string='Client Type')
+    client_type = fields.Many2one(comodel_name='customer.type', related='partner_id.customer_type_id', string='Customer Type')
     site_area = fields.Char(string='Site Area')
     site_address = fields.Char(string='Site Address')
     site_type = fields.Char(string='Site Type')
@@ -1515,11 +1515,11 @@ class Project(models.Model):
     coordinates = fields.Char(string='Coordinates')
     
     type_of_offer = fields.Selection([('lease_to_own', 'Lease to Own'), ('pass_battery', 'PaaS Battery'), ('paas_diesel', 'PaaS Diesel'),
-                                      ('pass_diesel', 'PaaS Diesel'), ('saas', 'SaaS'), ('sale', 'Sale')], string='Type of Offer', required=False,default='saas')
+                                      ('pass_diesel', 'PaaS Diesel'), ('saas', 'SaaS'), ('sale', 'Sale')], string='Service Type', required=False,default='saas')
     atm_power_at_night = fields.Selection([('yes', 'Yes'), ('no', 'No'),], string='Does the system power ATM night/we?', required=False,default='yes')
     
-    pv_installed_capacity = fields.Float(string='PV installed capacity (kWp)')
-    
+    pv_installed_capacity = fields.Float(string='Size (kWp)')
+    tariff_per_kwp = fields.Float(string='Tariff per kWh')
     total_capacity = fields.Float(string='Total Capacity (kWp)')
     solar_capacity = fields.Float(string='Solar Capacity (kWp)')
     
