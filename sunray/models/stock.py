@@ -459,6 +459,10 @@ class PurchaseOrder(models.Model):
     @api.onchange('partner_id')
     def _onchange_partner_id(self):
         self.partner_ref = self.partner_id.ref
+        
+    @api.onchange('requisition_id')
+    def _onchange_partner_id(self):
+        self.employee_id = self.requisition_id.employee_id
     
     @api.multi
     def _check_line_manager(self):
@@ -922,7 +926,7 @@ class PurchaseRequisition(models.Model):
         self.write({'state': 'open'})
         self.po_approval_date = date.today()
         self.po_manager_approval = self._uid
-        group_id = self.env['ir.model.data'].xmlid_to_object('purchase..group_purchase_manager')
+        group_id = self.env['ir.model.data'].xmlid_to_object('purchase.group_purchase_manager')
         user_ids = []
         partner_ids = []
         for user in group_id.users:
