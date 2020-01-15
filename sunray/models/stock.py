@@ -1454,7 +1454,9 @@ class Project(models.Model):
         ('supply_chain_project_execution', 'Supply Chain Project Execution'),
         ('qc_sign_off', 'Qc sign off'),
         ('customer_sign_off', 'Customer Sign off'),
-        ('close_out', ' Close out'),
+        ('close_out', 'Close out'),
+        ('installed', 'Installed'),
+        ('decommissioned', 'Decommissioned'),
         ], string='Stage', readonly=False, index=True, copy=False, default='kick_off', track_visibility='onchange')
     
     name = fields.Char("Name", index=True, required=True, track_visibility='onchange')
@@ -1578,6 +1580,21 @@ class Project(models.Model):
         return a
         return super(Project, self).create(vals)
     '''
+    
+    @api.onchange('crm_lead_id')
+    def _onchange_partner_id(self):
+        self.site_code_id = self.crm_lead_id.site_code_id
+        self.site_area = self.crm_lead_id.site_area
+        self.site_address = self.crm_lead_id.site_address
+        self.site_type = self.crm_lead_id.site_type
+        self.country_id = self.crm_lead_id.country_id
+        self.contract_duration = self.crm_lead_id.lease_duration
+        self.coordinates = self.crm_lead_id.coordinates
+        self.type_of_offer = self.crm_lead_id.type_of_offer
+        self.tariff_per_kwp = self.crm_lead_id.tariff_per_kwp
+        self.site_location_id = self.crm_lead_id.site_location_id
+        self.total_capacity = self.crm_lead_id.total_capacity
+        self.solar_capacity = self.crm_lead_id.solar_capacity
     
     @api.multi
     def send_project_commencement_mail(self):
