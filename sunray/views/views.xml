@@ -117,6 +117,8 @@
 			  	<field name="coordinates" attrs="{'invisible': [('company_id', '!=', 5)]}"/>
 			  	<field name="type_of_offer" attrs="{'invisible': [('company_id', '!=', 5)]}"/>
 			  	<field name="tariff_per_kwp" attrs="{'invisible': [('company_id', '!=', 5)]}"/>
+			  	<field name="solar_capacity" attrs="{'invisible': [('company_id', '!=', 5)]}"/>
+			  	<field name="total_capacity" attrs="{'invisible': [('company_id', '!=', 5)]}"/>
 			  	<!-- <field name="currency_id" attrs="{'invisible': [('company_id', '!=', 5)]}"/>  -->
 	    		<field name="nord_type_of_sales" attrs="{'invisible': [('company_id', '!=', 1)]}"/>
 	    		<field name="nord_type_of_offer" attrs="{'invisible': [('company_id', '!=', 1)]}"/>
