@@ -1588,7 +1588,7 @@ class Project(models.Model):
         self.site_address = self.crm_lead_id.site_address
         self.site_type = self.crm_lead_id.site_type
         self.country_id = self.crm_lead_id.country_id
-        self.contract_duration = self.crm_lead_id.lease_duration
+        self.lease_duration = self.crm_lead_id.contract_duration
         self.coordinates = self.crm_lead_id.coordinates
         self.type_of_offer = self.crm_lead_id.type_of_offer
         self.tariff_per_kwp = self.crm_lead_id.tariff_per_kwp
