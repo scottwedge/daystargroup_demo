@@ -1523,7 +1523,8 @@ class Project(models.Model):
     total_capacity = fields.Float(string='Total Capacity (kWp)')
     solar_capacity = fields.Float(string='Solar Capacity (kWp)')
     
-    currency_id = fields.Many2one(comodel_name='res.currency', string='Currency')
+    new_currency_id = fields.Many2one(comodel_name="res.currency", string='Stored Currency', default=lambda self: self.env.user.company_id.currency_id.id, store=True)
+    currency_id = fields.Many2one(comodel_name='res.currency', string='Currency', readonly=False)
     monthly_service_fees = fields.Float(string='Monthly Service fees')
     lease_duration = fields.Char(string='If lease, contract duration')
     sales_price = fields.Float(string="Sale Price")
