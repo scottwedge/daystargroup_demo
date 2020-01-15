@@ -7,6 +7,7 @@ from dateutil.relativedelta import relativedelta
 from ast import literal_eval
 from odoo.exceptions import UserError, AccessError, ValidationError
 from odoo import api, fields, models, _
+from email.policy import default
 
 class Message(models.Model):
     _inherit = 'mail.message'
@@ -73,7 +74,7 @@ class Lead(models.Model):
     
     site_code_id = fields.Many2one(comodel_name="site.code", string="Site Code")
     #site_code_ids = fields.Many2many(comodel_name="site.code", string="Site Code(s)")
-    
+    currency_id = fields.Many2one(comodel_name="res.currency", string='Currency', default=lambda self: self.env.user.company_id.currency_id.id, store=True)
     total_capacity = fields.Float(string='Total Capacity (kWp)')
     solar_capacity = fields.Float(string='Solar Capacity (kWp)')
     
