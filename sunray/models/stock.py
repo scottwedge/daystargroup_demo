@@ -459,6 +459,10 @@ class PurchaseOrder(models.Model):
     @api.onchange('partner_id')
     def _onchange_partner_id(self):
         self.partner_ref = self.partner_id.ref
+        
+    @api.onchange('requisition_id')
+    def _onchange_partner_id(self):
+        self.employee_id = self.requisition_id.employee_id
     
     @api.multi
     def _check_line_manager(self):
@@ -922,7 +926,7 @@ class PurchaseRequisition(models.Model):
         self.write({'state': 'open'})
         self.po_approval_date = date.today()
         self.po_manager_approval = self._uid
-        group_id = self.env['ir.model.data'].xmlid_to_object('purchase..group_purchase_manager')
+        group_id = self.env['ir.model.data'].xmlid_to_object('purchase.group_purchase_manager')
         user_ids = []
         partner_ids = []
         for user in group_id.users:
@@ -1450,7 +1454,9 @@ class Project(models.Model):
         ('supply_chain_project_execution', 'Supply Chain Project Execution'),
         ('qc_sign_off', 'Qc sign off'),
         ('customer_sign_off', 'Customer Sign off'),
-        ('close_out', ' Close out'),
+        ('close_out', 'Close out'),
+        ('installed', 'Installed'),
+        ('decommissioned', 'Decommissioned'),
         ], string='Stage', readonly=False, index=True, copy=False, default='kick_off', track_visibility='onchange')
     
     name = fields.Char("Name", index=True, required=True, track_visibility='onchange')
@@ -1514,11 +1520,11 @@ class Project(models.Model):
     commissioning_date = fields.Date(string='Commissioning date')
     coordinates = fields.Char(string='Coordinates')
     
-    type_of_offer = fields.Selection([('lease_to_own', 'Lease to Own'), ('pass_battery', 'PaaS Battery'), ('paas_diesel', 'PaaS Diesel'),
-                                      ('pass_diesel', 'PaaS Diesel'), ('saas', 'SaaS'), ('sale', 'Sale')], string='Service Type', required=False,default='saas')
+    type_of_offer = fields.Selection([('lease_to_own', 'Lease to own'), ('pass_battery', 'PaaS Battery'), ('paas_diesel', 'PaaS Diesel'),
+                                      ('pass_diesel', 'PaaS Diesel'), ('solar', 'Solar Only'), ('saas', 'SaaS'), ('sale', 'Sale')], string='Service Type', required=False,default='saas')
     atm_power_at_night = fields.Selection([('yes', 'Yes'), ('no', 'No'),], string='Does the system power ATM night/we?', required=False,default='yes')
     
-    pv_installed_capacity = fields.Float(string='Size (kWp)')
+    pv_installed_capacity = fields.Float(string='Size (kWp) ')
     tariff_per_kwp = fields.Float(string='Tariff per kWh')
     total_capacity = fields.Float(string='Total Capacity (kWp)')
     solar_capacity = fields.Float(string='Solar Capacity (kWp)')
@@ -1574,6 +1580,21 @@ class Project(models.Model):
         return a
         return super(Project, self).create(vals)
     '''
+    
+    @api.onchange('crm_lead_id')
+    def _onchange_partner_id(self):
+        self.site_code_id = self.crm_lead_id.site_code_id
+        self.site_area = self.crm_lead_id.site_area
+        self.site_address = self.crm_lead_id.site_address
+        self.site_type = self.crm_lead_id.site_type
+        self.country_id = self.crm_lead_id.country_id
+        self.lease_duration = self.crm_lead_id.contract_duration
+        self.coordinates = self.crm_lead_id.coordinates
+        self.type_of_offer = self.crm_lead_id.type_of_offer
+        self.tariff_per_kwp = self.crm_lead_id.tariff_per_kwp
+        self.site_location_id = self.crm_lead_id.site_location_id
+        self.total_capacity = self.crm_lead_id.total_capacity
+        self.solar_capacity = self.crm_lead_id.solar_capacity
     
     @api.multi
     def send_project_commencement_mail(self):
