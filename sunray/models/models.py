@@ -110,7 +110,19 @@ class Lead(models.Model):
         if self.stage_id.id == 29:
             project_line = self.env['project.project'].create({
                      'name': self.site_code_id.name,
-                     'crm_lead_id': self.id
+                     'crm_lead_id': self.id,
+                     'site_code_id': self.site_code_id,
+                     'site_area': self.site_area,
+                     'site_address': self.site_address,
+                     'site_type': self.site_type,
+                     'country_id': self.country_id,
+                     'lease_duration': self.contract_duration,
+                     'coordinates': self.coordinates,
+                     'type_of_offer': self.type_of_offer,
+                     'tariff_per_kwp': self.tariff_per_kwp,
+                     'site_location_id': self.site_location_id,
+                     'total_capacity': self.total_capacity,
+                     'solar_capacity': self.solar_capacity,
                 })
             return {}
             
