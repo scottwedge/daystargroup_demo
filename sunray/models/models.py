@@ -57,7 +57,7 @@ class Lead(models.Model):
     coordinates = fields.Char(string='Coordinates')
     
     type_of_offer = fields.Selection([('lease_to_own', 'Lease to Own'), ('pass_battery', 'PaaS Battery'), 
-                                      ('pass_diesel', 'PaaS Diesel'), ('saas', 'SaaS'), ('sale', 'Sale')], string='Service Type', required=False,default='saas')
+                                      ('pass_diesel', 'PaaS Diesel'), ('solar', 'Solar Only'),('saas', 'SaaS'), ('sale', 'Sale')], string='Service Type', required=False,default='saas')
     #atm_power_at_night = fields.Selection([('yes', 'Yes'), ('no', 'No'),], string='Does the system power ATM night/we?', required=False,default='yes')
     
     tariff_per_kwp = fields.Float(string='Tariff per kWh')
@@ -108,10 +108,11 @@ class Lead(models.Model):
     @api.onchange('stage_id')
     def create_project(self):
         if self.stage_id.id == 29:
-            debit_line = self.env['project.project'].sudo().create({
+            debit_line = self.env['project.project'].create({
                      'name': self.site_code_id.name,
                      'crm_lead_id': self.id
                 })
+            return {}
             
     @api.multi
     def button_reset(self):
