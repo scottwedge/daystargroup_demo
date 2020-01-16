@@ -108,10 +108,11 @@ class Lead(models.Model):
     @api.onchange('stage_id')
     def create_project(self):
         if self.stage_id.id == 29:
-            debit_line = self.env['project.project'].sudo().create({
+            debit_line = self.env['project.project'].create({
                      'name': self.site_code_id.name,
                      'crm_lead_id': self.id
                 })
+            return {}
             
     @api.multi
     def button_reset(self):
