@@ -106,11 +106,25 @@ class Lead(models.Model):
     '''
             
     @api.onchange('stage_id')
-    def create_project(self):
+    def create_project_from_lead(self):
         if self.stage_id.id == 29:
-            debit_line = self.env['project.project'].create({
+            project_line = self.env['project.project'].sudo().create({
                      'name': self.site_code_id.name,
-                     'crm_lead_id': self.id
+                     'partner_id': self.partner_id.id,
+                     'crm_lead_id': self.id,
+                     'site_code_id': self.site_code_id.id,
+                     'site_area': self.site_area,
+                     'site_address': self.site_address,
+                     'site_type': self.site_type,
+                     'country_id': self.country_id.id,
+                     'lease_duration': self.contract_duration,
+                     'coordinates': self.coordinates,
+                     'type_of_offer': self.type_of_offer,
+                     'tariff_per_kwp': self.tariff_per_kwp,
+                     'site_location_id': self.site_location_id.id,
+                     'total_capacity': self.total_capacity,
+                     'solar_capacity': self.solar_capacity,
+                     'sales_price': self.sales_price
                 })
             return {}
             

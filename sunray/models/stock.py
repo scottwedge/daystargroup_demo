@@ -1533,7 +1533,7 @@ class Project(models.Model):
     currency_id = fields.Many2one(comodel_name='res.currency', string='Currency', readonly=False)
     monthly_service_fees = fields.Float(string='Monthly Service fees')
     lease_duration = fields.Char(string='If lease, contract duration')
-    sales_price = fields.Float(string="Sale Price")
+    sales_price = fields.Float(string="Sale Revenue")
     site_area = fields.Char(string='Site Area')
     
     #@api.model
@@ -1595,6 +1595,7 @@ class Project(models.Model):
         self.site_location_id = self.crm_lead_id.site_location_id
         self.total_capacity = self.crm_lead_id.total_capacity
         self.solar_capacity = self.crm_lead_id.solar_capacity
+        self.sales_price = self.crm_lead_id.sales_price
     
     @api.multi
     def send_project_commencement_mail(self):
