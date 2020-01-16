@@ -1520,7 +1520,7 @@ class Project(models.Model):
     commissioning_date = fields.Date(string='Commissioning date')
     coordinates = fields.Char(string='Coordinates')
     
-    type_of_offer = fields.Selection([('lease_to_own', 'Lease to Own'), ('pass_battery', 'PaaS Battery'), ('paas_diesel', 'PaaS Diesel'),
+    type_of_offer = fields.Selection([('lease_to_own', 'Lease to own'), ('pass_battery', 'PaaS Battery'), ('paas_diesel', 'PaaS Diesel'),
                                       ('pass_diesel', 'PaaS Diesel'), ('solar', 'Solar Only'), ('saas', 'SaaS'), ('sale', 'Sale')], string='Service Type', required=False,default='saas')
     atm_power_at_night = fields.Selection([('yes', 'Yes'), ('no', 'No'),], string='Does the system power ATM night/we?', required=False,default='yes')
     
