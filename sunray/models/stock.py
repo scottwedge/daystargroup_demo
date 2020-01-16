@@ -1524,7 +1524,7 @@ class Project(models.Model):
                                       ('pass_diesel', 'PaaS Diesel'), ('solar', 'Solar Only'), ('saas', 'SaaS'), ('sale', 'Sale')], string='Service Type', required=False,default='saas')
     atm_power_at_night = fields.Selection([('yes', 'Yes'), ('no', 'No'),], string='Does the system power ATM night/we?', required=False,default='yes')
     
-    pv_installed_capacity = fields.Float(string='Size (kWp)')
+    pv_installed_capacity = fields.Float(string='Size (kWp) ')
     tariff_per_kwp = fields.Float(string='Tariff per kWh')
     total_capacity = fields.Float(string='Total Capacity (kWp)')
     solar_capacity = fields.Float(string='Solar Capacity (kWp)')
