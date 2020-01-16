@@ -106,7 +106,7 @@ class Lead(models.Model):
     '''
             
     @api.onchange('stage_id')
-    def create_project(self):
+    def create_project_from_lead(self):
         if self.stage_id.id == 29:
             project_line = self.env['project.project'].create({
                      'name': self.site_code_id.name,
