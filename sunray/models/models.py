@@ -112,7 +112,7 @@ class Lead(models.Model):
                      'name': self.site_code_id.name,
                      'crm_lead_id': self.id
                 })
-            return project_line
+            return {}
             
     @api.multi
     def button_reset(self):
