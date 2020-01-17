@@ -891,10 +891,11 @@ class PurchaseRequisition(models.Model):
         self.write({'state':'submit'})
         #group_id = self.env['ir.model.data'].xmlid_to_object('sunray.group_hr_line_manager')
         #user_ids = []
-        partner_ids = self.employee_id.parent_id.user_id.partner_id.id
+        partner_ids = []
+        partner_ids.append(self.employee_id.parent_id.user_id.partner_id.id)
         #for user in group_id.users:
         #    user_ids.append(user.id)
-        #    partner_ids.append(user.partner_id.id)
+        #    partner_ids.append(self.employee_id.parent_id.user_id.partner_id.id)
         self.message_subscribe(partner_ids=partner_ids)
         subject = "Purchase Agreement '{}' needs approval".format(self.name)
         self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
