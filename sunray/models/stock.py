@@ -149,7 +149,7 @@ class Partner(models.Model):
     @api.multi
     def name_get(self):
         res = []
- 
+  
         for partner in self:
             result = partner.name
             if partner.parent_account_number:
