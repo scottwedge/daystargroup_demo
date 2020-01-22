@@ -143,7 +143,7 @@ class Lead(models.Model):
             user_ids.append(user.id)
             partner_ids.append(user.partner_id.id)
         self.message_subscribe(partner_ids=partner_ids)
-        subject = "A site code is needed for this '{}' oppurtunity".format(self.name)
+        subject = "A site code is needed for this '{}' opportunity".format(self.name)
         self.message_post(subject=subject,body=subject,partner_ids=partner_ids)
         return False
         return {}
